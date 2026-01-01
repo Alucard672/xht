@@ -1,0 +1,62 @@
+{
+  "bsonType": "object",
+  "permission": {
+    "read": "auth.uid != null && doc._id == auth.uid",
+    "create": false,
+    "update": "auth.uid != null && doc._id == auth.uid",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "用户ID"
+    },
+    "mobile": {
+      "bsonType": "string",
+      "title": "手机号"
+    },
+    "nickname": {
+      "bsonType": "string",
+      "title": "昵称"
+    },
+    "role": {
+      "bsonType": "array",
+      "title": "角色数组",
+      "items": {
+        "bsonType": "string"
+      }
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属商家/租户ID（商家端用）"
+    },
+    "status": {
+      "bsonType": "int",
+      "title": "账号状态",
+      "description": "0正常，1封禁，2审核中，3审核失败，4注销"
+    },
+    "token": {
+      "bsonType": "array",
+      "title": "token 列表",
+      "items": {
+        "bsonType": "string"
+      }
+    },
+    "valid_token_date": {
+      "bsonType": "timestamp",
+      "title": "token 生效时间（早于该时间签发的 token 失效）"
+    },
+    "last_login_ip": {
+      "bsonType": "string",
+      "title": "最后登录IP"
+    },
+    "last_login_date": {
+      "bsonType": "timestamp",
+      "title": "最后登录时间"
+    },
+    "register_date": {
+      "bsonType": "timestamp",
+      "title": "注册时间"
+    }
+  }
+}
+

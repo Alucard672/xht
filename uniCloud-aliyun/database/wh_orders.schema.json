@@ -1,0 +1,66 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "customer_id", "order_no", "items", "total_fee"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "订单唯一ID"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属租户",
+      "foreignKey": "wh_tenants._id"
+    },
+    "customer_id": {
+      "bsonType": "string",
+      "title": "客户ID",
+      "foreignKey": "wh_customers._id"
+    },
+    "order_no": {
+      "bsonType": "string",
+      "title": "订单号"
+    },
+    "status": {
+      "bsonType": "int",
+      "title": "订单状态",
+      "description": "0:待接单, 1:待发货, 2:已完成, -1:已取消",
+      "defaultValue": 0
+    },
+    "payment_method": {
+      "bsonType": "string",
+      "title": "支付方式",
+      "description": "credit (赊账/记账), wechat (微信支付)",
+      "defaultValue": "credit"
+    },
+    "items": {
+      "bsonType": "array",
+      "title": "商品快照",
+      "items": {
+        "bsonType": "object",
+        "properties": {
+          "goods_id": { "bsonType": "string" },
+          "name": { "bsonType": "string" },
+          "price": { "bsonType": "int" },
+          "count": { "bsonType": "int" },
+          "unit": { "bsonType": "string" }
+        }
+      }
+    },
+    "total_fee": {
+      "bsonType": "int",
+      "title": "总金额(分)"
+    },
+    "create_time": {
+      "bsonType": "timestamp",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}
+

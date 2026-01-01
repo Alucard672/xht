@@ -1,0 +1,72 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "name", "stock"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
+    "delete": "auth.uid != null"
+  },
+  "properties": {
+    "_id": {
+      "description": "商品唯一ID"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属租户",
+      "foreignKey": "wh_tenants._id"
+    },
+    "name": {
+      "bsonType": "string",
+      "title": "商品名称",
+      "trim": "both"
+    },
+    "category_id": {
+      "bsonType": "string",
+      "title": "分类ID"
+    },
+    "img_url": {
+      "bsonType": "string",
+      "title": "图片地址"
+    },
+    "is_multi_unit": {
+      "bsonType": "boolean",
+      "title": "是否开启多单位",
+      "defaultValue": false
+    },
+    "unit_big": {
+      "bsonType": "object",
+      "title": "大单位配置",
+      "properties": {
+        "name": { "bsonType": "string" },
+        "price": { "bsonType": "int" }
+      }
+    },
+    "unit_small": {
+      "bsonType": "object",
+      "title": "小单位配置",
+      "properties": {
+        "name": { "bsonType": "string" },
+        "price": { "bsonType": "int" }
+      }
+    },
+    "rate": {
+      "bsonType": "int",
+      "title": "换算率",
+      "description": "1大单位 = N小单位",
+      "defaultValue": 1
+    },
+    "stock": {
+      "bsonType": "int",
+      "title": "总库存",
+      "description": "以最小单位存储",
+      "defaultValue": 0
+    },
+    "is_on_sale": {
+      "bsonType": "boolean",
+      "title": "是否上架",
+      "defaultValue": true
+    }
+  }
+}
+

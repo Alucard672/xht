@@ -1,0 +1,31 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "name"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
+    "delete": "auth.uid != null"
+  },
+  "properties": {
+    "_id": {
+      "description": "分类唯一ID"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属租户",
+      "foreignKey": "wh_tenants._id"
+    },
+    "name": {
+      "bsonType": "string",
+      "title": "分类名称",
+      "trim": "both"
+    },
+    "sort": {
+      "bsonType": "int",
+      "title": "排序",
+      "defaultValue": 0
+    }
+  }
+}
+

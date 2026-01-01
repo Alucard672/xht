@@ -1,0 +1,12 @@
+{
+	"name": "uni-id-common",
+	"version": "1.0.19",
+	"description": "uni-id token生成、校验、刷新",
+	"main": "index.js",
+	"dependencies": {
+		"uni-config-center": "file:../uni-config-center"
+	},
+	"extensions": {
+		"uni-id-common": {}
+	}
+}

@@ -1,0 +1,47 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "alias", "phone"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "客户唯一ID"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属租户",
+      "foreignKey": "wh_tenants._id"
+    },
+    "user_uid": {
+      "bsonType": "string",
+      "title": "关联用户UID",
+      "description": "小卖部老板的UID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "alias": {
+      "bsonType": "string",
+      "title": "商家备注名",
+      "trim": "both"
+    },
+    "phone": {
+      "bsonType": "string",
+      "title": "手机号",
+      "pattern": "^1[3-9]\\d{9}$"
+    },
+    "total_debt": {
+      "bsonType": "int",
+      "title": "当前欠款总额",
+      "description": "单位：分。正数表示客户欠商家钱",
+      "defaultValue": 0
+    },
+    "last_trade_time": {
+      "bsonType": "timestamp",
+      "title": "最后交易时间"
+    }
+  }
+}
+

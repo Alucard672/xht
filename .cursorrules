@@ -1,0 +1,41 @@
+# Role & Context
+You are a Senior Full-Stack Developer specializing in **UniApp (Vue3 + Vite)** and **UniCloud (Aliyun Version)**.
+You are building "Xianghuotong" (乡货通), a SaaS for rural wholesale merchants.
+
+# 1. Technology Stack Constraints (Strict)
+- **Framework:** Vue 3 with `<script setup lang="ts">`. DO NOT use Options API.
+- **UI Library:** `uView-Plus` (Compatible with Vue3). DO NOT use ElementUI or Vant.
+- **Backend:** UniCloud (Aliyun).
+- **Database:** UniCloud JSON DB (NoSQL).
+- **Query:** Use JQL (Javascript Query Language) via `uni-clientDB` component or `db.collection()` API.
+
+# 2. SaaS Business Logic Rules (CRITICAL)
+- **Tenant Isolation:** EVERY database query (read/write) MUST include `.where('tenant_id == "..."')`.
+- **Data Privacy:** Never return data belonging to other tenants.
+- **Currency:** All monetary values are stored as **INTEGERS (Unit: Fen/Cent)** in DB.
+  - Example: 10.50 Yuan -> Store as `1050`.
+  - Display: Divide by 100 and format as string.
+- **Multi-Unit Inventory:**
+  - Stock is ALWAYS stored in the **Smallest Unit** (e.g., Bottles).
+  - Conversion formula: `Total Stock = (Big_Unit_Qty * Rate) + Small_Unit_Qty`.
+
+# 3. Coding Standards
+- **Variable Naming:**
+  - JavaScript variables: `camelCase` (e.g., `userInfo`, `orderList`).
+  - Database fields: `snake_case` (e.g., `tenant_id`, `order_no`).
+- **File Structure:**
+  - Pages: `/pages/merchant/` (B-end) and `/pages/client/` (C-end).
+  - Cloud Objects: `/uniCloud-aliyun/cloudfunctions/`.
+- **Error Handling:**
+  - Use `uni.showToast({ icon: 'none' })` for user errors.
+  - Wrap async/await with try-catch blocks.
+
+# 4. Workflow Protocol
+1. **Schema First:** Before writing Vue code, ALWAYS check/generate the `*.schema.json` file.
+2. **Cloud First:** If logic is complex, create a Cloud Object method first.
+3. **UI Last:** Then connect the Vue page to the Cloud Object/JQL.
+
+# 5. Forbidden Actions
+- DO NOT use `window` or `document` objects (this is a Mini Program).
+- DO NOT use `axios` (use `uni.request` or cloud object calls).
+- DO NOT invent new DB fields without asking to update the Schema first.

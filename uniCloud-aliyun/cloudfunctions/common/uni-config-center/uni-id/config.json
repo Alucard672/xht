@@ -1,0 +1,8 @@
+{
+  "passwordSecret": "xht-secret-123456",
+  "tokenSecret": "xht-token-secret-123456",
+  "tokenExpiresIn": 7200,
+  "tokenExpiresThreshold": 600,
+  "passwordErrorLimit": 6,
+  "passwordErrorLockTime": 3600
+}

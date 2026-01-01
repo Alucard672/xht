@@ -1,0 +1,48 @@
+{
+  "bsonType": "object",
+  "required": ["name", "owner_uid"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null && doc.owner_uid == auth.uid",
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "租户唯一ID"
+    },
+    "name": {
+      "bsonType": "string",
+      "title": "店铺名称",
+      "description": "如：老王批发部",
+      "trim": "both"
+    },
+    "owner_uid": {
+      "bsonType": "string",
+      "title": "老板UID",
+      "description": "关联的老板 uni-id",
+      "foreignKey": "uni-id-users._id"
+    },
+    "expired_at": {
+      "bsonType": "timestamp",
+      "title": "会员到期时间"
+    },
+    "settings": {
+      "bsonType": "object",
+      "title": "店铺配置",
+      "properties": {
+        "allow_credit": {
+          "bsonType": "boolean",
+          "title": "允许赊账",
+          "defaultValue": true
+        },
+        "min_delivery_amount": {
+          "bsonType": "int",
+          "title": "最低起送额(分)",
+          "defaultValue": 0
+        }
+      }
+    }
+  }
+}
+

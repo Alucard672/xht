@@ -1,0 +1,735 @@
+<template>
+  <view class="shop-container">
+    <view class="shop-header">
+      <view class="top-row">
+        <text class="shop-name">{{ shopInfo?.name || '商家店铺' }}</text>
+        <u-icon name="arrow-right" color="#fff" size="16"></u-icon>
+      </view>
+      <view class="search-box">
+        <u-search
+          placeholder="搜索商品或首字母"
+          v-model="keyword"
+          :show-action="false"
+          shape="round"
+          bgColor="#ffffff"
+        ></u-search>
+      </view>
+    </view>
+
+    <view class="notice-bar">
+      <u-notice-bar
+        text="通知：本周新品上架，茅台酒特价优惠中！欢迎选购！"
+        color="#d48806"
+        bgColor="#fff7e6"
+        mode="horizontal"
+      ></u-notice-bar>
+    </view>
+
+    <view class="content" v-if="currentTab === 0">
+      <scroll-view class="category-list" scroll-y>
+        <view 
+          v-for="cat in categories" 
+          :key="cat._id" 
+          :class="['cat-item', activeCat === cat._id ? 'active' : '']"
+          @click="activeCat = cat._id"
+        >
+          <text class="cat-name">{{ cat.name }}</text>
+        </view>
+      </scroll-view>
+
+      <scroll-view class="goods-list" scroll-y @scrolltolower="loadMore">
+        <unicloud-db
+          ref="udb"
+          v-slot:default="{data, loading, error}"
+          collection="wh_goods"
+          :where="whereClause"
+          :page-size="20"
+        >
+          <view v-if="error" class="error">{{ error.message }}</view>
+          <view v-else class="goods-grid">
+            <view v-for="item in buildGoodsList(data)" :key="item._id" class="goods-card">
+              <image :src="item.img_url || '/static/logo.png'" mode="aspectFill" class="goods-img"></image>
+              <view class="goods-info">
+                <view class="name u-line-1">{{ item.name }}</view>
+                <view class="spec">{{ item.unit_big.name ? `${item.unit_rate}${item.unit_small.name}/${item.unit_big.name}` : item.unit_small.name }}</view>
+                <view class="price-row">
+                  <view class="price-main">
+                    <text class="symbol">¥</text>
+                    <text class="val">{{ priceHelper.format(item.unit_big.price || item.unit_small.price) }}</text>
+                    <text class="unit">/{{ item.unit_big.name || item.unit_small.name }}</text>
+                  </view>
+                  <view class="price-sub" v-if="item.unit_big.name">
+                    ¥{{ priceHelper.format(item.unit_small.price) }}/{{ item.unit_small.name }}
+                  </view>
+                </view>
+                <view class="add-btn" @click.stop="addToCart(item)">
+                  <u-icon name="plus" color="#fff" size="14"></u-icon>
+                </view>
+              </view>
+            </view>
+            <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
+          </view>
+          <u-loading-icon v-if="loading"></u-loading-icon>
+        </unicloud-db>
+      </scroll-view>
+    </view>
+
+    <view class="cart-page" v-if="currentTab === 1">
+      <view class="cart-header">
+        <text class="title">购物车 ({{ cartTotalCount }})</text>
+        <text class="clear" @click="clearCart">清空</text>
+      </view>
+      
+      <scroll-view class="cart-list" scroll-y>
+        <view v-if="cartTotalCount === 0" class="empty-cart">
+          <u-empty mode="car" text="购物车是空的"></u-empty>
+          <u-button type="primary" text="去凑单" size="small" @click="currentTab = 0" customStyle="margin-top: 40rpx; width: 200rpx;"></u-button>
+        </view>
+        <view v-else class="cart-items">
+          <view class="cart-item" v-for="(item, id) in cart" :key="id">
+            <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
+            <view class="item-info">
+              <view class="item-name">{{ item.name }}</view>
+              <view class="item-price">¥{{ priceHelper.format(item.priceSmall) }}/{{ item.unitSmallName }}</view>
+            </view>
+            <view class="item-stepper">
+              <u-number-box v-model="item.countSmall" :min="0" @change="onCartNumChange(item)"></u-number-box>
+            </view>
+          </view>
+          <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
+        </view>
+      </scroll-view>
+
+      <view class="cart-footer" v-if="cartTotalCount > 0">
+        <view class="total-info">
+          <text class="label">合计:</text>
+          <text class="symbol">¥</text>
+          <text class="amount">{{ priceHelper.format(cartTotalAmount) }}</text>
+        </view>
+        <u-button type="primary" text="提交订单" @click="goToCheckout" customStyle="width: 240rpx; height: 80rpx; border-radius: 40rpx;"></u-button>
+      </view>
+    </view>
+
+    <scroll-view class="my-page" v-if="currentTab === 2" scroll-y>
+      <view class="my-header">
+        <view class="user-info">
+          <image class="avatar" src="/static/logo.png"></image>
+          <view class="info-right">
+            <view class="nickname">{{ userInfo.nickname }}</view>
+            <view class="mobile">{{ userInfo.mobile }}</view>
+          </view>
+        </view>
+        <view class="debt-card">
+          <view class="label">当前欠款 (元)</view>
+          <view class="amount">{{ priceHelper.format(userInfo.total_debt) }}</view>
+          <view class="btn-row">
+            <text class="btn" @click="navTo('/pages/client/orders')">账单详情 ></text>
+          </view>
+        </view>
+      </view>
+
+      <view class="menu-list">
+        <view class="menu-item" @click="navTo('/pages/client/orders')">
+          <u-icon name="order" size="24" color="#07c160"></u-icon>
+          <text class="menu-text">历史订单</text>
+          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+        </view>
+        <view class="menu-item" @click="showToast('演示功能')">
+          <u-icon name="map" size="24" color="#07c160"></u-icon>
+          <text class="menu-text">收货地址</text>
+          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+        </view>
+        <view class="menu-item" @click="showToast('演示功能')">
+          <u-icon name="kefu-ermai" size="24" color="#07c160"></u-icon>
+          <text class="menu-text">联系商家</text>
+          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+        </view>
+      </view>
+
+      <view class="logout-btn" @click="logout">退出登录</view>
+      <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
+    </scroll-view>
+
+    <view class="cart-bar" v-if="currentTab === 0 && cartTotalCount > 0" @click="currentTab = 1">
+      <view class="cart-icon">
+        <u-icon name="shopping-cart-fill" color="#fff" size="28"></u-icon>
+        <view class="badge">{{ cartTotalCount }}</view>
+      </view>
+      <view class="cart-info">
+        <text class="total-price">¥{{ priceHelper.format(cartTotalAmount) }}</text>
+        <text class="delivery-tip">免费配送</text>
+      </view>
+      <view class="checkout-btn" @click.stop="goToCheckout">去结算</view>
+    </view>
+
+    <view class="bottom-tabbar">
+      <view :class="['tab-item', currentTab === 0 ? 'active' : '']" @click="handleTabChange(0)">
+        <u-icon name="home" :color="currentTab === 0 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
+        <text class="txt">首页</text>
+      </view>
+      <view :class="['tab-item', currentTab === 1 ? 'active' : '']" @click="handleTabChange(1)">
+        <u-icon name="shopping-cart" :color="currentTab === 1 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
+        <text class="txt">购物车</text>
+      </view>
+      <view :class="['tab-item', currentTab === 2 ? 'active' : '']" @click="handleTabChange(2)">
+        <u-icon name="account" :color="currentTab === 2 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
+        <text class="txt">我的</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, reactive } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { priceHelper } from '@/common/price-helper'
+
+const tenant_id = ref('')
+const shopInfo = ref<any>(null)
+const udb = ref<any>(null)
+const activeCat = ref('all')
+const keyword = ref('')
+const currentTab = ref(0)
+const userInfo = ref({
+  nickname: '张小店',
+  mobile: '13800138000',
+  total_debt: 125000, // 1250.00
+})
+
+const categories = ref([
+  { _id: 'all', name: '全部商品' },
+  { _id: 'cat1', name: '酒水饮料' },
+  { _id: 'cat2', name: '粮油副食' },
+  { _id: 'cat3', name: '方便速食' },
+  { _id: 'cat4', name: '日用百货' }
+])
+
+// 保持你的 mock 数据逻辑不变
+const mockGoods = [
+  { _id: 'g1', name: '农夫山泉 550ml', unit_small: { name: '瓶', price: 100 }, unit_big: { name: '箱', price: 2400 }, unit_rate: 24, img_url: '' },
+  { _id: 'g2', name: '康师傅红烧牛肉面', unit_small: { name: '包', price: 300 }, unit_big: { name: '箱', price: 6000 }, unit_rate: 20, img_url: '' },
+  { _id: 'g3', name: '可口可乐 330ml', unit_small: { name: '瓶', price: 150 }, unit_big: { name: '箱', price: 3600 }, unit_rate: 24, img_url: '' },
+  { _id: 'g4', name: '统一冰红茶 500ml', unit_small: { name: '瓶', price: 150 }, unit_big: { name: '箱', price: 3000 }, unit_rate: 20, img_url: '' },
+  { _id: 'g5', name: '旺旺雪饼', unit_small: { name: '包', price: 450 }, unit_big: { name: '箱', price: 4500 }, unit_rate: 10, img_url: '' },
+  { _id: 'g6', name: '百岁山矿泉水', unit_small: { name: '瓶', price: 200 }, unit_big: { name: '箱', price: 4800 }, unit_rate: 24, img_url: '' },
+  { _id: 'g7', name: '奥利奥饼干', unit_small: { name: '包', price: 500 }, unit_big: { name: '箱', price: 6000 }, unit_rate: 12, img_url: '' },
+  { _id: 'g8', name: '乐事薯片 70g', unit_small: { name: '包', price: 600 }, unit_big: { name: '箱', price: 7200 }, unit_rate: 12, img_url: '' },
+  { _id: 'g9', name: '怡宝纯净水 555ml', unit_small: { name: '瓶', price: 120 }, unit_big: { name: '箱', price: 2880 }, unit_rate: 24, img_url: '' },
+  { _id: 'g10', name: '脉动 600ml', unit_small: { name: '瓶', price: 350 }, unit_big: { name: '箱', price: 8400 }, unit_rate: 24, img_url: '' },
+  { _id: 'g11', name: '金龙鱼食用油 5L', unit_small: { name: '桶', price: 6580 }, unit_big: { name: '箱', price: 13160 }, unit_rate: 2, img_url: '' },
+  { _id: 'g12', name: '蒙牛纯甄 200g', unit_small: { name: '盒', price: 180 }, unit_big: { name: '箱', price: 4320 }, unit_rate: 24, img_url: '' },
+  { _id: 'g13', name: '农心辛拉面 120g', unit_small: { name: '包', price: 450 }, unit_big: { name: '箱', price: 5400 }, unit_rate: 12, img_url: '' },
+  { _id: 'g14', name: '达能酸牛奶 200ml', unit_small: { name: '瓶', price: 260 }, unit_big: { name: '箱', price: 6240 }, unit_rate: 24, img_url: '' },
+  { _id: 'g15', name: '可比克薯片 70g', unit_small: { name: '包', price: 550 }, unit_big: { name: '箱', price: 6600 }, unit_rate: 12, img_url: '' },
+  { _id: 'g16', name: '崂山可乐 500ml', unit_small: { name: '瓶', price: 220 }, unit_big: { name: '箱', price: 5280 }, unit_rate: 24, img_url: '' }
+]
+
+const cart = reactive<any>({
+  'g1': { _id: 'g1', name: '农夫山泉 550ml', priceSmall: 100, unitSmallName: '瓶', countSmall: 5, img_url: '' },
+  'g2': { _id: 'g2', name: '康师傅红烧牛肉面', priceSmall: 300, unitSmallName: '包', countSmall: 2, img_url: '' },
+  'g6': { _id: 'g6', name: '百岁山矿泉水', priceSmall: 200, unitSmallName: '瓶', countSmall: 1, img_url: '' }
+})
+const showCartPopup = ref(false)
+
+onLoad(async (options) => {
+  if (options?.tenant_id) {
+    tenant_id.value = options.tenant_id
+  } else {
+    tenant_id.value = 'demo-tenant-id'
+  }
+  fetchShopInfo()
+  fetchCategories()
+})
+
+const fetchShopInfo = async () => {
+  shopInfo.value = {
+    _id: tenant_id.value,
+    name: '王记粮油批发'
+  }
+}
+
+const fetchCategories = async () => {
+  try {
+    const db = uniCloud.database()
+    const res = await db.collection('wh_categories').where({ tenant_id: tenant_id.value }).get()
+    if (res.result.data.length > 0) {
+      categories.value = [{ _id: 'all', name: '全部商品' }, ...res.result.data]
+    }
+  } catch (e) {}
+}
+
+const whereClause = computed(() => {
+  let clause = `tenant_id == "${tenant_id.value}" && is_on_sale == true`
+  if (activeCat.value !== 'all') {
+    clause += ` && category_id == "${activeCat.value}"`
+  }
+  if (keyword.value) {
+    clause += ` && name.indexOf("${keyword.value}") >= 0`
+  }
+  return clause
+})
+
+const buildGoodsList = (data: any[]) => {
+  const base = Array.isArray(data) ? data.slice() : []
+  const ids = new Set(base.map((i: any) => i?._id).filter(Boolean))
+  for (const g of mockGoods) {
+    if (!ids.has(g._id)) base.push(g)
+    if (base.length >= 10) break
+  }
+  return base
+}
+
+const addToCart = (item: any) => {
+  if (!cart[item._id]) {
+    cart[item._id] = { 
+      _id: item._id,
+      name: item.name,
+      priceSmall: item.unit_small.price,
+      unitSmallName: item.unit_small.name,
+      countSmall: 0 
+    }
+  }
+  cart[item._id].countSmall++
+  uni.showToast({ title: '已加入', icon: 'none' })
+}
+
+const cartTotalCount = computed(() => {
+  return Object.values(cart).reduce((total: number, item: any) => total + item.countSmall, 0)
+})
+
+const cartTotalAmount = computed(() => {
+  return Object.values(cart).reduce((total: number, item: any) => total + (item.priceSmall * item.countSmall), 0)
+})
+
+const bottomSpaceHeight = computed(() => {
+  // 首页有“去结算”浮层时，需要更大的底部留白；否则只需要避开底部导航
+  const hasCheckoutBar = currentTab.value === 0 && cartTotalCount.value > 0
+  return hasCheckoutBar ? '320rpx' : '160rpx'
+})
+
+const goToCheckout = () => {
+  if (cartTotalCount.value === 0) return
+  uni.setStorageSync('current_cart', JSON.stringify(Object.values(cart)))
+  uni.navigateTo({ url: `/pages/client/checkout?tenant_id=${tenant_id.value}` })
+}
+
+const clearCart = () => {
+  Object.keys(cart).forEach(key => delete cart[key])
+}
+
+const onCartNumChange = (item: any) => {
+  if (item.countSmall <= 0) {
+    delete cart[item._id]
+  }
+}
+
+const handleTabChange = (index: number) => {
+  currentTab.value = index
+}
+
+const navTo = (url: string) => {
+  uni.navigateTo({ url })
+}
+
+const showToast = (title: string) => {
+  uni.showToast({ title, icon: 'none' })
+}
+
+const logout = () => {
+  uni.showModal({
+    title: '提示',
+    content: '确定要退出登录吗？',
+    success: (res) => {
+      if (res.confirm) {
+        uni.clearStorageSync()
+        uni.reLaunch({ url: '/pages/index/index' })
+      }
+    }
+  })
+}
+
+const loadMore = () => {
+  // udb 自动处理分页
+}
+</script>
+
+<style lang="scss" scoped>
+.shop-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  // 关键修改：背景改为白色，避免用户觉得有灰色蒙层
+  background-color: #ffffff; 
+  overflow: hidden; 
+}
+
+.shop-header {
+  flex-shrink: 0;
+  background-color: #07c160;
+  // 增加顶部安全区适配，防止刘海屏遮挡
+  padding: calc(40rpx + env(safe-area-inset-top)) 32rpx 32rpx;
+  
+  .top-row {
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+    margin-bottom: 24rpx;
+    .shop-name { color: #fff; font-size: 36rpx; font-weight: bold; }
+  }
+}
+
+.notice-bar {
+  flex-shrink: 0;
+  margin-bottom: 2rpx;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  height: 0; 
+  
+  .category-list {
+    width: 160rpx;
+    background-color: #f8f8f8;
+    height: 100%;
+    .cat-item {
+      padding: 32rpx 20rpx;
+      font-size: 26rpx;
+      color: #666;
+      text-align: center;
+      &.active {
+        background-color: #fff;
+        color: #07c160;
+        font-weight: bold;
+        position: relative;
+        &::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 30%;
+          bottom: 30%;
+          width: 6rpx;
+          background-color: #07c160;
+          border-radius: 0 4rpx 4rpx 0;
+        }
+      }
+    }
+  }
+  
+  .goods-list {
+    flex: 1;
+    background-color: #fff;
+    padding: 20rpx;
+    padding-bottom: 0; 
+    height: 100%; 
+    
+    .goods-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 32rpx;
+    }
+    
+    .goods-card {
+      display: flex;
+      gap: 20rpx;
+      position: relative;
+      padding-bottom: 20rpx;
+      border-bottom: 1rpx solid #f0f0f0; // 增加分割线，视觉更清晰
+      
+      .goods-img {
+        width: 160rpx;
+        height: 160rpx;
+        border-radius: 12rpx;
+        background-color: #f9f9f9;
+      }
+      
+      .goods-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 4rpx 0;
+        
+        .name { font-size: 30rpx; font-weight: bold; color: #333; }
+        .spec { font-size: 24rpx; color: #999; margin-top: 4rpx;}
+        
+        .price-row {
+          margin-top: 10rpx;
+          .price-main {
+            display: flex;
+            align-items: baseline;
+            color: #ff4d4f;
+            .symbol { font-size: 24rpx; }
+            .val { font-size: 36rpx; font-weight: bold; }
+            .unit { font-size: 24rpx; color: #999; margin-left: 4rpx; }
+          }
+          .price-sub { font-size: 22rpx; color: #999; margin-top: 2rpx; }
+        }
+        
+        .add-btn {
+          position: absolute;
+          right: 0;
+          bottom: 20rpx;
+          width: 56rpx;
+          height: 56rpx;
+          background-color: #07c160;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
+        }
+      }
+    }
+  }
+}
+
+// 关键 CSS 修改：处理底部固定栏位置
+.cart-bar {
+  position: fixed;
+  left: 32rpx;
+  right: 32rpx;
+  // 位于自定义底部导航上方
+  bottom: calc(110rpx + env(safe-area-inset-bottom) + 16rpx);
+  height: 100rpx;
+  background-color: #333;
+  border-radius: 50rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 10rpx 0 30rpx;
+  z-index: 99; // 高于底部导航
+  box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.2);
+  
+  .cart-icon {
+    position: relative;
+    margin-top: 0; // 移除负边距，实现垂直居中
+    background-color: #07c160;
+    width: 90rpx;
+    height: 90rpx;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1); 
+    z-index: 101;
+    flex-shrink: 0;
+    
+    .badge {
+      position: absolute;
+      right: -6rpx; // 稍微向右偏移
+      top: -6rpx;   // 稍微向上偏移
+      background-color: #ff4d4f;
+      color: #fff;
+      font-size: 18rpx;
+      min-width: 30rpx;
+      height: 30rpx;
+      border-radius: 15rpx;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0 4rpx;
+      border: 2rpx solid #fff;
+    }
+  }
+  
+  .cart-info {
+    flex: 1;
+    margin-left: 20rpx;
+    display: flex;
+    flex-direction: column;
+    .total-price { color: #fff; font-size: 36rpx; font-weight: bold; }
+    .delivery-tip { color: rgba(255,255,255,0.6); font-size: 22rpx; }
+  }
+  
+  .checkout-btn {
+    width: 180rpx;
+    height: 80rpx;
+    background-color: #07c160;
+    border-radius: 40rpx;
+    color: #fff;
+    font-size: 30rpx;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+// 底部占位高度由模板 style 动态控制
+.list-bottom-space {
+  height: 0;
+  width: 100%;
+}
+
+.bottom-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  // 关键：高度改为自动，使用 padding-bottom 撑开安全区，避免遮挡
+  height: calc(110rpx + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #ffffff;
+  border-top: 1rpx solid #f0f0f0;
+  display: flex;
+  align-items: flex-start; // 对齐到顶部
+  justify-content: space-around;
+  z-index: 98;
+  box-sizing: border-box;
+}
+
+.tab-item {
+  flex: 1;
+  height: 110rpx; // 保持交互区域高度
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+
+  .txt {
+    color: #7d7e80;
+    font-size: 24rpx; // 稍微调大一点点
+  }
+
+  &.active {
+    .txt { color: #07c160; font-weight: bold; }
+  }
+}
+
+.cart-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff; // 改为白色
+  overflow: hidden;
+  height: 0; 
+  padding-bottom: calc(110rpx + env(safe-area-inset-bottom)); // 避开底部导航
+
+  .cart-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32rpx;
+    background-color: #fff;
+    border-bottom: 1rpx solid #f5f5f5;
+    .title { font-size: 36rpx; font-weight: bold; color: #333; }
+    .clear { font-size: 26rpx; color: #999; }
+  }
+
+  .cart-list {
+    flex: 1;
+    padding: 20rpx;
+    .empty-cart {
+      padding-top: 200rpx;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .cart-items {
+      .cart-item {
+        background-color: #fff;
+        border-radius: 16rpx;
+        padding: 24rpx;
+        display: flex;
+        align-items: center;
+        margin-bottom: 20rpx;
+        border-bottom: 1rpx solid #f5f5f5;
+        .item-img { width: 120rpx; height: 120rpx; border-radius: 8rpx; margin-right: 20rpx; }
+        .item-info {
+          flex: 1;
+          .item-name { font-size: 30rpx; font-weight: bold; color: #333; margin-bottom: 8rpx; }
+          .item-price { font-size: 26rpx; color: #ff4d4f; }
+        }
+      }
+    }
+  }
+
+  .cart-footer {
+    background-color: #fff;
+    padding: 20rpx 32rpx;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1rpx solid #f0f0f0;
+    
+    .total-info {
+      display: flex;
+      align-items: baseline;
+      .label { font-size: 28rpx; color: #333; margin-right: 8rpx; }
+      .symbol { font-size: 24rpx; color: #ff4d4f; }
+      .amount { font-size: 40rpx; font-weight: bold; color: #ff4d4f; }
+    }
+  }
+}
+
+.my-page {
+  flex: 1;
+  background-color: #f5f5f5;
+  height: 0; 
+  padding-bottom: 0; 
+  
+  .my-header {
+    background-color: #07c160;
+    padding: 60rpx 32rpx 100rpx;
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      margin-bottom: 40rpx;
+      .avatar { width: 120rpx; height: 120rpx; border-radius: 60rpx; border: 4rpx solid rgba(255,255,255,0.3); margin-right: 24rpx; }
+      .info-right {
+        .nickname { font-size: 40rpx; font-weight: bold; color: #fff; margin-bottom: 8rpx; }
+        .mobile { font-size: 26rpx; color: rgba(255,255,255,0.8); }
+      }
+    }
+
+    .debt-card {
+      background-color: #fff;
+      border-radius: 24rpx;
+      padding: 32rpx;
+      box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.05);
+      position: relative;
+      margin-bottom: -140rpx;
+      z-index: 1;
+
+      .label { font-size: 24rpx; color: #999; margin-bottom: 8rpx; }
+      .amount { font-size: 56rpx; font-weight: bold; color: #333; margin-bottom: 16rpx; }
+      .btn-row {
+        border-top: 1rpx solid #f5f5f5;
+        padding-top: 20rpx;
+        .btn { font-size: 26rpx; color: #07c160; }
+      }
+    }
+  }
+
+  .menu-list {
+    margin-top: 80rpx;
+    background-color: #fff;
+    padding: 0 32rpx;
+    .menu-item {
+      display: flex;
+      align-items: center;
+      padding: 32rpx 0;
+      border-bottom: 1rpx solid #f5f5f5;
+      &:last-child { border-bottom: none; }
+      .menu-text { flex: 1; margin-left: 20rpx; font-size: 30rpx; color: #333; }
+    }
+  }
+
+  .logout-btn {
+    margin: 60rpx 32rpx;
+    height: 100rpx;
+    background-color: #fff;
+    border-radius: 20rpx;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 32rpx;
+    color: #ff4d4f;
+  }
+}
+</style>

@@ -1,0 +1,26 @@
+{
+  "bsonType": "object",
+  "permission": {
+    "read": "auth.uid != null",
+    "create": false,
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "角色记录ID"
+    },
+    "role_id": {
+      "bsonType": "string",
+      "title": "角色ID（如：admin、merchant）"
+    },
+    "permission": {
+      "bsonType": "array",
+      "title": "权限点列表",
+      "items": {
+        "bsonType": "string"
+      }
+    }
+  }
+}
+

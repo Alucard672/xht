@@ -1,0 +1,51 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "customer_id", "amount", "type", "source"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": false,
+    "update": false,
+    "delete": false
+  },
+  "properties": {
+    "_id": {
+      "description": "流水唯一ID"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属租户",
+      "foreignKey": "wh_tenants._id"
+    },
+    "customer_id": {
+      "bsonType": "string",
+      "title": "客户ID",
+      "foreignKey": "wh_customers._id"
+    },
+    "amount": {
+      "bsonType": "int",
+      "title": "变动金额(分)",
+      "description": "正数为欠款增加，负数为欠款减少"
+    },
+    "type": {
+      "bsonType": "string",
+      "title": "类型",
+      "description": "order: 订单欠款, repayment: 客户还款, adjust: 手动调整"
+    },
+    "source": {
+      "bsonType": "string",
+      "title": "来源ID",
+      "description": "如订单ID或支付流水ID"
+    },
+    "remark": {
+      "bsonType": "string",
+      "title": "备注"
+    },
+    "create_time": {
+      "bsonType": "timestamp",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}
+
