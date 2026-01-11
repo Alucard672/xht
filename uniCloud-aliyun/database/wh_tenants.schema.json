@@ -1,48 +1,52 @@
 {
   "bsonType": "object",
-  "required": ["name", "owner_uid"],
+  "required": ["name", "owner_uid", "created_at"],
   "permission": {
     "read": "auth.uid != null",
-    "create": "auth.uid != null",
-    "update": "auth.uid != null && doc.owner_uid == auth.uid",
-    "delete": false
+    "create": "false",
+    "update": "auth.uid == doc.owner_uid",
+    "delete": "false"
   },
   "properties": {
     "_id": {
-      "description": "租户唯一ID"
+      "description": "ID，系统自动生成"
     },
     "name": {
       "bsonType": "string",
-      "title": "店铺名称",
-      "description": "如：老王批发部",
+      "description": "店铺名称",
       "trim": "both"
     },
     "owner_uid": {
       "bsonType": "string",
-      "title": "老板UID",
-      "description": "关联的老板 uni-id",
+      "description": "店主UID",
       "foreignKey": "uni-id-users._id"
     },
     "expired_at": {
       "bsonType": "timestamp",
-      "title": "会员到期时间"
+      "description": "服务到期时间"
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
     },
     "settings": {
       "bsonType": "object",
-      "title": "店铺配置",
+      "description": "店铺设置",
       "properties": {
-        "allow_credit": {
-          "bsonType": "boolean",
-          "title": "允许赊账",
+        "allow_debt": {
+          "bsonType": "bool",
+          "description": "是否允许赊账",
           "defaultValue": true
         },
-        "min_delivery_amount": {
+        "min_delivery_price": {
           "bsonType": "int",
-          "title": "最低起送额(分)",
+          "description": "起送价(分)",
           "defaultValue": 0
         }
       }
     }
   }
 }
-

@@ -1,5 +1,5 @@
-import { defineConfig } from "vite";
-import uni from "@dcloudio/vite-plugin-uni";
+import { defineConfig } from 'vite'
+import uni from '@dcloudio/vite-plugin-uni'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -8,8 +8,8 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         // 抑制 Sass 弃用警告
-        silenceDeprecations: ["legacy-js-api", "import"],
-      },
-    },
-  },
-});
+        silenceDeprecations: ['legacy-js-api', 'import']
+      }
+    }
+  }
+})

@@ -6,8 +6,8 @@
     </view>
 
     <view class="form">
-      <u-form :model="form" ref="uForm">
-        <u-form-item label="手机号" prop="mobile" borderBottom>
+      <u-form ref="uForm" :model="form">
+        <u-form-item label="手机号" prop="mobile" border-bottom>
           <u-input v-model="form.mobile" type="number" placeholder="请输入手机号" border="none" />
         </u-form-item>
       </u-form>
@@ -17,7 +17,13 @@
         <text class="tip-text" @click="form.mobile = '13800001111'">[普通商家: 13800001111]</text>
       </view>
 
-      <u-button type="primary" text="直接登录" :loading="loading" customStyle="margin-top: 50rpx" @click="handleLogin"></u-button>
+      <u-button
+        type="primary"
+        text="直接登录"
+        :loading="loading"
+        custom-style="margin-top: 50rpx"
+        @click="handleLogin"
+      ></u-button>
     </view>
 
     <view class="footer">
@@ -44,13 +50,13 @@ const handleLogin = async () => {
   try {
     const merchantCo = uniCloud.importObject('wh-merchant-co')
     const res = await merchantCo.devLogin(form.mobile)
-    
+
     if (res.code === 0) {
       // 保存认证信息
       uni.setStorageSync('uni_id_token', res.token)
       uni.setStorageSync('uni_id_token_expired', res.tokenExpired)
       uni.setStorageSync('uni-id-pages-userInfo', res.userInfo)
-      
+
       if (res.userInfo.tenant_id) {
         uni.setStorageSync('tenant_id', res.userInfo.tenant_id)
       }

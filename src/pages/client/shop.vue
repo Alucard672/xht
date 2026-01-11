@@ -7,11 +7,11 @@
       </view>
       <view class="search-box">
         <u-search
-          placeholder="搜索商品或首字母"
           v-model="keyword"
+          placeholder="搜索商品或首字母"
           :show-action="false"
           shape="round"
-          bgColor="#ffffff"
+          bg-color="#ffffff"
         ></u-search>
       </view>
     </view>
@@ -20,16 +20,16 @@
       <u-notice-bar
         text="通知：本周新品上架，茅台酒特价优惠中！欢迎选购！"
         color="#d48806"
-        bgColor="#fff7e6"
+        bg-color="#fff7e6"
         mode="horizontal"
       ></u-notice-bar>
     </view>
 
-    <view class="content" v-if="currentTab === 0">
+    <view v-if="currentTab === 0" class="content">
       <scroll-view class="category-list" scroll-y>
-        <view 
-          v-for="cat in categories" 
-          :key="cat._id" 
+        <view
+          v-for="cat in categories"
+          :key="cat._id"
           :class="['cat-item', activeCat === cat._id ? 'active' : '']"
           @click="activeCat = cat._id"
         >
@@ -40,7 +40,7 @@
       <scroll-view class="goods-list" scroll-y @scrolltolower="loadMore">
         <unicloud-db
           ref="udb"
-          v-slot:default="{data, loading, error}"
+          v-slot="{ data, loading, error }"
           collection="wh_goods"
           :where="whereClause"
           :page-size="20"
@@ -48,17 +48,27 @@
           <view v-if="error" class="error">{{ error.message }}</view>
           <view v-else class="goods-grid">
             <view v-for="item in buildGoodsList(data)" :key="item._id" class="goods-card">
-              <image :src="item.img_url || '/static/logo.png'" mode="aspectFill" class="goods-img"></image>
+              <image
+                :src="item.img_url || '/static/logo.png'"
+                mode="aspectFill"
+                class="goods-img"
+              ></image>
               <view class="goods-info">
                 <view class="name u-line-1">{{ item.name }}</view>
-                <view class="spec">{{ item.unit_big.name ? `${item.unit_rate}${item.unit_small.name}/${item.unit_big.name}` : item.unit_small.name }}</view>
+                <view class="spec">{{
+                  item.unit_big.name
+                    ? `${item.unit_rate}${item.unit_small.name}/${item.unit_big.name}`
+                    : item.unit_small.name
+                }}</view>
                 <view class="price-row">
                   <view class="price-main">
                     <text class="symbol">¥</text>
-                    <text class="val">{{ priceHelper.format(item.unit_big.price || item.unit_small.price) }}</text>
+                    <text class="val">{{
+                      priceHelper.format(item.unit_big.price || item.unit_small.price)
+                    }}</text>
                     <text class="unit">/{{ item.unit_big.name || item.unit_small.name }}</text>
                   </view>
-                  <view class="price-sub" v-if="item.unit_big.name">
+                  <view v-if="item.unit_big.name" class="price-sub">
                     ¥{{ priceHelper.format(item.unit_small.price) }}/{{ item.unit_small.name }}
                   </view>
                 </view>
@@ -74,43 +84,60 @@
       </scroll-view>
     </view>
 
-    <view class="cart-page" v-if="currentTab === 1">
+    <view v-if="currentTab === 1" class="cart-page">
       <view class="cart-header">
         <text class="title">购物车 ({{ cartTotalCount }})</text>
         <text class="clear" @click="clearCart">清空</text>
       </view>
-      
+
       <scroll-view class="cart-list" scroll-y>
         <view v-if="cartTotalCount === 0" class="empty-cart">
           <u-empty mode="car" text="购物车是空的"></u-empty>
-          <u-button type="primary" text="去凑单" size="small" @click="currentTab = 0" customStyle="margin-top: 40rpx; width: 200rpx;"></u-button>
+          <u-button
+            type="primary"
+            text="去凑单"
+            size="small"
+            custom-style="margin-top: 40rpx; width: 200rpx;"
+            @click="currentTab = 0"
+          ></u-button>
         </view>
         <view v-else class="cart-items">
-          <view class="cart-item" v-for="(item, id) in cart" :key="id">
+          <view v-for="(item, id) in cart" :key="id" class="cart-item">
             <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
             <view class="item-info">
               <view class="item-name">{{ item.name }}</view>
-              <view class="item-price">¥{{ priceHelper.format(item.priceSmall) }}/{{ item.unitSmallName }}</view>
+              <view class="item-price"
+                >¥{{ priceHelper.format(item.priceSmall) }}/{{ item.unitSmallName }}</view
+              >
             </view>
             <view class="item-stepper">
-              <u-number-box v-model="item.countSmall" :min="0" @change="onCartNumChange(item)"></u-number-box>
+              <u-number-box
+                v-model="item.countSmall"
+                :min="0"
+                @change="onCartNumChange(item)"
+              ></u-number-box>
             </view>
           </view>
           <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
         </view>
       </scroll-view>
 
-      <view class="cart-footer" v-if="cartTotalCount > 0">
+      <view v-if="cartTotalCount > 0" class="cart-footer">
         <view class="total-info">
           <text class="label">合计:</text>
           <text class="symbol">¥</text>
           <text class="amount">{{ priceHelper.format(cartTotalAmount) }}</text>
         </view>
-        <u-button type="primary" text="提交订单" @click="goToCheckout" customStyle="width: 240rpx; height: 80rpx; border-radius: 40rpx;"></u-button>
+        <u-button
+          type="primary"
+          text="提交订单"
+          custom-style="width: 240rpx; height: 80rpx; border-radius: 40rpx;"
+          @click="goToCheckout"
+        ></u-button>
       </view>
     </view>
 
-    <scroll-view class="my-page" v-if="currentTab === 2" scroll-y>
+    <scroll-view v-if="currentTab === 2" class="my-page" scroll-y>
       <view class="my-header">
         <view class="user-info">
           <image class="avatar" src="/static/logo.png"></image>
@@ -150,7 +177,7 @@
       <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
     </scroll-view>
 
-    <view class="cart-bar" v-if="currentTab === 0 && cartTotalCount > 0" @click="currentTab = 1">
+    <view v-if="currentTab === 0 && cartTotalCount > 0" class="cart-bar" @click="currentTab = 1">
       <view class="cart-icon">
         <u-icon name="shopping-cart-fill" color="#fff" size="28"></u-icon>
         <view class="badge">{{ cartTotalCount }}</view>
@@ -168,7 +195,11 @@
         <text class="txt">首页</text>
       </view>
       <view :class="['tab-item', currentTab === 1 ? 'active' : '']" @click="handleTabChange(1)">
-        <u-icon name="shopping-cart" :color="currentTab === 1 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
+        <u-icon
+          name="shopping-cart"
+          :color="currentTab === 1 ? '#07c160' : '#7d7e80'"
+          size="26"
+        ></u-icon>
         <text class="txt">购物车</text>
       </view>
       <view :class="['tab-item', currentTab === 2 ? 'active' : '']" @click="handleTabChange(2)">
@@ -193,7 +224,7 @@ const currentTab = ref(0)
 const userInfo = ref({
   nickname: '张小店',
   mobile: '13800138000',
-  total_debt: 125000, // 1250.00
+  total_debt: 125000 // 1250.00
 })
 
 const categories = ref([
@@ -206,32 +237,165 @@ const categories = ref([
 
 // 保持你的 mock 数据逻辑不变
 const mockGoods = [
-  { _id: 'g1', name: '农夫山泉 550ml', unit_small: { name: '瓶', price: 100 }, unit_big: { name: '箱', price: 2400 }, unit_rate: 24, img_url: '' },
-  { _id: 'g2', name: '康师傅红烧牛肉面', unit_small: { name: '包', price: 300 }, unit_big: { name: '箱', price: 6000 }, unit_rate: 20, img_url: '' },
-  { _id: 'g3', name: '可口可乐 330ml', unit_small: { name: '瓶', price: 150 }, unit_big: { name: '箱', price: 3600 }, unit_rate: 24, img_url: '' },
-  { _id: 'g4', name: '统一冰红茶 500ml', unit_small: { name: '瓶', price: 150 }, unit_big: { name: '箱', price: 3000 }, unit_rate: 20, img_url: '' },
-  { _id: 'g5', name: '旺旺雪饼', unit_small: { name: '包', price: 450 }, unit_big: { name: '箱', price: 4500 }, unit_rate: 10, img_url: '' },
-  { _id: 'g6', name: '百岁山矿泉水', unit_small: { name: '瓶', price: 200 }, unit_big: { name: '箱', price: 4800 }, unit_rate: 24, img_url: '' },
-  { _id: 'g7', name: '奥利奥饼干', unit_small: { name: '包', price: 500 }, unit_big: { name: '箱', price: 6000 }, unit_rate: 12, img_url: '' },
-  { _id: 'g8', name: '乐事薯片 70g', unit_small: { name: '包', price: 600 }, unit_big: { name: '箱', price: 7200 }, unit_rate: 12, img_url: '' },
-  { _id: 'g9', name: '怡宝纯净水 555ml', unit_small: { name: '瓶', price: 120 }, unit_big: { name: '箱', price: 2880 }, unit_rate: 24, img_url: '' },
-  { _id: 'g10', name: '脉动 600ml', unit_small: { name: '瓶', price: 350 }, unit_big: { name: '箱', price: 8400 }, unit_rate: 24, img_url: '' },
-  { _id: 'g11', name: '金龙鱼食用油 5L', unit_small: { name: '桶', price: 6580 }, unit_big: { name: '箱', price: 13160 }, unit_rate: 2, img_url: '' },
-  { _id: 'g12', name: '蒙牛纯甄 200g', unit_small: { name: '盒', price: 180 }, unit_big: { name: '箱', price: 4320 }, unit_rate: 24, img_url: '' },
-  { _id: 'g13', name: '农心辛拉面 120g', unit_small: { name: '包', price: 450 }, unit_big: { name: '箱', price: 5400 }, unit_rate: 12, img_url: '' },
-  { _id: 'g14', name: '达能酸牛奶 200ml', unit_small: { name: '瓶', price: 260 }, unit_big: { name: '箱', price: 6240 }, unit_rate: 24, img_url: '' },
-  { _id: 'g15', name: '可比克薯片 70g', unit_small: { name: '包', price: 550 }, unit_big: { name: '箱', price: 6600 }, unit_rate: 12, img_url: '' },
-  { _id: 'g16', name: '崂山可乐 500ml', unit_small: { name: '瓶', price: 220 }, unit_big: { name: '箱', price: 5280 }, unit_rate: 24, img_url: '' }
+  {
+    _id: 'g1',
+    name: '农夫山泉 550ml',
+    unit_small: { name: '瓶', price: 100 },
+    unit_big: { name: '箱', price: 2400 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g2',
+    name: '康师傅红烧牛肉面',
+    unit_small: { name: '包', price: 300 },
+    unit_big: { name: '箱', price: 6000 },
+    unit_rate: 20,
+    img_url: ''
+  },
+  {
+    _id: 'g3',
+    name: '可口可乐 330ml',
+    unit_small: { name: '瓶', price: 150 },
+    unit_big: { name: '箱', price: 3600 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g4',
+    name: '统一冰红茶 500ml',
+    unit_small: { name: '瓶', price: 150 },
+    unit_big: { name: '箱', price: 3000 },
+    unit_rate: 20,
+    img_url: ''
+  },
+  {
+    _id: 'g5',
+    name: '旺旺雪饼',
+    unit_small: { name: '包', price: 450 },
+    unit_big: { name: '箱', price: 4500 },
+    unit_rate: 10,
+    img_url: ''
+  },
+  {
+    _id: 'g6',
+    name: '百岁山矿泉水',
+    unit_small: { name: '瓶', price: 200 },
+    unit_big: { name: '箱', price: 4800 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g7',
+    name: '奥利奥饼干',
+    unit_small: { name: '包', price: 500 },
+    unit_big: { name: '箱', price: 6000 },
+    unit_rate: 12,
+    img_url: ''
+  },
+  {
+    _id: 'g8',
+    name: '乐事薯片 70g',
+    unit_small: { name: '包', price: 600 },
+    unit_big: { name: '箱', price: 7200 },
+    unit_rate: 12,
+    img_url: ''
+  },
+  {
+    _id: 'g9',
+    name: '怡宝纯净水 555ml',
+    unit_small: { name: '瓶', price: 120 },
+    unit_big: { name: '箱', price: 2880 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g10',
+    name: '脉动 600ml',
+    unit_small: { name: '瓶', price: 350 },
+    unit_big: { name: '箱', price: 8400 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g11',
+    name: '金龙鱼食用油 5L',
+    unit_small: { name: '桶', price: 6580 },
+    unit_big: { name: '箱', price: 13160 },
+    unit_rate: 2,
+    img_url: ''
+  },
+  {
+    _id: 'g12',
+    name: '蒙牛纯甄 200g',
+    unit_small: { name: '盒', price: 180 },
+    unit_big: { name: '箱', price: 4320 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g13',
+    name: '农心辛拉面 120g',
+    unit_small: { name: '包', price: 450 },
+    unit_big: { name: '箱', price: 5400 },
+    unit_rate: 12,
+    img_url: ''
+  },
+  {
+    _id: 'g14',
+    name: '达能酸牛奶 200ml',
+    unit_small: { name: '瓶', price: 260 },
+    unit_big: { name: '箱', price: 6240 },
+    unit_rate: 24,
+    img_url: ''
+  },
+  {
+    _id: 'g15',
+    name: '可比克薯片 70g',
+    unit_small: { name: '包', price: 550 },
+    unit_big: { name: '箱', price: 6600 },
+    unit_rate: 12,
+    img_url: ''
+  },
+  {
+    _id: 'g16',
+    name: '崂山可乐 500ml',
+    unit_small: { name: '瓶', price: 220 },
+    unit_big: { name: '箱', price: 5280 },
+    unit_rate: 24,
+    img_url: ''
+  }
 ]
 
 const cart = reactive<any>({
-  'g1': { _id: 'g1', name: '农夫山泉 550ml', priceSmall: 100, unitSmallName: '瓶', countSmall: 5, img_url: '' },
-  'g2': { _id: 'g2', name: '康师傅红烧牛肉面', priceSmall: 300, unitSmallName: '包', countSmall: 2, img_url: '' },
-  'g6': { _id: 'g6', name: '百岁山矿泉水', priceSmall: 200, unitSmallName: '瓶', countSmall: 1, img_url: '' }
+  g1: {
+    _id: 'g1',
+    name: '农夫山泉 550ml',
+    priceSmall: 100,
+    unitSmallName: '瓶',
+    countSmall: 5,
+    img_url: ''
+  },
+  g2: {
+    _id: 'g2',
+    name: '康师傅红烧牛肉面',
+    priceSmall: 300,
+    unitSmallName: '包',
+    countSmall: 2,
+    img_url: ''
+  },
+  g6: {
+    _id: 'g6',
+    name: '百岁山矿泉水',
+    priceSmall: 200,
+    unitSmallName: '瓶',
+    countSmall: 1,
+    img_url: ''
+  }
 })
 const showCartPopup = ref(false)
 
-onLoad(async (options) => {
+onLoad(async options => {
   if (options?.tenant_id) {
     tenant_id.value = options.tenant_id
   } else {
@@ -255,7 +419,9 @@ const fetchCategories = async () => {
     if (res.result.data.length > 0) {
       categories.value = [{ _id: 'all', name: '全部商品' }, ...res.result.data]
     }
-  } catch (e) {}
+  } catch (e) {
+    // ignore
+  }
 }
 
 const whereClause = computed(() => {
@@ -281,12 +447,12 @@ const buildGoodsList = (data: any[]) => {
 
 const addToCart = (item: any) => {
   if (!cart[item._id]) {
-    cart[item._id] = { 
+    cart[item._id] = {
       _id: item._id,
       name: item.name,
       priceSmall: item.unit_small.price,
       unitSmallName: item.unit_small.name,
-      countSmall: 0 
+      countSmall: 0
     }
   }
   cart[item._id].countSmall++
@@ -298,7 +464,10 @@ const cartTotalCount = computed(() => {
 })
 
 const cartTotalAmount = computed(() => {
-  return Object.values(cart).reduce((total: number, item: any) => total + (item.priceSmall * item.countSmall), 0)
+  return Object.values(cart).reduce(
+    (total: number, item: any) => total + item.priceSmall * item.countSmall,
+    0
+  )
 })
 
 const bottomSpaceHeight = computed(() => {
@@ -339,7 +508,7 @@ const logout = () => {
   uni.showModal({
     title: '提示',
     content: '确定要退出登录吗？',
-    success: (res) => {
+    success: res => {
       if (res.confirm) {
         uni.clearStorageSync()
         uni.reLaunch({ url: '/pages/index/index' })
@@ -360,8 +529,8 @@ const loadMore = () => {
   height: 100vh;
   width: 100vw;
   // 关键修改：背景改为白色，避免用户觉得有灰色蒙层
-  background-color: #ffffff; 
-  overflow: hidden; 
+  background-color: #ffffff;
+  overflow: hidden;
 }
 
 .shop-header {
@@ -369,13 +538,17 @@ const loadMore = () => {
   background-color: #07c160;
   // 增加顶部安全区适配，防止刘海屏遮挡
   padding: calc(40rpx + env(safe-area-inset-top)) 32rpx 32rpx;
-  
+
   .top-row {
     display: flex;
     align-items: center;
     gap: 8rpx;
     margin-bottom: 24rpx;
-    .shop-name { color: #fff; font-size: 36rpx; font-weight: bold; }
+    .shop-name {
+      color: #fff;
+      font-size: 36rpx;
+      font-weight: bold;
+    }
   }
 }
 
@@ -388,8 +561,8 @@ const loadMore = () => {
   flex: 1;
   display: flex;
   overflow: hidden;
-  height: 0; 
-  
+  height: 0;
+
   .category-list {
     width: 160rpx;
     background-color: #f8f8f8;
@@ -417,57 +590,78 @@ const loadMore = () => {
       }
     }
   }
-  
+
   .goods-list {
     flex: 1;
     background-color: #fff;
     padding: 20rpx;
-    padding-bottom: 0; 
-    height: 100%; 
-    
+    padding-bottom: 0;
+    height: 100%;
+
     .goods-grid {
       display: flex;
       flex-direction: column;
       gap: 32rpx;
     }
-    
+
     .goods-card {
       display: flex;
       gap: 20rpx;
       position: relative;
       padding-bottom: 20rpx;
       border-bottom: 1rpx solid #f0f0f0; // 增加分割线，视觉更清晰
-      
+
       .goods-img {
         width: 160rpx;
         height: 160rpx;
         border-radius: 12rpx;
         background-color: #f9f9f9;
       }
-      
+
       .goods-info {
         flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         padding: 4rpx 0;
-        
-        .name { font-size: 30rpx; font-weight: bold; color: #333; }
-        .spec { font-size: 24rpx; color: #999; margin-top: 4rpx;}
-        
+
+        .name {
+          font-size: 30rpx;
+          font-weight: bold;
+          color: #333;
+        }
+        .spec {
+          font-size: 24rpx;
+          color: #999;
+          margin-top: 4rpx;
+        }
+
         .price-row {
           margin-top: 10rpx;
           .price-main {
             display: flex;
             align-items: baseline;
             color: #ff4d4f;
-            .symbol { font-size: 24rpx; }
-            .val { font-size: 36rpx; font-weight: bold; }
-            .unit { font-size: 24rpx; color: #999; margin-left: 4rpx; }
+            .symbol {
+              font-size: 24rpx;
+            }
+            .val {
+              font-size: 36rpx;
+              font-weight: bold;
+            }
+            .unit {
+              font-size: 24rpx;
+              color: #999;
+              margin-left: 4rpx;
+            }
           }
-          .price-sub { font-size: 22rpx; color: #999; margin-top: 2rpx; }
+          .price-sub {
+            font-size: 22rpx;
+            color: #999;
+            margin-top: 2rpx;
+          }
         }
-        
+
         .add-btn {
           position: absolute;
           right: 0;
@@ -500,8 +694,8 @@ const loadMore = () => {
   align-items: center;
   padding: 0 10rpx 0 30rpx;
   z-index: 99; // 高于底部导航
-  box-shadow: 0 6rpx 20rpx rgba(0,0,0,0.2);
-  
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.2);
+
   .cart-icon {
     position: relative;
     margin-top: 0; // 移除负边距，实现垂直居中
@@ -512,14 +706,14 @@ const loadMore = () => {
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1); 
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
     z-index: 101;
     flex-shrink: 0;
-    
+
     .badge {
       position: absolute;
       right: -6rpx; // 稍微向右偏移
-      top: -6rpx;   // 稍微向上偏移
+      top: -6rpx; // 稍微向上偏移
       background-color: #ff4d4f;
       color: #fff;
       font-size: 18rpx;
@@ -533,16 +727,23 @@ const loadMore = () => {
       border: 2rpx solid #fff;
     }
   }
-  
+
   .cart-info {
     flex: 1;
     margin-left: 20rpx;
     display: flex;
     flex-direction: column;
-    .total-price { color: #fff; font-size: 36rpx; font-weight: bold; }
-    .delivery-tip { color: rgba(255,255,255,0.6); font-size: 22rpx; }
+    .total-price {
+      color: #fff;
+      font-size: 36rpx;
+      font-weight: bold;
+    }
+    .delivery-tip {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 22rpx;
+    }
   }
-  
+
   .checkout-btn {
     width: 180rpx;
     height: 80rpx;
@@ -595,7 +796,10 @@ const loadMore = () => {
   }
 
   &.active {
-    .txt { color: #07c160; font-weight: bold; }
+    .txt {
+      color: #07c160;
+      font-weight: bold;
+    }
   }
 }
 
@@ -605,7 +809,7 @@ const loadMore = () => {
   flex-direction: column;
   background-color: #fff; // 改为白色
   overflow: hidden;
-  height: 0; 
+  height: 0;
   padding-bottom: calc(110rpx + env(safe-area-inset-bottom)); // 避开底部导航
 
   .cart-header {
@@ -616,8 +820,15 @@ const loadMore = () => {
     padding: 32rpx;
     background-color: #fff;
     border-bottom: 1rpx solid #f5f5f5;
-    .title { font-size: 36rpx; font-weight: bold; color: #333; }
-    .clear { font-size: 26rpx; color: #999; }
+    .title {
+      font-size: 36rpx;
+      font-weight: bold;
+      color: #333;
+    }
+    .clear {
+      font-size: 26rpx;
+      color: #999;
+    }
   }
 
   .cart-list {
@@ -638,11 +849,24 @@ const loadMore = () => {
         align-items: center;
         margin-bottom: 20rpx;
         border-bottom: 1rpx solid #f5f5f5;
-        .item-img { width: 120rpx; height: 120rpx; border-radius: 8rpx; margin-right: 20rpx; }
+        .item-img {
+          width: 120rpx;
+          height: 120rpx;
+          border-radius: 8rpx;
+          margin-right: 20rpx;
+        }
         .item-info {
           flex: 1;
-          .item-name { font-size: 30rpx; font-weight: bold; color: #333; margin-bottom: 8rpx; }
-          .item-price { font-size: 26rpx; color: #ff4d4f; }
+          .item-name {
+            font-size: 30rpx;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8rpx;
+          }
+          .item-price {
+            font-size: 26rpx;
+            color: #ff4d4f;
+          }
         }
       }
     }
@@ -655,13 +879,24 @@ const loadMore = () => {
     justify-content: space-between;
     align-items: center;
     border-top: 1rpx solid #f0f0f0;
-    
+
     .total-info {
       display: flex;
       align-items: baseline;
-      .label { font-size: 28rpx; color: #333; margin-right: 8rpx; }
-      .symbol { font-size: 24rpx; color: #ff4d4f; }
-      .amount { font-size: 40rpx; font-weight: bold; color: #ff4d4f; }
+      .label {
+        font-size: 28rpx;
+        color: #333;
+        margin-right: 8rpx;
+      }
+      .symbol {
+        font-size: 24rpx;
+        color: #ff4d4f;
+      }
+      .amount {
+        font-size: 40rpx;
+        font-weight: bold;
+        color: #ff4d4f;
+      }
     }
   }
 }
@@ -669,21 +904,35 @@ const loadMore = () => {
 .my-page {
   flex: 1;
   background-color: #f5f5f5;
-  height: 0; 
-  padding-bottom: 0; 
-  
+  height: 0;
+  padding-bottom: 0;
+
   .my-header {
     background-color: #07c160;
     padding: 60rpx 32rpx 100rpx;
-    
+
     .user-info {
       display: flex;
       align-items: center;
       margin-bottom: 40rpx;
-      .avatar { width: 120rpx; height: 120rpx; border-radius: 60rpx; border: 4rpx solid rgba(255,255,255,0.3); margin-right: 24rpx; }
+      .avatar {
+        width: 120rpx;
+        height: 120rpx;
+        border-radius: 60rpx;
+        border: 4rpx solid rgba(255, 255, 255, 0.3);
+        margin-right: 24rpx;
+      }
       .info-right {
-        .nickname { font-size: 40rpx; font-weight: bold; color: #fff; margin-bottom: 8rpx; }
-        .mobile { font-size: 26rpx; color: rgba(255,255,255,0.8); }
+        .nickname {
+          font-size: 40rpx;
+          font-weight: bold;
+          color: #fff;
+          margin-bottom: 8rpx;
+        }
+        .mobile {
+          font-size: 26rpx;
+          color: rgba(255, 255, 255, 0.8);
+        }
       }
     }
 
@@ -691,17 +940,29 @@ const loadMore = () => {
       background-color: #fff;
       border-radius: 24rpx;
       padding: 32rpx;
-      box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.05);
+      box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.05);
       position: relative;
       margin-bottom: -140rpx;
       z-index: 1;
 
-      .label { font-size: 24rpx; color: #999; margin-bottom: 8rpx; }
-      .amount { font-size: 56rpx; font-weight: bold; color: #333; margin-bottom: 16rpx; }
+      .label {
+        font-size: 24rpx;
+        color: #999;
+        margin-bottom: 8rpx;
+      }
+      .amount {
+        font-size: 56rpx;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 16rpx;
+      }
       .btn-row {
         border-top: 1rpx solid #f5f5f5;
         padding-top: 20rpx;
-        .btn { font-size: 26rpx; color: #07c160; }
+        .btn {
+          font-size: 26rpx;
+          color: #07c160;
+        }
       }
     }
   }
@@ -715,8 +976,15 @@ const loadMore = () => {
       align-items: center;
       padding: 32rpx 0;
       border-bottom: 1rpx solid #f5f5f5;
-      &:last-child { border-bottom: none; }
-      .menu-text { flex: 1; margin-left: 20rpx; font-size: 30rpx; color: #333; }
+      &:last-child {
+        border-bottom: none;
+      }
+      .menu-text {
+        flex: 1;
+        margin-left: 20rpx;
+        font-size: 30rpx;
+        color: #333;
+      }
     }
   }
 

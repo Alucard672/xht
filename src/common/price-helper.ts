@@ -7,8 +7,8 @@ export const priceHelper = {
    * @param fen 分
    */
   format(fen: number): string {
-    if (!fen) return '0.00';
-    return (fen / 100).toFixed(2);
+    if (!fen) return '0.00'
+    return (fen / 100).toFixed(2)
   },
 
   /**
@@ -17,17 +17,16 @@ export const priceHelper = {
    */
   toFen(yuan: string | number): number {
     if (typeof yuan === 'string') {
-      yuan = parseFloat(yuan);
+      yuan = parseFloat(yuan)
     }
-    if (isNaN(yuan)) return 0;
-    return Math.round(yuan * 100);
+    if (isNaN(yuan)) return 0
+    return Math.round(yuan * 100)
   },
 
   /**
    * 计算总价 (分)
    */
   calcTotal(priceSmall: number, countSmall: number): number {
-    return priceSmall * countSmall;
+    return priceSmall * countSmall
   }
-};
-
+}

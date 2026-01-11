@@ -1,52 +1,80 @@
 <template>
   <view class="goods-edit-container">
-    <u-form :model="form" ref="uForm" labelWidth="180rpx">
-      <u-form-item label="商品名称" prop="name" borderBottom required>
+    <u-form ref="uForm" :model="form" label-width="180rpx">
+      <u-form-item label="商品名称" prop="name" border-bottom required>
         <u-input v-model="form.name" placeholder="请输入商品名称" border="none" />
       </u-form-item>
 
-      <u-form-item label="所属分类" borderBottom required @click="showCategoryPicker = true">
-        <u-input v-model="categoryName" placeholder="请选择分类" border="none" disabled disabledColor="#ffffff" />
-        <u-icon slot="right" name="arrow-right"></u-icon>
+      <u-form-item label="所属分类" border-bottom required @click="showCategoryPicker = true">
+        <u-input
+          v-model="categoryName"
+          placeholder="请选择分类"
+          border="none"
+          disabled
+          disabled-color="#ffffff"
+        />
+        <template #right>
+          <u-icon name="arrow-right"></u-icon>
+        </template>
       </u-form-item>
 
-      <u-form-item label="商品图片" borderBottom>
+      <u-form-item label="商品图片" border-bottom>
         <u-upload
-          :fileList="fileList"
-          @afterRead="afterRead"
-          @delete="deletePic"
+          :file-list="fileList"
           name="goods_img"
           multiple
-          :maxCount="1"
+          :max-count="1"
+          @after-read="afterRead"
+          @delete="deletePic"
         ></u-upload>
       </u-form-item>
 
-      <u-form-item label="多单位设置" borderBottom>
+      <u-form-item label="多单位设置" border-bottom>
         <u-switch v-model="form.is_multi_unit"></u-switch>
       </u-form-item>
 
       <view v-if="form.is_multi_unit" class="unit-section">
-        <u-form-item label="大单位名称" borderBottom>
+        <u-form-item label="大单位名称" border-bottom>
           <u-input v-model="form.unit_big.name" placeholder="如：箱" border="none" />
         </u-form-item>
-        <u-form-item label="换算率" borderBottom>
-          <u-input v-model="form.rate" type="number" placeholder="1大单位 = N小单位" border="none" />
+        <u-form-item label="换算率" border-bottom>
+          <u-input
+            v-model="form.rate"
+            type="number"
+            placeholder="1大单位 = N小单位"
+            border="none"
+          />
         </u-form-item>
-        <u-form-item label="大单位价格" borderBottom>
-          <u-input v-model="form.unit_big_price_display" type="digit" placeholder="大单位单价" border="none" />
+        <u-form-item label="大单位价格" border-bottom>
+          <u-input
+            v-model="form.unit_big_price_display"
+            type="digit"
+            placeholder="大单位单价"
+            border="none"
+          />
         </u-form-item>
       </view>
 
-      <u-form-item :label="form.is_multi_unit ? '小单位名称' : '计量单位'" borderBottom required>
+      <u-form-item :label="form.is_multi_unit ? '小单位名称' : '计量单位'" border-bottom required>
         <u-input v-model="form.unit_small.name" placeholder="如：瓶/包/个" border="none" />
       </u-form-item>
 
-      <u-form-item :label="form.is_multi_unit ? '小单位价格' : '销售价格'" borderBottom required>
-        <u-input v-model="form.unit_small_price_display" type="digit" placeholder="单价" border="none" />
+      <u-form-item :label="form.is_multi_unit ? '小单位价格' : '销售价格'" border-bottom required>
+        <u-input
+          v-model="form.unit_small_price_display"
+          type="digit"
+          placeholder="单价"
+          border="none"
+        />
       </u-form-item>
 
-      <u-form-item label="当前总库存" borderBottom required>
-        <u-input v-model="form.stock" type="number" :placeholder="'以' + (form.unit_small.name || '最小单位') + '计'" border="none" />
+      <u-form-item label="当前总库存" border-bottom required>
+        <u-input
+          v-model="form.stock"
+          type="number"
+          :placeholder="'以' + (form.unit_small.name || '最小单位') + '计'"
+          border="none"
+        />
         <template #right>
           <text class="unit-tip">{{ form.unit_small.name }}</text>
         </template>
@@ -61,7 +89,7 @@
     <u-picker
       :show="showCategoryPicker"
       :columns="[categories]"
-      keyName="name"
+      key-name="name"
       @confirm="confirmCategory"
       @cancel="showCategoryPicker = false"
     ></u-picker>
@@ -104,19 +132,19 @@ const fetchCategories = async () => {
   categories.value = res.result.data
 }
 
-const confirmCategory = (e) => {
+const confirmCategory = e => {
   const selected = e.value[0]
   form.category_id = selected._id
   categoryName.value = selected.name
   showCategoryPicker.value = false
 }
 
-const deletePic = (event) => {
+const deletePic = event => {
   fileList.value.splice(event.index, 1)
   form.img_url = ''
 }
 
-const afterRead = async (event) => {
+const afterRead = async event => {
   const file = event.file[0]
   fileList.value.push({
     ...file,
@@ -144,12 +172,12 @@ const saveGoods = async () => {
   if (!tenant_id) return uni.showToast({ title: '租户异常', icon: 'none' })
 
   loading.value = true
-  
+
   // 转换价格为分
   form.unit_small.price = priceHelper.toFen(form.unit_small_price_display)
   if (form.is_multi_unit) {
     form.unit_big.price = priceHelper.toFen(form.unit_big_price_display)
-    
+
     // 基础价格校验
     if (form.unit_big.price < form.unit_small.price) {
       loading.value = false

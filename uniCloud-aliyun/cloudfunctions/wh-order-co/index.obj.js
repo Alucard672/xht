@@ -64,10 +64,13 @@ module.exports = {
       // B. 如果是赊账支付，更新客户欠款并记录日志
       if (order.payment_method === 'credit') {
         // 更新客户总欠款
-        await transaction.collection('wh_customers').doc(order.customer_id).update({
-          total_debt: dbCmd.inc(order.total_fee),
-          last_trade_time: Date.now()
-        })
+        await transaction
+          .collection('wh_customers')
+          .doc(order.customer_id)
+          .update({
+            total_debt: dbCmd.inc(order.total_fee),
+            last_trade_time: Date.now()
+          })
 
         // 记录欠款流水
         await transaction.collection('wh_debt_logs').add({
@@ -95,4 +98,3 @@ module.exports = {
     }
   }
 }
-

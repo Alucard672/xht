@@ -12,8 +12,7 @@ const path = require('path')
  *   w.config()
  */
 module.exports = function (options = {}) {
-  const pluginId =
-    options && typeof options.pluginId === 'string' ? options.pluginId : 'uni-id'
+  const pluginId = options && typeof options.pluginId === 'string' ? options.pluginId : 'uni-id'
 
   const baseDir = path.resolve(__dirname, pluginId)
 

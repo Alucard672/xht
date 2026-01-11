@@ -27,21 +27,20 @@ module.exports = {
   async getMerchantList({ page = 1, limit = 10, keyword = '' }) {
     const db = uniCloud.database()
     const dbCmd = db.command
-    
+
     let where = {}
     if (keyword) {
-      where = dbCmd.or([
-        { name: new RegExp(keyword, 'i') }
-      ])
+      where = dbCmd.or([{ name: new RegExp(keyword, 'i') }])
     }
 
     // 统计数据
     const totalMerchants = await db.collection('wh_tenants').count()
     const totalCustomers = await db.collection('wh_customers').count()
     const totalOrders = await db.collection('wh_orders').count()
-    
+
     // 列表数据 (联表查询老板手机号)
-    const listRes = await db.collection('wh_tenants')
+    const listRes = await db
+      .collection('wh_tenants')
       .aggregate()
       .match(where)
       .lookup({
@@ -76,18 +75,21 @@ module.exports = {
    */
   async getPlatformStats() {
     const db = uniCloud.database()
-    
+
     // 基础汇总
     const totalMerchants = await db.collection('wh_tenants').count()
     const totalCustomers = await db.collection('wh_customers').count()
     const totalOrders = await db.collection('wh_orders').count()
-    
+
     // 营业额汇总
-    const orders = await db.collection('wh_orders').where({
-      status: 'completed'
-    }).get()
+    const orders = await db
+      .collection('wh_orders')
+      .where({
+        status: 'completed'
+      })
+      .get()
     const totalRevenue = orders.data.reduce((sum, o) => sum + (o.total_amount || 0), 0)
-    
+
     // 趋势模拟 (实际应按月分组聚合)
     const trends = [
       { month: '12月', merchants: 125, orders: 45680, revenue: 895000000, growth: '+9.1%' },
@@ -96,7 +98,8 @@ module.exports = {
     ]
 
     // TOP 商户模拟
-    const topMerchants = await db.collection('wh_tenants')
+    const topMerchants = await db
+      .collection('wh_tenants')
       .aggregate()
       .lookup({
         from: 'wh_orders',
@@ -135,33 +138,37 @@ module.exports = {
   async getEmployeeList({ status = -1, keyword = '' }) {
     const db = uniCloud.database()
     const dbCmd = db.command
-    
+
     // 员工是指 role 包含 admin 或 operator 的用户
     let where = {
       role: dbCmd.in(['admin', 'operator'])
     }
-    
+
     if (status !== -1) {
       where.status = status
     }
-    
+
     if (keyword) {
       where = dbCmd.and([
         where,
-        dbCmd.or([
-          { nickname: new RegExp(keyword, 'i') },
-          { mobile: new RegExp(keyword, 'i') }
-        ])
+        dbCmd.or([{ nickname: new RegExp(keyword, 'i') }, { mobile: new RegExp(keyword, 'i') }])
       ])
     }
 
     const stats = {
-      total: await db.collection('uni-id-users').where({ role: dbCmd.in(['admin', 'operator']) }).count(),
-      active: await db.collection('uni-id-users').where({ role: dbCmd.in(['admin', 'operator']), status: 0 }).count(),
+      total: await db
+        .collection('uni-id-users')
+        .where({ role: dbCmd.in(['admin', 'operator']) })
+        .count(),
+      active: await db
+        .collection('uni-id-users')
+        .where({ role: dbCmd.in(['admin', 'operator']), status: 0 })
+        .count(),
       admins: await db.collection('uni-id-users').where({ role: 'admin' }).count()
     }
 
-    const listRes = await db.collection('uni-id-users')
+    const listRes = await db
+      .collection('uni-id-users')
       .where(where)
       .orderBy('register_date', 'desc')
       .get()
@@ -180,4 +187,3 @@ module.exports = {
     }
   }
 }
-

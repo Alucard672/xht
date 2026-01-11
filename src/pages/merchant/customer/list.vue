@@ -14,36 +14,43 @@
     <view class="list-container">
       <unicloud-db
         ref="udb"
-        v-slot:default="{data, loading, error, hasMore}"
+        v-slot="{ data, loading, error, hasMore }"
         collection="wh_customers"
         :where="whereClause"
         @load="onDataLoaded"
       >
         <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
-        <view v-else-if="error" class="error-box">{{error.message}}</view>
+        <view v-else-if="error" class="error-box">{{ error.message }}</view>
         <view v-else class="card-list">
-          <view v-for="item in (data.length > 0 ? data : mockCustomers)" :key="item._id" class="card customer-card">
+          <view
+            v-for="item in data.length > 0 ? data : mockCustomers"
+            :key="item._id"
+            class="card customer-card"
+          >
             <view class="info">
               <view class="name-row">
                 <text class="name">{{ item.alias }}</text>
                 <text class="mobile">{{ item.mobile || '' }}</text>
               </view>
               <view class="debt-row">
-                欠款: <text :class="{warn: item.total_debt > 0}">¥{{ (item.total_debt / 100).toFixed(2) }}</text>
+                欠款:
+                <text :class="{ warn: item.total_debt > 0 }"
+                  >¥{{ (item.total_debt / 100).toFixed(2) }}</text
+                >
               </view>
             </view>
             <view class="actions">
-              <u-button 
-                v-if="item.total_debt > 0" 
-                type="warning" 
-                size="mini" 
-                text="还一笔" 
+              <u-button
+                v-if="item.total_debt > 0"
+                type="warning"
+                size="mini"
+                text="还一笔"
                 plain
                 @click="openRepay(item)"
               ></u-button>
             </view>
           </view>
-          <u-loadmore :status="(data.length > 0 && hasMore) ? 'loadmore' : 'nomore'" />
+          <u-loadmore :status="data.length > 0 && hasMore ? 'loadmore' : 'nomore'" />
         </view>
       </unicloud-db>
     </view>
@@ -52,12 +59,12 @@
     <u-modal
       :show="repayShow"
       title="录入还款"
+      show-cancel-button
       @confirm="submitRepay"
       @cancel="repayShow = false"
-      showCancelButton
     >
       <view class="repay-form">
-        <u-form labelWidth="140rpx">
+        <u-form label-width="140rpx">
           <u-form-item label="还款金额">
             <u-input v-model="repayAmount" type="digit" placeholder="元" border="bottom"></u-input>
           </u-form-item>
@@ -71,11 +78,11 @@
     <!-- 底部导航 -->
     <u-tabbar
       :value="3"
-      @change="handleTabChange"
       :fixed="true"
       :placeholder="true"
-      :safeAreaInsetBottom="true"
-      activeColor="#1890ff"
+      :safe-area-inset-bottom="true"
+      active-color="#1890ff"
+      @change="handleTabChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
       <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
@@ -147,7 +154,12 @@ const submitRepay = async () => {
 
 const handleTabChange = (index: number) => {
   if (index === 3) return
-  const paths = ['/pages/merchant/dashboard', '/pages/merchant/order/list', '/pages/merchant/goods/list', '/pages/merchant/customer/list']
+  const paths = [
+    '/pages/merchant/dashboard',
+    '/pages/merchant/order/list',
+    '/pages/merchant/goods/list',
+    '/pages/merchant/customer/list'
+  ]
   uni.redirectTo({ url: paths[index] })
 }
 </script>
@@ -171,9 +183,19 @@ const handleTabChange = (index: number) => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    .label { font-size: 24rpx; color: #999; margin-bottom: 8rpx; }
-    .val { font-size: 36rpx; font-weight: bold; color: #333; }
-    .warn { color: #ff4d4f; }
+    .label {
+      font-size: 24rpx;
+      color: #999;
+      margin-bottom: 8rpx;
+    }
+    .val {
+      font-size: 36rpx;
+      font-weight: bold;
+      color: #333;
+    }
+    .warn {
+      color: #ff4d4f;
+    }
   }
 }
 
@@ -186,24 +208,34 @@ const handleTabChange = (index: number) => {
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
+
   .info {
     .name-row {
       display: flex;
       align-items: baseline;
       gap: 12rpx;
       margin-bottom: 8rpx;
-      .name { font-size: 32rpx; font-weight: bold; color: #333; }
-      .mobile { font-size: 24rpx; color: #999; }
+      .name {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #333;
+      }
+      .mobile {
+        font-size: 24rpx;
+        color: #999;
+      }
     }
     .debt-row {
       font-size: 26rpx;
       color: #666;
-      .warn { color: #ff4d4f; font-weight: bold; }
+      .warn {
+        color: #ff4d4f;
+        font-weight: bold;
+      }
     }
   }
 }

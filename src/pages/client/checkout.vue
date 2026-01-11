@@ -35,21 +35,24 @@ const totalFee = ref(0)
 const paymentMethod = ref('credit')
 const loading = ref(false)
 
-onLoad((options) => {
+onLoad(options => {
   tenant_id.value = options.tenant_id
   const cartData = uni.getStorageSync('current_cart')
   if (cartData) {
     cartItems.value = JSON.parse(cartData)
-    totalFee.value = cartItems.value.reduce((total, item) => total + (item.priceSmall * item.countSmall), 0)
+    totalFee.value = cartItems.value.reduce(
+      (total, item) => total + item.priceSmall * item.countSmall,
+      0
+    )
   }
 })
 
 const submitOrder = async () => {
   if (cartItems.value.length === 0) return
-  
+
   loading.value = true
   const db = uniCloud.database()
-  
+
   try {
     const orderData = {
       tenant_id: tenant_id.value,
@@ -68,7 +71,7 @@ const submitOrder = async () => {
     }
 
     const res = await db.collection('wh_orders').add(orderData)
-    
+
     if (res.result.id) {
       uni.showToast({ title: '下单成功' })
       uni.removeStorageSync('current_cart')
@@ -103,8 +106,12 @@ const submitOrder = async () => {
       justify-content: space-between;
       margin-bottom: 15rpx;
       font-size: 28rpx;
-      .qty { color: #999; }
-      .price { color: #333; }
+      .qty {
+        color: #999;
+      }
+      .price {
+        color: #333;
+      }
     }
   }
   .footer {
@@ -117,7 +124,7 @@ const submitOrder = async () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 -2rpx 10rpx rgba(0,0,0,0.05);
+    box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
     .total {
       font-size: 36rpx;
       color: #ff4d4f;
@@ -126,4 +133,3 @@ const submitOrder = async () => {
   }
 }
 </style>
-

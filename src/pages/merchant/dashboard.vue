@@ -24,7 +24,9 @@
           <view class="value-row">
             <text class="value">{{ stats.pendingOrderCount }}</text>
             <text class="unit">笔</text>
-            <view class="badge" v-if="stats.pendingOrderCount > 0">{{ stats.pendingOrderCount }}</view>
+            <view v-if="stats.pendingOrderCount > 0" class="badge">{{
+              stats.pendingOrderCount
+            }}</view>
           </view>
         </view>
       </view>
@@ -56,55 +58,91 @@
       <text class="more" @click="navTo('/pages/merchant/order/list')">查看全部 ></text>
     </view>
     <view class="order-list">
-      <view class="order-card card-box" v-for="order in pendingOrders" :key="order._id">
+      <view v-for="order in pendingOrders" :key="order._id" class="order-card card-box">
         <view class="order-header">
-          <u-tag :text="getStatusText(order.status)" :type="getStatusType(order.status)" size="mini"></u-tag>
+          <u-tag
+            :text="getStatusText(order.status)"
+            :type="getStatusType(order.status)"
+            size="mini"
+          ></u-tag>
           <text class="order-no">#{{ order.order_no.slice(-8) }}</text>
           <text class="customer-name">{{ order.customer_name }}</text>
         </view>
         <view class="order-goods u-line-1">
-          <text v-for="(g, i) in order.items" :key="i">{{ g.name }} x{{ g.countSmall }}{{ g.unitSmallName }}{{ i < order.items.length-1 ? '，' : '' }}</text>
+          <text v-for="(g, i) in order.items" :key="i"
+            >{{ g.name }} x{{ g.countSmall }}{{ g.unitSmallName
+            }}{{ i < order.items.length - 1 ? '，' : '' }}</text
+          >
         </view>
         <view class="order-footer">
           <text class="time">{{ formatTime(order.create_time) }}</text>
           <text class="amount">¥{{ (order.total_amount / 100).toFixed(2) }}</text>
         </view>
       </view>
-      <u-empty v-if="pendingOrders.length === 0" mode="order" icon="http://cdn.uviewui.com/uview/empty/order.png" text="暂无待处理订单"></u-empty>
+      <u-empty
+        v-if="pendingOrders.length === 0"
+        mode="order"
+        icon="http://cdn.uviewui.com/uview/empty/order.png"
+        text="暂无待处理订单"
+      ></u-empty>
     </view>
 
     <!-- 库存预警 -->
     <view class="section-header">
       <view class="left">
         <text class="title">库存预警</text>
-        <u-badge :value="stockAlerts.length" type="error" :inverted="false" customStyle="margin-left: 10rpx"></u-badge>
+        <u-badge
+          :value="stockAlerts.length"
+          type="error"
+          :inverted="false"
+          custom-style="margin-left: 10rpx"
+        ></u-badge>
       </view>
       <text class="more" @click="navTo('/pages/merchant/goods/list')">管理</text>
     </view>
     <view class="stock-alerts card-box">
-      <view class="alert-item" v-for="item in stockAlerts" :key="item._id">
+      <view v-for="item in stockAlerts" :key="item._id" class="alert-item">
         <view class="item-left">
-          <image :src="item.image || '/static/logo.png'" class="goods-img" mode="aspectFill"></image>
+          <image
+            :src="item.image || '/static/logo.png'"
+            class="goods-img"
+            mode="aspectFill"
+          ></image>
           <view class="goods-info">
             <view class="name u-line-1">{{ item.name }}</view>
-            <view class="stock-num">库存：<text class="warn">{{ item.stock }}</text>{{ item.unit_small }}</view>
+            <view class="stock-num"
+              >库存：<text class="warn">{{ item.stock }}</text
+              >{{ item.unit_small }}</view
+            >
           </view>
         </view>
         <view class="item-right">
-          <u-button type="primary" size="mini" plain text="去补货" :customStyle="{width: '140rpx', height: '52rpx', fontSize: '24rpx'}" @click="navTo('/pages/merchant/goods/edit?id='+item._id)"></u-button>
+          <u-button
+            type="primary"
+            size="mini"
+            plain
+            text="去补货"
+            :custom-style="{ width: '140rpx', height: '52rpx', fontSize: '24rpx' }"
+            @click="navTo('/pages/merchant/goods/edit?id=' + item._id)"
+          ></u-button>
         </view>
       </view>
-      <u-empty v-if="stockAlerts.length === 0" mode="list" text="库存充足" icon="http://cdn.uviewui.com/uview/empty/list.png"></u-empty>
+      <u-empty
+        v-if="stockAlerts.length === 0"
+        mode="list"
+        text="库存充足"
+        icon="http://cdn.uviewui.com/uview/empty/list.png"
+      ></u-empty>
     </view>
 
     <!-- 底部导航 -->
     <u-tabbar
       :value="0"
-      @change="handleTabChange"
       :fixed="true"
       :placeholder="true"
-      :safeAreaInsetBottom="true"
-      activeColor="#1890ff"
+      :safe-area-inset-bottom="true"
+      active-color="#1890ff"
+      @change="handleTabChange"
     >
       <u-tabbar-item text="工作台" icon="home-fill"></u-tabbar-item>
       <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
@@ -115,85 +153,111 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 
-const merchantCo = uniCloud.importObject('wh-merchant-co');
+const merchantCo = uniCloud.importObject('wh-merchant-co')
 
-const shopName = ref('加载中...');
-const todayStr = ref(new Date().toISOString().split('T')[0]);
+const shopName = ref('加载中...')
+const todayStr = ref(new Date().toISOString().split('T')[0])
 const stats = ref({
   todayOrderCount: 23,
   todayRevenue: 850000,
   pendingOrderCount: 12,
   unsettledOrderCount: 5
-});
+})
 const pendingOrders = ref<any[]>([
-  { _id: '1', order_no: '20250101001', customer_name: '李老板', status: 'pending', create_time: Date.now() - 300000, total_amount: 10800, items: [{name:'农夫山泉', countSmall: 2, unitSmallName: '箱'}] },
-  { _id: '2', order_no: '20250101002', customer_name: '张小店', status: 'confirmed', create_time: Date.now() - 900000, total_amount: 18000, items: [{name:'可口可乐', countSmall: 3, unitSmallName: '箱'}] },
-  { _id: '3', order_no: '20250101003', customer_name: '王便利店', status: 'confirmed', create_time: Date.now() - 3600000, total_amount: 23500, items: [{name:'金龙鱼油', countSmall: 2, unitSmallName: '桶'}] }
-]);
+  {
+    _id: '1',
+    order_no: '20250101001',
+    customer_name: '李老板',
+    status: 'pending',
+    create_time: Date.now() - 300000,
+    total_amount: 10800,
+    items: [{ name: '农夫山泉', countSmall: 2, unitSmallName: '箱' }]
+  },
+  {
+    _id: '2',
+    order_no: '20250101002',
+    customer_name: '张小店',
+    status: 'confirmed',
+    create_time: Date.now() - 900000,
+    total_amount: 18000,
+    items: [{ name: '可口可乐', countSmall: 3, unitSmallName: '箱' }]
+  },
+  {
+    _id: '3',
+    order_no: '20250101003',
+    customer_name: '王便利店',
+    status: 'confirmed',
+    create_time: Date.now() - 3600000,
+    total_amount: 23500,
+    items: [{ name: '金龙鱼油', countSmall: 2, unitSmallName: '桶' }]
+  }
+])
 const stockAlerts = ref<any[]>([
   { _id: 'g1', name: '农夫山泉 550ml', stock: 5, unit_small: '瓶', image: '' },
   { _id: 'g2', name: '康师傅红烧牛肉面', stock: 3, unit_small: '包', image: '' },
   { _id: 'g3', name: '旺旺雪饼', stock: 8, unit_small: '包', image: '' }
-]);
+])
 
 const loadData = async () => {
-  shopName.value = '王记粮油批发';
+  shopName.value = '王记粮油批发'
   // 保持异步调用，但不覆盖模拟数据（除非接口报错）
   try {
-    const res = await merchantCo.getDashboardStats();
+    const res = await merchantCo.getDashboardStats()
     if (res.code === 0 && res.data.stats.todayOrderCount > 0) {
-      stats.value = res.data.stats;
-      pendingOrders.value = res.data.pendingOrders;
-      stockAlerts.value = res.data.stockAlerts;
+      stats.value = res.data.stats
+      pendingOrders.value = res.data.pendingOrders
+      stockAlerts.value = res.data.stockAlerts
     }
-  } catch (e) {}
-};
+  } catch (e) {
+    // ignore
+  }
+}
 
 const getStatusText = (status: string) => {
-  const map: any = { 'pending': '待确认', 'confirmed': '待发货', 'completed': '已完成' };
-  return map[status] || status;
-};
+  const map: any = { pending: '待确认', confirmed: '待发货', completed: '已完成' }
+  return map[status] || status
+}
 
 const getStatusType = (status: string) => {
-  const map: any = { 'pending': 'error', 'confirmed': 'primary', 'completed': 'success' };
-  return map[status] || 'info';
-};
+  const map: any = { pending: 'error', confirmed: 'primary', completed: 'success' }
+  return map[status] || 'info'
+}
 
 const formatTime = (ts: number) => {
-  if (!ts) return '';
-  const now = Date.now();
-  const diff = (now - ts) / 1000;
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
-  if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
-  return new Date(ts).toLocaleDateString();
-};
+  if (!ts) return ''
+  const now = Date.now()
+  const diff = (now - ts) / 1000
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return Math.floor(diff / 60) + '分钟前'
+  if (diff < 86400) return Math.floor(diff / 3600) + '小时前'
+  return new Date(ts).toLocaleDateString()
+}
 
 const navTo = (url: string) => {
-  uni.navigateTo({ url });
-};
+  uni.navigateTo({ url })
+}
 
 const showShopCode = () => {
-  uni.showToast({ title: '演示功能', icon: 'none' });
-};
+  uni.showToast({ title: '演示功能', icon: 'none' })
+}
 
 const handleTabChange = (index: number) => {
-  if (index === 0) return;
+  if (index === 0) return
   const paths = [
     '/pages/merchant/dashboard',
     '/pages/merchant/order/list',
     '/pages/merchant/goods/list',
     '/pages/merchant/customer/list'
-  ];
-  uni.redirectTo({ url: paths[index] });
-};
+  ]
+  uni.redirectTo({ url: paths[index] })
+}
 
 onShow(() => {
-  loadData();
-});
+  loadData()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -207,25 +271,25 @@ onShow(() => {
   background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
   padding: 40rpx 32rpx 100rpx;
   color: #fff;
-  
+
   .shop-name {
     font-size: 36rpx;
     font-weight: bold;
     margin-bottom: 8rpx;
   }
-  
+
   .date-text {
     font-size: 24rpx;
     opacity: 0.8;
     margin-bottom: 40rpx;
   }
-  
+
   .stats-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 20rpx;
   }
-  
+
   .stats-item {
     flex: 1;
     background: rgba(255, 255, 255, 0.15);
@@ -236,21 +300,28 @@ onShow(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    
+
     .label {
       font-size: 22rpx;
       opacity: 0.8;
       margin-bottom: 12rpx;
       white-space: nowrap;
     }
-    
+
     .value-row {
       display: flex;
       align-items: baseline;
-      .value { font-size: 36rpx; font-weight: bold; }
-      .unit { font-size: 20rpx; margin-left: 4rpx; opacity: 0.7; }
+      .value {
+        font-size: 36rpx;
+        font-weight: bold;
+      }
+      .unit {
+        font-size: 20rpx;
+        margin-left: 4rpx;
+        opacity: 0.7;
+      }
     }
-    
+
     .badge {
       position: absolute;
       right: 10rpx;
@@ -269,7 +340,7 @@ onShow(() => {
   background-color: #ffffff;
   border-radius: 20rpx;
   margin: 0 32rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
 .quick-actions {
@@ -279,15 +350,19 @@ onShow(() => {
   margin-top: -60rpx;
   position: relative;
   z-index: 1;
-  
+
   .action-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12rpx;
-    
-    text { font-size: 24rpx; color: #333; font-weight: 500; }
-    
+
+    text {
+      font-size: 24rpx;
+      color: #333;
+      font-weight: 500;
+    }
+
     .icon-box {
       width: 96rpx;
       height: 96rpx;
@@ -295,11 +370,19 @@ onShow(() => {
       display: flex;
       justify-content: center;
       align-items: center;
-      
-      &.blue { background-color: #e6f7ff; }
-      &.orange { background-color: #fff7e6; }
-      &.green { background-color: #f6ffed; }
-      &.purple { background-color: #f9f0ff; }
+
+      &.blue {
+        background-color: #e6f7ff;
+      }
+      &.orange {
+        background-color: #fff7e6;
+      }
+      &.green {
+        background-color: #f6ffed;
+      }
+      &.purple {
+        background-color: #f9f0ff;
+      }
     }
   }
 }
@@ -309,39 +392,66 @@ onShow(() => {
   justify-content: space-between;
   align-items: center;
   padding: 40rpx 32rpx 20rpx;
-  
+
   .left {
     display: flex;
     align-items: center;
   }
-  
-  .title { font-size: 32rpx; font-weight: bold; color: #333; }
-  .more { font-size: 24rpx; color: #1890ff; }
+
+  .title {
+    font-size: 32rpx;
+    font-weight: bold;
+    color: #333;
+  }
+  .more {
+    font-size: 24rpx;
+    color: #1890ff;
+  }
 }
 
 .order-list {
   .order-card {
     margin-bottom: 20rpx;
     padding: 24rpx;
-    
+
     .order-header {
       display: flex;
       align-items: center;
       gap: 16rpx;
       margin-bottom: 16rpx;
-      
-      .order-no { font-size: 24rpx; color: #999; }
-      .customer-name { font-size: 30rpx; font-weight: bold; color: #333; flex: 1; text-align: right; }
+
+      .order-no {
+        font-size: 24rpx;
+        color: #999;
+      }
+      .customer-name {
+        font-size: 30rpx;
+        font-weight: bold;
+        color: #333;
+        flex: 1;
+        text-align: right;
+      }
     }
-    
-    .order-goods { font-size: 26rpx; color: #666; margin-bottom: 16rpx; }
-    
+
+    .order-goods {
+      font-size: 26rpx;
+      color: #666;
+      margin-bottom: 16rpx;
+    }
+
     .order-footer {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      .time { font-size: 24rpx; color: #999; }
-      .amount { font-size: 32rpx; font-weight: bold; color: #ff6b00; }
+      .time {
+        font-size: 24rpx;
+        color: #999;
+      }
+      .amount {
+        font-size: 32rpx;
+        font-weight: bold;
+        color: #ff6b00;
+      }
     }
   }
 }
@@ -354,8 +464,10 @@ onShow(() => {
     justify-content: space-between;
     padding: 30rpx 0;
     border-bottom: 1rpx solid #f5f5f5;
-    &:last-child { border-bottom: none; }
-    
+    &:last-child {
+      border-bottom: none;
+    }
+
     .item-left {
       display: flex;
       align-items: center;
@@ -363,35 +475,39 @@ onShow(() => {
       overflow: hidden;
       margin-right: 20rpx;
     }
-    
-    .goods-img { 
-      width: 100rpx; 
-      height: 100rpx; 
-      border-radius: 12rpx; 
-      margin-right: 20rpx; 
+
+    .goods-img {
+      width: 100rpx;
+      height: 100rpx;
+      border-radius: 12rpx;
+      margin-right: 20rpx;
       background-color: #f9f9f9;
       flex-shrink: 0;
     }
-    
+
     .goods-info {
       flex: 1;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      
-      .name { 
-        font-size: 28rpx; 
-        font-weight: bold; 
-        color: #333; 
+
+      .name {
+        font-size: 28rpx;
+        font-weight: bold;
+        color: #333;
         margin-bottom: 8rpx;
         width: 100%;
       }
-      .stock-num { 
-        font-size: 24rpx; 
-        color: #999; 
+      .stock-num {
+        font-size: 24rpx;
+        color: #999;
         white-space: nowrap;
-        .warn { color: #ff4d4f; font-weight: bold; margin: 0 4rpx; } 
+        .warn {
+          color: #ff4d4f;
+          font-weight: bold;
+          margin: 0 4rpx;
+        }
       }
     }
 
@@ -401,4 +517,3 @@ onShow(() => {
   }
 }
 </style>
-

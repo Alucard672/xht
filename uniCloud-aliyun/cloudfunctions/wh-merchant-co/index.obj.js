@@ -1,156 +1,162 @@
 const uniID = require('uni-id-common')
 
 module.exports = {
-	_before: function () {
-		this.uniID = uniID.createInstance({
-			clientInfo: this.getClientInfo()
-		})
-	},
-	/**
-	 * 商家入驻
-	 * @param {String} shopName 店铺名称
-	 */
-	async onboard(shopName) {
-		const auth = await this.uniID.checkToken(this.getUniIdToken())
-		if (auth.code !== 0) return auth
-		
-		const uid = auth.uid
-		const db = uniCloud.database()
-		
-		// 1. 检查是否已经入驻
-		const userRecord = await db.collection('uni-id-users').doc(uid).get()
-		if (userRecord.data[0] && userRecord.data[0].tenant_id) {
-			return {
-				code: 0,
-				msg: '您已拥有店铺',
-				tenant_id: userRecord.data[0].tenant_id
-			}
-		}
-		
-		// 2. 创建租户
-		const tenantRes = await db.collection('wh_tenants').add({
-			name: shopName,
-			owner_uid: uid,
-			expired_at: Date.now() + 30 * 24 * 3600 * 1000, // 默认30天试用
-			settings: {
-				allow_credit: true,
-				min_delivery_amount: 0
-			}
-		})
-		
-		const tenant_id = tenantRes.id
-		
-		// 3. 更新用户 tenant_id
-		await db.collection('uni-id-users').doc(uid).update({
-			tenant_id: tenant_id,
-			role: ['merchant']
-		})
-		
-		return {
-			code: 0,
-			msg: '入驻成功',
-			tenant_id
-		}
-	},
+  _before: function () {
+    this.uniID = uniID.createInstance({
+      clientInfo: this.getClientInfo()
+    })
+  },
+  /**
+   * 商家入驻
+   * @param {String} shopName 店铺名称
+   */
+  async onboard(shopName) {
+    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    if (auth.code !== 0) return auth
 
-	/**
-	 * 开发阶段免密登录
-	 * @param {String} mobile 手机号
-	 */
-	async devLogin(mobile) {
-		const db = uniCloud.database()
-		// 1. 查找或创建用户
-		let userRes = await db.collection('uni-id-users').where({ mobile }).get()
-		let uid
-		let userInfo
-		
-		if (userRes.data.length === 0) {
-			// uni-id-common 不提供 addUser，这里直接写 uni-id-users（仅开发期免密登录用）
-			const role = mobile === '13003629527' ? ['admin'] : ['merchant']
-			const now = Date.now()
-			const addRes = await db.collection('uni-id-users').add({
-				mobile,
-				role,
-				status: 0,
-				nickname: '用户' + String(mobile).slice(-4),
-				register_date: now,
-				last_login_date: now
-			})
-			uid = addRes.id
-			userInfo = { mobile, _id: uid, role }
-		} else {
-			uid = userRes.data[0]._id
-			userInfo = userRes.data[0]
-		}
+    const uid = auth.uid
+    const db = uniCloud.database()
 
-		// 2. 生成 Token
-		const tokenRes = await this.uniID.createToken({
-			uid,
-			role: userInfo.role || (mobile === '13003629527' ? ['admin'] : ['merchant'])
-		})
+    // 1. 检查是否已经入驻
+    const userRecord = await db.collection('uni-id-users').doc(uid).get()
+    if (userRecord.data[0] && userRecord.data[0].tenant_id) {
+      return {
+        code: 0,
+        msg: '您已拥有店铺',
+        tenant_id: userRecord.data[0].tenant_id
+      }
+    }
 
-		return {
-			code: 0,
-			msg: '登录成功',
-			token: tokenRes.token,
-			tokenExpired: tokenRes.tokenExpired,
-			userInfo: {
-				_id: uid,
-				mobile: userInfo.mobile,
-				tenant_id: userInfo.tenant_id || '',
-				nickname: userInfo.nickname || '用户' + mobile.substring(7)
-			}
-		}
-	},
+    // 2. 创建租户
+    const tenantRes = await db.collection('wh_tenants').add({
+      name: shopName,
+      owner_uid: uid,
+      expired_at: Date.now() + 30 * 24 * 3600 * 1000, // 默认30天试用
+      settings: {
+        allow_credit: true,
+        min_delivery_amount: 0
+      }
+    })
 
-	/**
-	 * 客户还款处理
-	 * @param {Object} params { customer_id, amount, remark }
-	 */
-	async repay({ customer_id, amount, remark }) {
-		const auth = await this.uniID.checkToken(this.getUniIdToken())
-		if (auth.code !== 0) return auth
+    const tenant_id = tenantRes.id
 
-		const db = uniCloud.database()
-		const dbCmd = db.command
-		const transaction = await db.startTransaction()
+    // 3. 更新用户 tenant_id
+    await db
+      .collection('uni-id-users')
+      .doc(uid)
+      .update({
+        tenant_id: tenant_id,
+        role: ['merchant']
+      })
 
-		try {
-			// 1. 获取客户当前状态
-			const customerRes = await transaction.collection('wh_customers').doc(customer_id).get()
-			const customer = customerRes.data[0]
-			if (!customer) throw new Error('客户不存在')
+    return {
+      code: 0,
+      msg: '入驻成功',
+      tenant_id
+    }
+  },
 
-			// 2. 更新总欠款 (减去还款金额)
-			await transaction.collection('wh_customers').doc(customer_id).update({
-				total_debt: dbCmd.inc(-amount)
-			})
+  /**
+   * 开发阶段免密登录
+   * @param {String} mobile 手机号
+   */
+  async devLogin(mobile) {
+    const db = uniCloud.database()
+    // 1. 查找或创建用户
+    let userRes = await db.collection('uni-id-users').where({ mobile }).get()
+    let uid
+    let userInfo
 
-			// 3. 记录流水
-			await transaction.collection('wh_debt_logs').add({
-				tenant_id: customer.tenant_id,
-				customer_id,
-				amount: -amount, // 负数代表欠款减少
-				type: 'repayment',
-				source: 'manual',
-				remark: remark || '客户还款',
-				create_time: Date.now()
-			})
+    if (userRes.data.length === 0) {
+      // uni-id-common 不提供 addUser，这里直接写 uni-id-users（仅开发期免密登录用）
+      const role = mobile === '13003629527' ? ['admin'] : ['merchant']
+      const now = Date.now()
+      const addRes = await db.collection('uni-id-users').add({
+        mobile,
+        role,
+        status: 0,
+        nickname: '用户' + String(mobile).slice(-4),
+        register_date: now,
+        last_login_date: now
+      })
+      uid = addRes.id
+      userInfo = { mobile, _id: uid, role }
+    } else {
+      uid = userRes.data[0]._id
+      userInfo = userRes.data[0]
+    }
 
-			await transaction.commit()
-			return { code: 0, msg: '还款成功' }
-		} catch (e) {
-			await transaction.rollback()
-			return { code: 500, msg: e.message }
-		}
-	},
+    // 2. 生成 Token
+    const tokenRes = await this.uniID.createToken({
+      uid,
+      role: userInfo.role || (mobile === '13003629527' ? ['admin'] : ['merchant'])
+    })
 
-	/**
-	 * 获取商户工作台统计
-	 */
-	async getDashboardStats() {
-		// 暂时注释掉登录校验，方便页面展示调试
-		/*
+    return {
+      code: 0,
+      msg: '登录成功',
+      token: tokenRes.token,
+      tokenExpired: tokenRes.tokenExpired,
+      userInfo: {
+        _id: uid,
+        mobile: userInfo.mobile,
+        tenant_id: userInfo.tenant_id || '',
+        nickname: userInfo.nickname || '用户' + mobile.substring(7)
+      }
+    }
+  },
+
+  /**
+   * 客户还款处理
+   * @param {Object} params { customer_id, amount, remark }
+   */
+  async repay({ customer_id, amount, remark }) {
+    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const dbCmd = db.command
+    const transaction = await db.startTransaction()
+
+    try {
+      // 1. 获取客户当前状态
+      const customerRes = await transaction.collection('wh_customers').doc(customer_id).get()
+      const customer = customerRes.data[0]
+      if (!customer) throw new Error('客户不存在')
+
+      // 2. 更新总欠款 (减去还款金额)
+      await transaction
+        .collection('wh_customers')
+        .doc(customer_id)
+        .update({
+          total_debt: dbCmd.inc(-amount)
+        })
+
+      // 3. 记录流水
+      await transaction.collection('wh_debt_logs').add({
+        tenant_id: customer.tenant_id,
+        customer_id,
+        amount: -amount, // 负数代表欠款减少
+        type: 'repayment',
+        source: 'manual',
+        remark: remark || '客户还款',
+        create_time: Date.now()
+      })
+
+      await transaction.commit()
+      return { code: 0, msg: '还款成功' }
+    } catch (e) {
+      await transaction.rollback()
+      return { code: 500, msg: e.message }
+    }
+  },
+
+  /**
+   * 获取商户工作台统计
+   */
+  async getDashboardStats() {
+    // 暂时注释掉登录校验，方便页面展示调试
+    /*
 		const auth = await this.uniID.checkToken(this.getUniIdToken())
 		if (auth.code !== 0) return auth
 
@@ -158,53 +164,60 @@ module.exports = {
 		const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
 		const tenant_id = userRes.data[0].tenant_id
 		*/
-		const db = uniCloud.database()
-		// 使用一个固定的演示租户ID，确保能查出数据
-		const tenant_id = "demo-tenant-id" 
-		
-		if (!tenant_id) return { code: 403, msg: '未入驻商户' }
+    const db = uniCloud.database()
+    // 使用一个固定的演示租户ID，确保能查出数据
+    const tenant_id = 'demo-tenant-id'
 
-		// 1. 今日订单 & 销售额 (此处为演示，简化逻辑)
-		const now = new Date()
-		const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
-		
-		const todayOrders = await db.collection('wh_orders')
-			.where({
-				tenant_id,
-				create_time: db.command.gte(todayStart)
-			}).get()
-		
-		const stats = {
-			todayOrderCount: todayOrders.data.length,
-			todayRevenue: todayOrders.data.reduce((sum, o) => sum + (o.total_amount || 0), 0),
-			pendingOrderCount: (await db.collection('wh_orders').where({ tenant_id, status: 'pending' }).count()).total,
-			unsettledOrderCount: (await db.collection('wh_orders').where({ tenant_id, payment_status: 'unpaid' }).count()).total
-		}
+    if (!tenant_id) return { code: 403, msg: '未入驻商户' }
 
-		// 2. 待处理订单
-		const pendingOrders = await db.collection('wh_orders')
-			.where({ tenant_id, status: db.command.in(['pending', 'confirmed']) })
-			.orderBy('create_time', 'desc')
-			.limit(3)
-			.get()
+    // 1. 今日订单 & 销售额 (此处为演示，简化逻辑)
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
 
-		// 3. 库存预警
-		const stockAlerts = await db.collection('wh_goods')
-			.where({
-				tenant_id,
-				stock: db.command.lte(10) // 假设小于10为预警
-			})
-			.limit(3)
-			.get()
+    const todayOrders = await db
+      .collection('wh_orders')
+      .where({
+        tenant_id,
+        create_time: db.command.gte(todayStart)
+      })
+      .get()
 
-		return {
-			code: 0,
-			data: {
-				stats,
-				pendingOrders: pendingOrders.data,
-				stockAlerts: stockAlerts.data
-			}
-		}
-	}
+    const stats = {
+      todayOrderCount: todayOrders.data.length,
+      todayRevenue: todayOrders.data.reduce((sum, o) => sum + (o.total_amount || 0), 0),
+      pendingOrderCount: (
+        await db.collection('wh_orders').where({ tenant_id, status: 'pending' }).count()
+      ).total,
+      unsettledOrderCount: (
+        await db.collection('wh_orders').where({ tenant_id, payment_status: 'unpaid' }).count()
+      ).total
+    }
+
+    // 2. 待处理订单
+    const pendingOrders = await db
+      .collection('wh_orders')
+      .where({ tenant_id, status: db.command.in(['pending', 'confirmed']) })
+      .orderBy('create_time', 'desc')
+      .limit(3)
+      .get()
+
+    // 3. 库存预警
+    const stockAlerts = await db
+      .collection('wh_goods')
+      .where({
+        tenant_id,
+        stock: db.command.lte(10) // 假设小于10为预警
+      })
+      .limit(3)
+      .get()
+
+    return {
+      code: 0,
+      data: {
+        stats,
+        pendingOrders: pendingOrders.data,
+        stockAlerts: stockAlerts.data
+      }
+    }
+  }
 }
-

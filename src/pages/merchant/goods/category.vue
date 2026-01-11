@@ -6,21 +6,32 @@
 
     <unicloud-db
       ref="udb"
-      v-slot:default="{data, loading, error}"
+      v-slot="{ data, loading, error }"
       collection="wh_categories"
       :where="`tenant_id == '${tenant_id}'`"
       orderby="sort asc"
     >
       <view v-if="loading"><u-loading-icon></u-loading-icon></view>
-      <view v-else-if="error">{{error.message}}</view>
+      <view v-else-if="error">{{ error.message }}</view>
       <view v-else>
         <u-list>
-          <u-list-item v-for="(item, index) in (data.length > 0 ? data : mockCategories)" :key="item._id">
+          <u-list-item v-for="item in data.length > 0 ? data : mockCategories" :key="item._id">
             <u-cell :title="item.name" :label="'排序: ' + (item.sort || 0)">
               <template #value>
                 <view class="cell-actions">
-                  <u-icon name="edit-pen" size="20" color="#2979ff" @click="editCategory(item)" customStyle="margin-right: 30rpx"></u-icon>
-                  <u-icon name="trash" size="20" color="#fa3534" @click="deleteCategory(item._id)"></u-icon>
+                  <u-icon
+                    name="edit-pen"
+                    size="20"
+                    color="#2979ff"
+                    custom-style="margin-right: 30rpx"
+                    @click="editCategory(item)"
+                  ></u-icon>
+                  <u-icon
+                    name="trash"
+                    size="20"
+                    color="#fa3534"
+                    @click="deleteCategory(item._id)"
+                  ></u-icon>
                 </view>
               </template>
             </u-cell>
@@ -33,17 +44,22 @@
     <u-modal
       :show="modal.show"
       :title="modal.isEdit ? '编辑分类' : '新增分类'"
-      showCancelButton
+      show-cancel-button
       @confirm="submitCategory"
       @cancel="modal.show = false"
     >
       <view class="modal-content">
-        <u-form :model="modal.form" labelWidth="120rpx">
-          <u-form-item label="名称" borderBottom required>
+        <u-form :model="modal.form" label-width="120rpx">
+          <u-form-item label="名称" border-bottom required>
             <u-input v-model="modal.form.name" placeholder="请输入分类名称" border="none"></u-input>
           </u-form-item>
-          <u-form-item label="排序" borderBottom>
-            <u-input v-model="modal.form.sort" type="number" placeholder="数字越小越靠前" border="none"></u-input>
+          <u-form-item label="排序" border-bottom>
+            <u-input
+              v-model="modal.form.sort"
+              type="number"
+              placeholder="数字越小越靠前"
+              border="none"
+            ></u-input>
           </u-form-item>
         </u-form>
       </view>
@@ -56,7 +72,7 @@ import { ref, reactive } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 
 const tenant_id = uni.getStorageSync('tenant_id')
-const udb = ref(null)
+const udb = ref<any>(null)
 
 const mockCategories = [
   { _id: 'mc1', name: '酒水饮料', sort: 1 },
@@ -89,14 +105,17 @@ const editCategory = (item: any) => {
 
 const submitCategory = async () => {
   if (!modal.form.name) return uni.showToast({ title: '请输入名称', icon: 'none' })
-  
+
   const db = uniCloud.database()
   try {
     if (modal.isEdit) {
-      await db.collection('wh_categories').doc(modal.form._id).update({
-        name: modal.form.name,
-        sort: parseInt(String(modal.form.sort)) || 0
-      })
+      await db
+        .collection('wh_categories')
+        .doc(modal.form._id)
+        .update({
+          name: modal.form.name,
+          sort: parseInt(String(modal.form.sort)) || 0
+        })
     } else {
       await db.collection('wh_categories').add({
         tenant_id,
@@ -116,7 +135,7 @@ const deleteCategory = (id: string) => {
   uni.showModal({
     title: '提示',
     content: '确定要删除该分类吗？',
-    success: async (res) => {
+    success: async res => {
       if (res.confirm) {
         try {
           await uniCloud.database().collection('wh_categories').doc(id).remove()
@@ -147,4 +166,3 @@ const deleteCategory = (id: string) => {
   }
 }
 </style>
-

@@ -19,16 +19,22 @@
         <text class="menu-sub">扫码下单、对账</text>
       </view>
 
-      <view class="menu-item admin" v-if="isSuperAdmin" @click="goAdmin">
+      <view v-if="isSuperAdmin" class="menu-item admin" @click="goAdmin">
         <u-icon name="setting-fill" color="#fff" size="30"></u-icon>
         <text class="menu-text">系统管理端</text>
         <text class="menu-sub">平台商户与概览</text>
       </view>
     </view>
 
-    <view class="debug-info" v-if="tenantId">
+    <view v-if="tenantId" class="debug-info">
       <text>当前租户ID: {{ tenantId }}</text>
-      <u-button size="mini" type="info" text="清除缓存" @click="clearCache" customStyle="margin-top: 10rpx"></u-button>
+      <u-button
+        size="mini"
+        type="info"
+        text="清除缓存"
+        custom-style="margin-top: 10rpx"
+        @click="clearCache"
+      ></u-button>
     </view>
   </view>
 </template>
