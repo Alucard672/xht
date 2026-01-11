@@ -97,14 +97,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { onReady } from '@dcloudio/uni-app'
+import { ref, reactive, onMounted } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
+import type { GoodsFormData } from '@/types/goods'
 
 const loading = ref(false)
-const tenant_id = uni.getStorageSync('tenant_id')
+const goodsCo = uniCloud.importObject('wh-goods-co')
+const goods_id = ref('')
+const isEdit = ref(false)
 
-const form = reactive({
+const form = reactive<
+  GoodsFormData & {
+    unit_big_price_display: string
+    unit_small_price_display: string
+  }
+>({
   name: '',
   category_id: '',
   img_url: '',
@@ -122,29 +130,79 @@ const categories = ref([])
 const showCategoryPicker = ref(false)
 const fileList = ref([])
 
-onReady(() => {
+onLoad(options => {
+  if (options && options.id) {
+    goods_id.value = options.id
+    isEdit.value = true
+    loadGoodsDetail()
+  }
+})
+
+onMounted(() => {
   fetchCategories()
 })
 
 const fetchCategories = async () => {
   const db = uniCloud.database()
-  const res = await db.collection('wh_categories').where(`tenant_id == '${tenant_id}'`).get()
-  categories.value = res.result.data
+  const tenant_id = uni.getStorageSync('tenant_id')
+  try {
+    const res = await db.collection('wh_categories').where(`tenant_id == '${tenant_id}'`).get()
+    categories.value = res.result.data
+  } catch (e: any) {
+    console.error('获取分类失败', e)
+  }
 }
 
-const confirmCategory = e => {
+const loadGoodsDetail = async () => {
+  try {
+    const res = await goodsCo.getGoodsDetail(goods_id.value)
+    if (res.code === 0) {
+      const data = res.data
+      form.name = data.name
+      form.category_id = data.category_id
+      form.img_url = data.img_url || ''
+      form.is_multi_unit = data.is_multi_unit
+      form.rate = data.rate
+      form.unit_big = data.unit_big
+      form.unit_small = data.unit_small
+      form.stock = data.stock
+
+      // 转换价格显示
+      form.unit_small_price_display = priceHelper.format(data.unit_small.price)
+      if (data.is_multi_unit && data.unit_big) {
+        form.unit_big_price_display = priceHelper.format(data.unit_big.price)
+      }
+
+      // 设置图片
+      if (data.img_url) {
+        fileList.value = [{ url: data.img_url, status: 'success', message: '' }]
+      }
+
+      // 设置分类名称
+      const cat = categories.value.find((c: any) => c._id === data.category_id)
+      if (cat) {
+        categoryName.value = cat.name
+      }
+    }
+  } catch (e: any) {
+    uni.showToast({ title: e.message || '加载失败', icon: 'none' })
+  }
+}
+
+const confirmCategory = (e: any) => {
   const selected = e.value[0]
   form.category_id = selected._id
   categoryName.value = selected.name
   showCategoryPicker.value = false
 }
 
-const deletePic = event => {
+const deletePic = (event: any) => {
   fileList.value.splice(event.index, 1)
   form.img_url = ''
 }
 
-const afterRead = async event => {
+const afterRead = async (event: any) => {
+  const tenant_id = uni.getStorageSync('tenant_id')
   const file = event.file[0]
   fileList.value.push({
     ...file,
@@ -168,43 +226,48 @@ const afterRead = async event => {
 
 const saveGoods = async () => {
   if (!form.name) return uni.showToast({ title: '请输入名称', icon: 'none' })
-  if (!form.category_id) return uni.showToast({ title: '请选择分类', icon: 'none' })
-  if (!tenant_id) return uni.showToast({ title: '租户异常', icon: 'none' })
+  if (!form.unit_small.name) return uni.showToast({ title: '请输入单位', icon: 'none' })
+  if (!form.unit_small_price_display) return uni.showToast({ title: '请输入价格', icon: 'none' })
 
   loading.value = true
 
   // 转换价格为分
-  form.unit_small.price = priceHelper.toFen(form.unit_small_price_display)
-  if (form.is_multi_unit) {
-    form.unit_big.price = priceHelper.toFen(form.unit_big_price_display)
+  const goodsData: GoodsFormData = {
+    name: form.name,
+    category_id: form.category_id,
+    img_url: form.img_url,
+    is_multi_unit: form.is_multi_unit,
+    rate: parseInt(String(form.rate)) || 1,
+    unit_small: {
+      name: form.unit_small.name,
+      price: priceHelper.toFen(form.unit_small_price_display)
+    },
+    stock: parseInt(String(form.stock)) || 0
+  }
 
-    // 基础价格校验
-    if (form.unit_big.price < form.unit_small.price) {
-      loading.value = false
-      return uni.showToast({ title: '大单位价格不能小于小单位价格', icon: 'none' })
+  if (form.is_multi_unit && form.unit_big.name) {
+    goodsData.unit_big = {
+      name: form.unit_big.name,
+      price: priceHelper.toFen(form.unit_big_price_display || '0')
     }
   }
 
-  const db = uniCloud.database()
   try {
-    const data = {
-      tenant_id,
-      name: form.name,
-      category_id: form.category_id,
-      img_url: form.img_url,
-      is_multi_unit: form.is_multi_unit,
-      rate: parseInt(String(form.rate)) || 1,
-      unit_big: form.unit_big,
-      unit_small: form.unit_small,
-      stock: parseInt(String(form.stock)) || 0,
-      is_on_sale: true
+    let res
+    if (isEdit.value) {
+      res = await goodsCo.updateGoods(goods_id.value, goodsData)
+    } else {
+      res = await goodsCo.createGoods(goodsData)
     }
 
-    await db.collection('wh_goods').add(data)
-    uni.showToast({ title: '保存成功' })
-    setTimeout(() => uni.navigateBack(), 1500)
-  } catch (e) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
+    if (res.code === 0) {
+      uni.showToast({ title: res.msg })
+      setTimeout(() => uni.navigateBack(), 1500)
+    } else {
+      uni.showToast({ title: res.msg || '保存失败', icon: 'none' })
+    }
+  } catch (e: any) {
+    uni.showToast({ title: e.message || '保存失败', icon: 'none' })
   } finally {
     loading.value = false
   }

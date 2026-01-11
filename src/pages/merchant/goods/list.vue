@@ -6,8 +6,8 @@
           v-model="keyword"
           placeholder="搜索商品或拼音"
           :show-action="false"
-          @search="refresh"
-          @clear="refresh"
+          @search="handleSearch"
+          @clear="handleClear"
         ></u-search>
       </view>
       <u-button
@@ -20,48 +20,43 @@
     </view>
 
     <view class="list-container">
-      <unicloud-db
-        ref="udb"
-        v-slot="{ data, loading, error, hasMore }"
-        collection="wh_goods"
-        :where="whereClause"
-        orderby="create_time desc"
-      >
-        <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
-        <view v-else-if="error" class="error-box">{{ error.message }}</view>
-        <view v-else class="card-list">
-          <!-- 展示模拟数据或实际数据 -->
-          <view
-            v-for="item in data.length > 0 ? data : mockGoods"
-            :key="item._id"
-            class="card goods-card"
+      <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
+      <view v-else-if="goodsList.length === 0" class="empty-box">
+        <u-empty mode="list" text="暂无商品"></u-empty>
+      </view>
+      <view v-else class="card-list">
+        <view v-for="item in goodsList" :key="item._id" class="card goods-card">
+          <image
+            :src="item.img_url || '/static/logo.png'"
+            mode="aspectFill"
+            class="goods-img"
             @click="navTo('/pages/merchant/goods/edit?id=' + item._id)"
-          >
-            <image
-              :src="item.img_url || '/static/logo.png'"
-              mode="aspectFill"
-              class="goods-img"
-            ></image>
-            <view class="goods-info">
-              <view class="name-row">
-                <text class="name u-line-1">{{ item.name }}</text>
-                <u-switch :value="item.is_on_sale" size="16" @change="toggleSale(item)"></u-switch>
-              </view>
-              <view class="stock-row">
-                库存: <text :class="{ warn: item.stock < 10 }">{{ item.stock }}</text>
-                {{ item.unit_small.name }}
-              </view>
-              <view class="price-row">
-                <text class="price"
-                  >¥{{ (item.unit_small.price / 100).toFixed(2) }}/{{ item.unit_small.name }}</text
-                >
-                <u-icon name="edit-pen" color="#999" size="18"></u-icon>
-              </view>
+          ></image>
+          <view class="goods-info" @click="navTo('/pages/merchant/goods/edit?id=' + item._id)">
+            <view class="name-row">
+              <text class="name u-line-1">{{ item.name }}</text>
+            </view>
+            <view class="stock-row">
+              库存: <text :class="{ warn: item.stock < 10 }">{{ item.stock }}</text>
+              {{ item.unit_small.name }}
+            </view>
+            <view class="price-row">
+              <text class="price"
+                >¥{{ (item.unit_small.price / 100).toFixed(2) }}/{{ item.unit_small.name }}</text
+              >
+              <u-icon name="edit-pen" color="#999" size="18"></u-icon>
             </view>
           </view>
-          <u-loadmore :status="data.length > 0 && hasMore ? 'loadmore' : 'nomore'" />
+          <view class="goods-actions">
+            <u-switch
+              :value="item.is_on_sale"
+              size="16"
+              @change="handleToggleSale(item)"
+              @click.stop
+            ></u-switch>
+          </view>
         </view>
-      </unicloud-db>
+      </view>
     </view>
 
     <!-- 底部导航 -->
@@ -82,80 +77,55 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { useGoods } from '@/composables/useGoods'
 
-const tenant_id = uni.getStorageSync('tenant_id')
-const udb = ref(null)
+const { goodsList, loading, total, fetchGoodsList, toggleOnSale, deleteGoods } = useGoods()
+
 const keyword = ref('')
+const currentPage = ref(1)
+const pageSize = ref(20)
 
-const mockGoods = [
-  {
-    _id: 'm1',
-    name: '农夫山泉 550ml',
-    stock: 120,
-    is_on_sale: true,
-    unit_small: { name: '瓶', price: 100 },
-    img_url: ''
-  },
-  {
-    _id: 'm2',
-    name: '康师傅红烧牛肉面',
-    stock: 5,
-    is_on_sale: true,
-    unit_small: { name: '包', price: 300 },
-    img_url: ''
-  },
-  {
-    _id: 'm3',
-    name: '雪碧 330ml',
-    stock: 45,
-    is_on_sale: true,
-    unit_small: { name: '罐', price: 200 },
-    img_url: ''
-  },
-  {
-    _id: 'm4',
-    name: '金龙鱼大米 5kg',
-    stock: 20,
-    is_on_sale: true,
-    unit_small: { name: '袋', price: 4500 },
-    img_url: ''
-  },
-  {
-    _id: 'm5',
-    name: '海天酱油 500ml',
-    stock: 8,
-    is_on_sale: false,
-    unit_small: { name: '瓶', price: 800 },
-    img_url: ''
-  }
-]
-
-const whereClause = computed(() => {
-  let clause = `tenant_id == "${tenant_id}"`
-  if (keyword.value) {
-    clause += ` && name.indexOf("${keyword.value}") >= 0`
-  }
-  return clause
-})
-
-const refresh = () => {
-  // @ts-ignore
-  udb.value.refresh()
+const loadGoodsList = async () => {
+  await fetchGoodsList({
+    keyword: keyword.value,
+    page: currentPage.value,
+    limit: pageSize.value
+  })
 }
 
-const toggleSale = async (item: any) => {
-  const db = uniCloud.database()
-  try {
-    await db.collection('wh_goods').doc(item._id).update({
-      is_on_sale: !item.is_on_sale
-    })
-    uni.showToast({ title: '已' + (item.is_on_sale ? '下架' : '上架') })
-    refresh()
-  } catch (e) {
-    uni.showToast({ title: '更新失败', icon: 'none' })
+const handleSearch = () => {
+  currentPage.value = 1
+  loadGoodsList()
+}
+
+const handleClear = () => {
+  keyword.value = ''
+  currentPage.value = 1
+  loadGoodsList()
+}
+
+const handleToggleSale = async (item: any) => {
+  const success = await toggleOnSale(item._id, !item.is_on_sale)
+  if (success) {
+    loadGoodsList()
   }
+}
+
+const handleDelete = (item: any) => {
+  uni.showModal({
+    title: '提示',
+    content: `确定要删除"${item.name}"吗？`,
+    success: async res => {
+      if (res.confirm) {
+        const success = await deleteGoods(item._id)
+        if (success) {
+          loadGoodsList()
+        }
+      }
+    }
+  })
 }
 
 const navTo = (url: string) => {
@@ -173,8 +143,12 @@ const handleTabChange = (index: number) => {
   uni.redirectTo({ url: paths[index] })
 }
 
+onMounted(() => {
+  loadGoodsList()
+})
+
 onShow(() => {
-  refresh()
+  loadGoodsList()
 })
 </script>
 

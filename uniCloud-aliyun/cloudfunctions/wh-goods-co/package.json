@@ -1,0 +1,7 @@
+{
+  "name": "wh-goods-co",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {}
+  }
+}
