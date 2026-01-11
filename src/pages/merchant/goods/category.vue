@@ -4,41 +4,35 @@
       <u-button type="primary" icon="plus" text="新增分类" @click="showAddPopup"></u-button>
     </view>
 
-    <unicloud-db
-      ref="udb"
-      v-slot="{ data, loading, error }"
-      collection="wh_categories"
-      :where="`tenant_id == '${tenant_id}'`"
-      orderby="sort asc"
-    >
-      <view v-if="loading"><u-loading-icon></u-loading-icon></view>
-      <view v-else-if="error">{{ error.message }}</view>
-      <view v-else>
-        <u-list>
-          <u-list-item v-for="item in data.length > 0 ? data : mockCategories" :key="item._id">
-            <u-cell :title="item.name" :label="'排序: ' + (item.sort || 0)">
-              <template #value>
-                <view class="cell-actions">
-                  <u-icon
-                    name="edit-pen"
-                    size="20"
-                    color="#2979ff"
-                    custom-style="margin-right: 30rpx"
-                    @click="editCategory(item)"
-                  ></u-icon>
-                  <u-icon
-                    name="trash"
-                    size="20"
-                    color="#fa3534"
-                    @click="deleteCategory(item._id)"
-                  ></u-icon>
-                </view>
-              </template>
-            </u-cell>
-          </u-list-item>
-        </u-list>
-      </view>
-    </unicloud-db>
+    <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
+    <view v-else-if="categories.length === 0" class="empty-box">
+      <u-empty mode="list" text="暂无分类"></u-empty>
+    </view>
+    <view v-else>
+      <u-list>
+        <u-list-item v-for="item in categories" :key="item._id">
+          <u-cell :title="item.name" :label="'排序: ' + (item.sort || 0)">
+            <template #value>
+              <view class="cell-actions">
+                <u-icon
+                  name="edit-pen"
+                  size="20"
+                  color="#2979ff"
+                  custom-style="margin-right: 30rpx"
+                  @click="editCategory(item)"
+                ></u-icon>
+                <u-icon
+                  name="trash"
+                  size="20"
+                  color="#fa3534"
+                  @click="deleteCategory(item._id)"
+                ></u-icon>
+              </view>
+            </template>
+          </u-cell>
+        </u-list-item>
+      </u-list>
+    </view>
 
     <!-- 新增/编辑弹窗 -->
     <u-modal
@@ -68,18 +62,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { ref, reactive, onMounted } from 'vue'
 
-const tenant_id = uni.getStorageSync('tenant_id')
-const udb = ref<any>(null)
-
-const mockCategories = [
-  { _id: 'mc1', name: '酒水饮料', sort: 1 },
-  { _id: 'mc2', name: '粮油副食', sort: 2 },
-  { _id: 'mc3', name: '方便速食', sort: 3 },
-  { _id: 'mc4', name: '日用百货', sort: 4 }
-]
+const categoryCo = uniCloud.importObject('wh-category-co')
+const categories = ref<any[]>([])
+const loading = ref(false)
 
 const modal = reactive({
   show: false,
@@ -90,6 +77,20 @@ const modal = reactive({
     sort: 0
   }
 })
+
+const loadCategories = async () => {
+  loading.value = true
+  try {
+    const res = await categoryCo.getCategoryList()
+    if (res.code === 0) {
+      categories.value = res.data
+    }
+  } catch (e: any) {
+    uni.showToast({ title: e.message || '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
 
 const showAddPopup = () => {
   modal.isEdit = false
@@ -106,28 +107,29 @@ const editCategory = (item: any) => {
 const submitCategory = async () => {
   if (!modal.form.name) return uni.showToast({ title: '请输入名称', icon: 'none' })
 
-  const db = uniCloud.database()
   try {
+    let res
     if (modal.isEdit) {
-      await db
-        .collection('wh_categories')
-        .doc(modal.form._id)
-        .update({
-          name: modal.form.name,
-          sort: parseInt(String(modal.form.sort)) || 0
-        })
-    } else {
-      await db.collection('wh_categories').add({
-        tenant_id,
+      res = await categoryCo.updateCategory(modal.form._id, {
         name: modal.form.name,
-        sort: parseInt(String(modal.form.sort)) || 0
+        sort: modal.form.sort
+      })
+    } else {
+      res = await categoryCo.createCategory({
+        name: modal.form.name,
+        sort: modal.form.sort
       })
     }
-    uni.showToast({ title: '保存成功' })
-    modal.show = false
-    udb.value.refresh()
-  } catch (e) {
-    uni.showToast({ title: '保存失败', icon: 'none' })
+
+    if (res.code === 0) {
+      uni.showToast({ title: res.msg })
+      modal.show = false
+      loadCategories()
+    } else {
+      uni.showToast({ title: res.msg || '保存失败', icon: 'none' })
+    }
+  } catch (e: any) {
+    uni.showToast({ title: e.message || '保存失败', icon: 'none' })
   }
 }
 
@@ -138,16 +140,24 @@ const deleteCategory = (id: string) => {
     success: async res => {
       if (res.confirm) {
         try {
-          await uniCloud.database().collection('wh_categories').doc(id).remove()
-          uni.showToast({ title: '删除成功' })
-          udb.value.refresh()
-        } catch (e) {
-          uni.showToast({ title: '删除失败', icon: 'none' })
+          const result = await categoryCo.deleteCategory(id)
+          if (result.code === 0) {
+            uni.showToast({ title: result.msg })
+            loadCategories()
+          } else {
+            uni.showToast({ title: result.msg || '删除失败', icon: 'none' })
+          }
+        } catch (e: any) {
+          uni.showToast({ title: e.message || '删除失败', icon: 'none' })
         }
       }
     }
   })
 }
+
+onMounted(() => {
+  loadCategories()
+})
 </script>
 
 <style lang="scss" scoped>
