@@ -155,18 +155,12 @@ module.exports = {
    * 获取商户工作台统计
    */
   async getDashboardStats() {
-    // 暂时注释掉登录校验，方便页面展示调试
-    /*
-		const auth = await this.uniID.checkToken(this.getUniIdToken())
-		if (auth.code !== 0) return auth
+    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    if (auth.code !== 0) return auth
 
-		const db = uniCloud.database()
-		const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
-		const tenant_id = userRes.data[0].tenant_id
-		*/
     const db = uniCloud.database()
-    // 使用一个固定的演示租户ID，确保能查出数据
-    const tenant_id = 'demo-tenant-id'
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
 
     if (!tenant_id) return { code: 403, msg: '未入驻商户' }
 

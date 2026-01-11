@@ -1,6 +1,23 @@
 // 云对象教程: https://uniapp.dcloud.net.cn/uniCloud/cloud-obj
 // jsdoc语法提示教程：https://ask.dcloud.net.cn/article/129
 const uniIdCommon = require('uni-id-common')
+const crypto = require('crypto')
+
+/**
+ * 密码加密工具
+ * @param {String} password
+ */
+function encryptPassword(password) {
+  // 简单使用 md5 + salt 或者是 HMAC-SHA256
+  // 为了兼容性，这里使用 uni-id 默认的加密方式 (如果可能)，但因为我们没有 uni-id 库，我们使用自定义的 robust 方式
+  // 生产环境建议使用 bcrypt，但在云函数中需注意环境
+  // 这里使用 HMAC-SHA256，密钥可以是 config 中的 tokenSecret，或者固定一个 internal secret
+  // 注意：这将与标准 uni-id 不兼容（除非 uni-id 配置了相同算法）
+  // 为了演示和快速修复，我们使用简单的 HASH
+  const hmac = crypto.createHmac('sha256', 'xht-super-secret-key')
+  hmac.update(password)
+  return hmac.digest('hex')
+}
 
 module.exports = {
   _before: async function () {
@@ -10,9 +27,75 @@ module.exports = {
   },
 
   /**
+   * 商家登录
+   * @param {Object} params
+   * @param {String} params.username 手机号
+   * @param {String} params.password 密码
+   */
+  async loginMerchant(params) {
+    const { username, password } = params
+
+    if (!username || !password) {
+      throw new Error('用户名和密码不能为空')
+    }
+
+    const db = uniCloud.database()
+
+    // 1. 查找用户
+    const userRes = await db
+      .collection('uni-id-users')
+      .where({
+        mobile: username
+      })
+      .get()
+
+    if (userRes.data.length === 0) {
+      throw new Error('用户不存在')
+    }
+
+    const user = userRes.data[0]
+
+    // 2. 校验密码
+    // 注意：如果是老数据（uni-id 生成的），可能是不兼容的 hash。这里假设都是新系统生成。
+    const safePassword = encryptPassword(password)
+    if (user.password !== safePassword) {
+      throw new Error('密码错误')
+    }
+
+    // 3. 生成 Token (使用 uni-id-common)
+    const { token, tokenExpired } = await this.uniIdCommon.createToken({
+      uid: user._id,
+      role: user.role || []
+    })
+
+    // 获取租户信息
+    let tenantInfo = null
+    if (user.tenant_id) {
+      const tenantRes = await db.collection('wh_tenants').doc(user.tenant_id).get()
+      if (tenantRes.data.length > 0) {
+        tenantInfo = tenantRes.data[0]
+      }
+    }
+
+    return {
+      code: 0,
+      msg: '登录成功',
+      token,
+      tokenExpired,
+      userInfo: {
+        _id: user._id,
+        username: user.mobile,
+        role: user.role || [],
+        tenant_id: user.tenant_id
+      },
+      tenantInfo
+    }
+  },
+
+  /**
    * 注册商家并创建租户
    * @param {Object} params
-   * @param {String} params.username 用户名/手机号
+   * @param {String} params.username 用户名/手机号 (实际存入 mobile)
    * @param {String} params.password 密码
    * @param {String} params.shopName 店铺名称
    */
@@ -23,22 +106,15 @@ module.exports = {
       throw new Error('参数不完整')
     }
 
-    // 1. 注册 uni-id 用户
-    // 这里简化处理，直接用 username 注册，实际生产中可能需要验证码
-    // 注意：需要在 uni-id-config 中开启 允许 username 注册 (本示例假定已配置或使用 mobile)
-    // 如果 username 是手机号，使用 registerUser 可能需要验证码，这里为了演示使用 username/password 方式
-    // 实际项目中建议使用 registerWithMobile (需验证码) 或 addAccount
-
-    // 我们尝试直接创建用户，同时设置 role 为 merchant
-    // 注意：uni-id-common 的 register 方法通常需要验证码，如果是纯密码注册，可以使用 addAccount (仅限管理员) 或配置允许
-    // 简单起见，我们假设 username 是手机号，密码注册 (需 uni-id 配置支持)
-    // 或者使用 addUser (管理员API)，但在 C 端调用会报错。
-    // 为了Demo顺利，我们先以此逻辑：
+    // 校验手机号格式 (简单)
+    if (!/^1\d{10}$/.test(username)) {
+      throw new Error('手机号格式不正确')
+    }
 
     const db = uniCloud.database()
     const dbCmd = db.command
 
-    // 检查手机号是否已被注册
+    // 1. 检查手机号是否已被注册
     const existUser = await db
       .collection('uni-id-users')
       .where({
@@ -50,31 +126,31 @@ module.exports = {
       throw new Error('该手机号已注册')
     }
 
-    // 2. 事务处理：创建用户 + 创建租户
-    // uni-id 内部没有暴露部分事务能力给外部方便混合，所以我们手动步骤
-    // 先注册用户
+    // 2. 注册用户
+    const safePassword = encryptPassword(password)
+    const now = Date.now()
 
-    const { uid, token, tokenExpired } = await this.uniIdCommon.register({
-      username,
-      password,
-      role: ['merchant']
+    const userRes = await db.collection('uni-id-users').add({
+      username: username, // 冗余存一份
+      mobile: username,
+      password: safePassword,
+      role: ['merchant'],
+      register_date: now,
+      register_ip: this.getClientInfo().clientIP
     })
 
-    if (!uid) {
-      throw new Error('注册失败')
+    if (!userRes.id) {
+      throw new Error('注册用户失败')
     }
 
-    // 更新用户手机号 (register 默认为 username，需同步 mobile)
-    await db.collection('uni-id-users').doc(uid).update({
-      mobile: username
-    })
+    const uid = userRes.id
 
     // 3. 创建租户
     const tenantRes = await db.collection('wh_tenants').add({
       name: shopName,
       owner_uid: uid,
-      created_at: Date.now(),
-      expired_at: Date.now() + 365 * 24 * 60 * 60 * 1000, // 默认一年
+      created_at: now,
+      expired_at: now + 365 * 24 * 60 * 60 * 1000, // 默认一年
       settings: {
         allow_debt: true,
         min_delivery_price: 0
@@ -82,14 +158,20 @@ module.exports = {
     })
 
     if (!tenantRes.id) {
-      // 回滚：删除用户 (简单补偿)
-      // await db.collection('uni-id-users').doc(uid).remove()
+      // 简单回滚
+      await db.collection('uni-id-users').doc(uid).remove()
       throw new Error('店铺创建失败')
     }
 
-    // 4. 回写租户ID到用户表 (方便后续查询)
+    // 4. 回写租户ID到用户表
     await db.collection('uni-id-users').doc(uid).update({
       tenant_id: tenantRes.id
+    })
+
+    // 5. 生成 Token
+    const { token, tokenExpired } = await this.uniIdCommon.createToken({
+      uid: uid,
+      role: ['merchant']
     })
 
     return {

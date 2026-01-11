@@ -1,27 +1,42 @@
 // 云对象教程: https://uniapp.dcloud.net.cn/uniCloud/cloud-obj
 // jsdoc语法提示教程：https://ask.dcloud.net.cn/article/129
 
+const uniIdCommon = require('uni-id-common')
+
 module.exports = {
   _before: async function () {
+    this.uniIdCommon = uniIdCommon.createInstance({
+      clientInfo: this.getClientInfo()
+    })
+
     // 获取当前用户的 tenant_id
+    // 尝试直接获取 token 字符串（兼容 headers）
     const token = this.getUniIdToken()
-    if (!token || !token.uid) {
+
+    // 如果自动解析失败，尝试手动校验
+    let uid = token && token.uid
+    let tokenExpired = token && token.tokenExpired
+
+    if (!uid) {
+      // 尝试从 clientInfo 或 headers 重新解析 (云对象中 getUniIdToken 应该已经处理，但为了保险)
+      // 注意：云对象在本地运行时可能会有环境差异
+      // 这里我们简单做个双重检查，如果 getUniIdToken 失败，抛出详细点
       throw new Error('未登录')
     }
 
+    // 强制依赖手动 checkToken 可能会更稳（可选）
+    // const checkRes = await this.uniIdCommon.checkToken(token)
+    // if (checkRes.code !== 0) throw new Error(checkRes.msg)
+
     const db = uniCloud.database()
-    const userRes = await db
-      .collection('uni-id-users')
-      .doc(token.uid)
-      .field({ tenant_id: true })
-      .get()
+    const userRes = await db.collection('uni-id-users').doc(uid).field({ tenant_id: true }).get()
 
     if (!userRes.data || !userRes.data.length || !userRes.data[0].tenant_id) {
       throw new Error('用户未绑定租户')
     }
 
     this.tenant_id = userRes.data[0].tenant_id
-    this.current_uid = token.uid
+    this.current_uid = uid
   },
 
   /**

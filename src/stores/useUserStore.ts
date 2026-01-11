@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(uni.getStorageSync('uni_id_token') || '')
-  const userInfo = ref(uni.getStorageSync('uni_id_user_info') || {})
+  const userInfo = ref(uni.getStorageSync('uni-id-pages-userInfo') || {})
   const tenantInfo = ref(uni.getStorageSync('tenant_info') || {})
 
   const hasLogin = ref(!!token.value)
@@ -15,7 +15,7 @@ export const useUserStore = defineStore('user', () => {
 
     uni.setStorageSync('uni_id_token', data.token)
     uni.setStorageSync('uni_id_token_expired', data.tokenExpired)
-    uni.setStorageSync('uni_id_user_info', data.userInfo)
+    uni.setStorageSync('uni-id-pages-userInfo', data.userInfo)
     if (data.tenantInfo) {
       uni.setStorageSync('tenant_info', data.tenantInfo)
       // 兼容旧逻辑
@@ -33,7 +33,7 @@ export const useUserStore = defineStore('user', () => {
 
     uni.removeStorageSync('uni_id_token')
     uni.removeStorageSync('uni_id_token_expired')
-    uni.removeStorageSync('uni_id_user_info')
+    uni.removeStorageSync('uni-id-pages-userInfo')
     uni.removeStorageSync('tenant_info')
     uni.removeStorageSync('tenant_id')
 

@@ -5,20 +5,20 @@ module.exports = {
     this.uniID = uniID.createInstance({
       clientInfo: this.getClientInfo()
     })
-    // 暂时注释掉登录校验，方便页面展示调试
-    /*
     const auth = await this.uniID.checkToken(this.getUniIdToken())
     if (auth.code !== 0) throw auth
-    
+
     // 超级管理员校验
     const db = uniCloud.database()
     const user = await db.collection('uni-id-users').doc(auth.uid).get()
-    if (user.data[0].mobile !== '13003629527') {
-      throw { code: 403, msg: '权限不足' }
+    // 这里简单通过手机号判断管理员，实际应检查 role
+    if (user.data.length === 0 || !user.data[0].role.includes('admin')) {
+      // 兼容旧逻辑：如果手机号是特定的，也允许
+      if (user.data[0].mobile !== '13003629527') {
+        throw { code: 403, msg: '权限不足' }
+      }
     }
     this.uid = auth.uid
-    */
-    this.uid = 'demo-admin-uid'
   },
 
   /**

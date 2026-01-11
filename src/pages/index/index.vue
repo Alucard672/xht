@@ -19,60 +19,59 @@
         <text class="menu-sub">扫码下单、对账</text>
       </view>
 
-      <view v-if="isSuperAdmin" class="menu-item admin" @click="goAdmin">
+      <view class="menu-item admin" @click="goAdmin">
         <u-icon name="setting-fill" color="#fff" size="30"></u-icon>
         <text class="menu-text">系统管理端</text>
         <text class="menu-sub">平台商户与概览</text>
       </view>
     </view>
 
-    <view v-if="tenantId" class="debug-info">
-      <text>当前租户ID: {{ tenantId }}</text>
-      <u-button
-        size="mini"
-        type="info"
-        text="清除缓存"
-        custom-style="margin-top: 10rpx"
-        @click="clearCache"
-      ></u-button>
+    <view class="footer-tips">
+      <text>开发调试模式：点击各入口时检查登录</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
-
-const tenantId = ref('demo-tenant-id') // 默认演示租户ID
-const isSuperAdmin = ref(true) // 默认开启超管入口
-
-onShow(() => {
-  // 暂时注释掉真实逻辑，直接开启所有入口
-  /*
-  tenantId.value = uni.getStorageSync('tenant_id')
-  const userInfo = uni.getStorageSync('uni-id-pages-userInfo')
-  isSuperAdmin.value = userInfo && userInfo.mobile === '13003629527'
-  */
-})
+import { checkLogin } from '@/utils/auth'
 
 const goMerchant = () => {
+  if (!checkLogin()) {
+    return uni.navigateTo({ url: '/pages/merchant/login' })
+  }
+
+  const tenant_id = uni.getStorageSync('tenant_id')
+  if (!tenant_id) {
+    // 已登录但无租户，去注册
+    return uni.navigateTo({ url: '/pages/merchant/register' })
+  }
+
   // 直接进入工作台
   uni.navigateTo({ url: '/pages/merchant/dashboard' })
 }
 
 const goAdmin = () => {
+  if (!checkLogin()) {
+    // 统一跳商家登录页（或专门的管理员登录页）
+    return uni.navigateTo({ url: '/pages/merchant/login' })
+  }
   uni.navigateTo({ url: '/pages/admin/merchant/list' })
 }
 
 const goClient = () => {
-  // 直接进入商城，带入演示ID
-  uni.navigateTo({ url: `/pages/client/shop?tenant_id=${tenantId.value}` })
-}
-
-const clearCache = () => {
-  uni.clearStorageSync()
-  tenantId.value = ''
-  uni.showToast({ title: '缓存已清除' })
+  // 客户端暂时允许未登录访问（扫码场景），或者带入演示ID
+  const tenant_id = uni.getStorageSync('tenant_id')
+  if (tenant_id) {
+    uni.navigateTo({ url: `/pages/client/shop?tenant_id=${tenant_id}` })
+  } else {
+    // 模拟一个演示 tenant_id 或者提示
+    // uni.showToast({ title: '体验模式：进入演示店铺', icon: 'none' })
+    // setTimeout(() => {
+    // 假设有一个演示店铺ID
+    // uni.navigateTo({ url: `/pages/client/shop?tenant_id=demo-tenant-id` })
+    // }, 500)
+    uni.showToast({ title: '请先登录商户端获取体验ID', icon: 'none' })
+  }
 }
 </script>
 
@@ -150,12 +149,11 @@ const clearCache = () => {
     }
   }
 
-  .debug-info {
+  .footer-tips {
     margin-top: auto;
     padding-bottom: 40rpx;
-    text-align: center;
     color: #999;
-    font-size: 20rpx;
+    font-size: 24rpx;
   }
 }
 </style>

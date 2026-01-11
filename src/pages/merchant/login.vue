@@ -1,8 +1,8 @@
 <template>
   <view class="login-container">
     <view class="header">
-      <text class="title">乡货通 - 开发环境登录</text>
-      <text class="subtitle">输入手机号即可直接进入系统</text>
+      <text class="title">乡货通 - 商家登录</text>
+      <text class="subtitle">专注乡镇批发的 SaaS 平台</text>
     </view>
 
     <view class="form">
@@ -10,33 +10,35 @@
         <u-form-item label="手机号" prop="mobile" border-bottom>
           <u-input v-model="form.mobile" type="number" placeholder="请输入手机号" border="none" />
         </u-form-item>
+        <u-form-item label="密码" prop="password" border-bottom>
+          <u-input v-model="form.password" type="password" placeholder="请输入密码" border="none" />
+        </u-form-item>
       </u-form>
-
-      <view class="quick-tips">
-        <text class="tip-text" @click="form.mobile = '13003629527'">[超级管理员: 13003629527]</text>
-        <text class="tip-text" @click="form.mobile = '13800001111'">[普通商家: 13800001111]</text>
-      </view>
 
       <u-button
         type="primary"
-        text="直接登录"
+        text="登录"
         :loading="loading"
         custom-style="margin-top: 50rpx"
         @click="handleLogin"
       ></u-button>
-    </view>
 
-    <view class="footer">
-      <text>提示：开发环境已关闭短信验证码</text>
+      <view class="actions">
+        <text class="link" @click="goRegister">没有账号？去注册</text>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { useUserStore } from '@/stores/useUserStore'
+
+const userStore = useUserStore()
 
 const form = reactive({
-  mobile: ''
+  mobile: '',
+  password: ''
 })
 
 const loading = ref(false)
@@ -45,45 +47,38 @@ const handleLogin = async () => {
   if (!/^1[3-9]\d{9}$/.test(form.mobile)) {
     return uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
   }
+  if (!form.password) {
+    return uni.showToast({ title: '请输入密码', icon: 'none' })
+  }
 
   loading.value = true
   try {
-    const merchantCo = uniCloud.importObject('wh-merchant-co')
-    const res = await merchantCo.devLogin(form.mobile)
+    const userCo = uniCloud.importObject('wh-user-co')
+    const res = await userCo.loginMerchant({
+      username: form.mobile,
+      password: form.password
+    })
 
     if (res.code === 0) {
-      // 保存认证信息
-      uni.setStorageSync('uni_id_token', res.token)
-      uni.setStorageSync('uni_id_token_expired', res.tokenExpired)
-      uni.setStorageSync('uni-id-pages-userInfo', res.userInfo)
-
-      if (res.userInfo.tenant_id) {
-        uni.setStorageSync('tenant_id', res.userInfo.tenant_id)
-      }
-
+      userStore.login(res)
       uni.showToast({ title: '登录成功' })
 
       setTimeout(() => {
-        if (form.mobile === '13003629527') {
-          // 超管进入后台
-          uni.reLaunch({ url: '/pages/admin/merchant/list' })
-        } else {
-          // 普通用户进入商家端首页或注册页
-          if (res.userInfo.tenant_id) {
-            uni.reLaunch({ url: '/pages/index/index' })
-          } else {
-            uni.reLaunch({ url: '/pages/merchant/register' })
-          }
-        }
+        // 登录成功后跳转到首页
+        uni.reLaunch({ url: '/pages/index/index' })
       }, 1000)
     } else {
       uni.showToast({ title: res.msg || '登录失败', icon: 'none' })
     }
   } catch (e: any) {
-    uni.showToast({ title: '系统错误: ' + (e.msg || ''), icon: 'none' })
+    uni.showToast({ title: e.message || '系统错误', icon: 'none' })
   } finally {
     loading.value = false
   }
+}
+
+const goRegister = () => {
+  uni.navigateTo({ url: '/pages/merchant/register' })
 }
 </script>
 
@@ -107,15 +102,13 @@ const handleLogin = async () => {
   }
   .form {
     margin-bottom: 40rpx;
-    .quick-tips {
-      margin-top: 20rpx;
+    .actions {
+      margin-top: 30rpx;
       display: flex;
-      flex-direction: column;
-      gap: 10rpx;
-      .tip-text {
-        font-size: 24rpx;
+      justify-content: center;
+      .link {
+        font-size: 28rpx;
         color: #2979ff;
-        text-decoration: underline;
       }
     }
   }

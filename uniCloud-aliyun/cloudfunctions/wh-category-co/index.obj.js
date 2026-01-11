@@ -1,24 +1,28 @@
 // 云对象: 商品分类管理
+const uniIdCommon = require('uni-id-common')
+
 module.exports = {
   _before: async function () {
+    this.uniIdCommon = uniIdCommon.createInstance({
+      clientInfo: this.getClientInfo()
+    })
+
     const token = this.getUniIdToken()
-    if (!token || !token.uid) {
+    let uid = token && token.uid
+
+    if (!uid) {
       throw new Error('未登录')
     }
 
     const db = uniCloud.database()
-    const userRes = await db
-      .collection('uni-id-users')
-      .doc(token.uid)
-      .field({ tenant_id: true })
-      .get()
+    const userRes = await db.collection('uni-id-users').doc(uid).field({ tenant_id: true }).get()
 
     if (!userRes.data || !userRes.data.length || !userRes.data[0].tenant_id) {
       throw new Error('用户未绑定租户')
     }
 
     this.tenant_id = userRes.data[0].tenant_id
-    this.current_uid = token.uid
+    this.current_uid = uid
   },
 
   /**
