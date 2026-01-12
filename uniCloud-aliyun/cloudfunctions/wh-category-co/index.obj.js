@@ -7,11 +7,23 @@ module.exports = {
       clientInfo: this.getClientInfo()
     })
 
-    const token = this.getUniIdToken()
-    let uid = token && token.uid
+    let token = this.getUniIdToken()
+    let uid
 
-    if (!uid) {
+    if (!token) {
       throw new Error('未登录')
+    }
+
+    if (typeof token === 'string') {
+      const checkRes = await this.uniIdCommon.checkToken(token)
+      if (checkRes.code !== 0) {
+        throw new Error('登录失效')
+      }
+      uid = checkRes.uid
+    } else if (token.uid) {
+      uid = token.uid
+    } else {
+      throw new Error('未登录 (无效Token)')
     }
 
     const db = uniCloud.database()

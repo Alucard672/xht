@@ -5,8 +5,27 @@ module.exports = {
     this.uniID = uniID.createInstance({
       clientInfo: this.getClientInfo()
     })
-    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    let token = this.getUniIdToken()
+    if (!token) {
+      throw { code: 401, msg: '未登录' }
+    }
+
+    // 兼容处理：如果是对象且包含token字段，取token字符串进行校验；或者是字符串直接校验
+    // 如果已经是解析好的对象(含uid)，也可以直接用，但为了安全建议统一checkToken
+    let tokenStr = token
+    if (typeof token === 'object') {
+      if (token.token) {
+        tokenStr = token.token
+      } else if (token.uid) {
+        // 某些环境已解析
+        this.uid = token.uid
+        return // 已有UID，跳过后续校验
+      }
+    }
+
+    const auth = await this.uniID.checkToken(tokenStr)
     if (auth.code !== 0) throw auth
+    auth.uid = auth.uid || auth.userInfo._id
 
     // 超级管理员校验
     const db = uniCloud.database()

@@ -11,7 +11,9 @@ module.exports = {
    * @param {String} shopName 店铺名称
    */
   async onboard(shopName) {
-    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
     if (auth.code !== 0) return auth
 
     const uid = auth.uid
@@ -111,7 +113,9 @@ module.exports = {
    * @param {Object} params { customer_id, amount, remark }
    */
   async repay({ customer_id, amount, remark }) {
-    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
     if (auth.code !== 0) return auth
 
     const db = uniCloud.database()
@@ -155,7 +159,9 @@ module.exports = {
    * 获取商户工作台统计
    */
   async getDashboardStats() {
-    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
     if (auth.code !== 0) return auth
 
     const db = uniCloud.database()

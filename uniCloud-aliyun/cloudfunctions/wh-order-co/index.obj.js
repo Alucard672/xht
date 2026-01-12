@@ -14,7 +14,9 @@ module.exports = {
   async confirmOrder(orderId) {
     // 暂时注释掉登录校验，方便页面展示调试
     /*
-    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    let token = this.getUniIdToken()
+    if(typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
     if (auth.code !== 0) return auth
     */
 
@@ -39,7 +41,9 @@ module.exports = {
   async completeOrder(orderId) {
     // 暂时注释掉登录校验，方便页面展示调试
     /*
-    const auth = await this.uniID.checkToken(this.getUniIdToken())
+    let token = this.getUniIdToken()
+    if(typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
     if (auth.code !== 0) return auth
     */
 

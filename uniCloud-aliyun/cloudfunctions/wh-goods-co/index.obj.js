@@ -10,23 +10,28 @@ module.exports = {
     })
 
     // 获取当前用户的 tenant_id
-    // 尝试直接获取 token 字符串（兼容 headers）
-    const token = this.getUniIdToken()
+    // 尝试直接获取 token
+    let token = this.getUniIdToken()
+    let uid
 
-    // 如果自动解析失败，尝试手动校验
-    let uid = token && token.uid
-    let tokenExpired = token && token.tokenExpired
-
-    if (!uid) {
-      // 尝试从 clientInfo 或 headers 重新解析 (云对象中 getUniIdToken 应该已经处理，但为了保险)
-      // 注意：云对象在本地运行时可能会有环境差异
-      // 这里我们简单做个双重检查，如果 getUniIdToken 失败，抛出详细点
-      throw new Error('未登录')
+    if (!token) {
+      throw new Error('未登录 (Token为空)')
     }
 
-    // 强制依赖手动 checkToken 可能会更稳（可选）
-    // const checkRes = await this.uniIdCommon.checkToken(token)
-    // if (checkRes.code !== 0) throw new Error(checkRes.msg)
+    // 如果 token 是字符串（HBuilderX 本地调试常见），需要手动校验解析
+    if (typeof token === 'string') {
+      const checkRes = await this.uniIdCommon.checkToken(token)
+      if (checkRes.code !== 0) {
+        throw new Error(`登录失效: ${checkRes.msg}`)
+      }
+      uid = checkRes.uid
+    } else if (token.uid) {
+      // 如果已经是对象（某些环境下框架可能已解析）
+      uid = token.uid
+    } else {
+      const tokenStr = JSON.stringify(token)
+      throw new Error(`未登录 (Token格式无法识别). Value: ${tokenStr}`)
+    }
 
     const db = uniCloud.database()
     const userRes = await db.collection('uni-id-users').doc(uid).field({ tenant_id: true }).get()
