@@ -18,6 +18,11 @@
         </template>
       </u-form-item>
 
+      <!-- 添加快速入口 -->
+      <view class="form-tip-row">
+        <text class="link-text" @click="goToCategoryManage">没有分类？去新增</text>
+      </view>
+
       <u-form-item label="商品图片" border-bottom>
         <u-upload
           :file-list="fileList"
@@ -190,10 +195,17 @@ const loadGoodsDetail = async () => {
 }
 
 const confirmCategory = (e: any) => {
+  if (!e.value || e.value.length === 0 || !e.value[0]) return
   const selected = e.value[0]
   form.category_id = selected._id
   categoryName.value = selected.name
   showCategoryPicker.value = false
+}
+
+const goToCategoryManage = () => {
+  uni.navigateTo({
+    url: '/pages/merchant/goods/category'
+  })
 }
 
 const deletePic = (event: any) => {
@@ -279,6 +291,16 @@ const saveGoods = async () => {
   padding: 30rpx;
   background-color: #fff;
   min-height: 100vh;
+  .form-tip-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10rpx 0;
+    .link-text {
+      font-size: 24rpx;
+      color: #2979ff;
+      text-decoration: underline;
+    }
+  }
   .unit-section {
     background-color: #f9f9f9;
     padding: 0 20rpx;
