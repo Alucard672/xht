@@ -63,8 +63,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { importObject } from '@/utils/cloud'
 
-const categoryCo = uniCloud.importObject('wh-category-co')
+const categoryCo = importObject('wh-category-co')
 const categories = ref<any[]>([])
 const loading = ref(false)
 

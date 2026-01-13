@@ -108,7 +108,9 @@ import { priceHelper } from '@/common/price-helper'
 import type { GoodsFormData } from '@/types/goods'
 
 const loading = ref(false)
-const goodsCo = uniCloud.importObject('wh-goods-co')
+import { importObject } from '@/utils/cloud'
+
+const goodsCo = importObject('wh-goods-co')
 const goods_id = ref('')
 const isEdit = ref(false)
 
@@ -135,7 +137,10 @@ const categories = ref([])
 const showCategoryPicker = ref(false)
 const fileList = ref([])
 
-onLoad(options => {
+onLoad(async options => {
+  // 优先加载分类，确保后续回显正常
+  await fetchCategories()
+
   if (options && options.id) {
     goods_id.value = options.id
     isEdit.value = true
@@ -143,18 +148,30 @@ onLoad(options => {
   }
 })
 
+// onMounted 里的调用可以移除或保留作为双重保险（注意避免重复）
 onMounted(() => {
-  fetchCategories()
+  // fetchCategories() // 已移至 onLoad 并等待
 })
 
+const categoryCo = importObject('wh-category-co')
+
 const fetchCategories = async () => {
-  const db = uniCloud.database()
-  const tenant_id = uni.getStorageSync('tenant_id')
+  // 弃用 clientDB，改用 cloud object 以确保权限和数据一致性
+  // const db = uniCloud.database()
+  // const tenant_id = uni.getStorageSync('tenant_id')
+
   try {
-    const res = await db.collection('wh_categories').where(`tenant_id == '${tenant_id}'`).get()
-    categories.value = res.result.data
+    console.log('[Edit] 开始加载分类列表...')
+    const res = await categoryCo.getCategoryList()
+
+    console.log('[Edit] 分类列表返回:', res)
+    if (res.code === 0) {
+      categories.value = res.data
+      console.log('[Edit] categories.value 更新为:', categories.value)
+    }
   } catch (e: any) {
     console.error('获取分类失败', e)
+    uni.showToast({ title: '加载分类失败', icon: 'none' })
   }
 }
 
@@ -184,9 +201,21 @@ const loadGoodsDetail = async () => {
       }
 
       // 设置分类名称
-      const cat = categories.value.find((c: any) => c._id === data.category_id)
-      if (cat) {
-        categoryName.value = cat.name
+      console.log('[Edit] 准备匹配分类, goods.category_id:', data.category_id)
+      console.log('[Edit] 当前可选分类列表:', categories.value)
+
+      if (data.category_id) {
+        const cat = categories.value.find((c: any) => c._id === data.category_id)
+        if (cat) {
+          console.log('[Edit] 匹配成功:', cat.name)
+          categoryName.value = cat.name
+        } else {
+          console.warn('[Edit] 未找到对应的分类ID:', data.category_id)
+          // 尝试降级显示（仅为了调试看到ID）
+          // categoryName.value = `未知分类 (${data.category_id})`
+        }
+      } else {
+        console.log('[Edit] 该商品未设置分类ID')
       }
     }
   } catch (e: any) {
