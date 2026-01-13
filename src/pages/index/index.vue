@@ -47,7 +47,7 @@ const goMerchant = () => {
   }
 
   // 直接进入工作台
-  uni.navigateTo({ url: '/pages/merchant/dashboard' })
+  uni.switchTab({ url: '/pages/merchant/dashboard' })
 }
 
 const goAdmin = () => {

@@ -93,6 +93,12 @@
       }
     },
     {
+      "path": "pages/client/orders",
+      "style": {
+        "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
       "path": "pages/admin/merchant/list",
       "style": {
         "navigationBarTitleText": "商户管理",
@@ -117,6 +123,30 @@
       }
     }
   ],
+  "tabBar": {
+    "color": "#7d7e80",
+    "selectedColor": "#1890ff",
+    "borderStyle": "white",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/merchant/dashboard",
+        "text": "工作台"
+      },
+      {
+        "pagePath": "pages/merchant/order/list",
+        "text": "订单"
+      },
+      {
+        "pagePath": "pages/merchant/goods/list",
+        "text": "商品"
+      },
+      {
+        "pagePath": "pages/merchant/customer/list",
+        "text": "客户"
+      }
+    ]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "乡货通",

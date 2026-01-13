@@ -6,7 +6,7 @@
 
     <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
     <view v-else-if="categories.length === 0" class="empty-box">
-      <u-empty mode="list" text="暂无分类"></u-empty>
+      <u-empty mode="list" icon="/static/empty/list.png" text="暂入分类"></u-empty>
     </view>
     <view v-else>
       <u-list>

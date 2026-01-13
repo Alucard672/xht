@@ -1,76 +1,82 @@
 <template>
-  <view class="merchant-page">
-    <view class="tabs-box">
+  <view class="order-list-container">
+    <u-sticky bg-color="#fff">
       <u-tabs
         :list="tabList"
         :current="currentTab"
-        line-color="#1890ff"
-        active-style="color: #1890ff; font-weight: bold;"
-        @click="tabClick"
+        active-color="#07c160"
+        line-color="#07c160"
+        @change="handleTabChange"
       ></u-tabs>
-    </view>
+    </u-sticky>
 
-    <view class="list-container">
-      <unicloud-db
-        ref="udb"
-        v-slot="{ data, loading, error, hasMore }"
-        collection="wh_orders"
-        :where="whereClause"
-        orderby="create_time desc"
-      >
-        <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
-        <view v-else-if="error" class="error-box">{{ error.message }}</view>
-        <view v-else class="card-list">
-          <view
-            v-for="order in data.length > 0 ? data : mockOrders"
-            :key="order._id"
-            class="card order-card"
-          >
-            <view class="card-header">
-              <text class="no">#{{ order.order_no.slice(-8) }}</text>
-              <u-tag
-                :text="getStatusText(order.status)"
-                :type="getStatusType(order.status)"
-                size="mini"
-              ></u-tag>
+    <view class="list-content">
+      <view v-if="loading && orders.length === 0" class="loading-state">
+        <u-loading-icon text="加载中..."></u-loading-icon>
+      </view>
+
+      <view v-else-if="orders.length === 0" class="empty-state">
+        <u-empty mode="order" icon="/static/empty/order.png" text="暂无订单"></u-empty>
+      </view>
+
+      <view v-else class="order-items">
+        <view v-for="order in orders" :key="order._id" class="order-card">
+          <view class="card-header">
+            <text class="order-no">单号: {{ order.order_no || order._id.slice(-8) }}</text>
+            <text :class="['status-txt', 'status-' + order.status]">{{
+              getStatusTxt(order.status)
+            }}</text>
+          </view>
+
+          <view class="card-body">
+            <view class="customer-info">
+              <u-icon name="account" size="16" color="#999"></u-icon>
+              <text class="name">{{ order.address?.name || '未知客户' }}</text>
+              <text class="mobile">{{ order.address?.mobile || '' }}</text>
+            </view>
+            <view v-if="order.address?.fullAddress" class="address-info">
+              <u-icon name="map" size="16" color="#999"></u-icon>
+              <text class="addr">{{ order.address.fullAddress }}</text>
             </view>
 
-            <view class="card-body">
-              <view class="customer">客户: {{ order.customer_name || '散客' }}</view>
-              <view class="items">
-                <view v-for="(item, idx) in order.items" :key="idx" class="item-line">
-                  {{ item.name }} x{{ item.countSmall || item.count
-                  }}{{ item.unitSmallName || item.unit }}
-                </view>
+            <view class="items-summary">
+              <view v-for="(item, idx) in order.items.slice(0, 3)" :key="idx" class="item-row">
+                <text class="item-name">{{ item.name }}</text>
+                <text class="item-qty">x{{ item.count }}{{ item.unit_name }}</text>
               </view>
-            </view>
-
-            <view class="card-footer">
-              <view class="time">{{ formatTime(order.create_time) }}</view>
-              <view class="right">
-                <text class="total">合计: ¥{{ (order.total_amount / 100).toFixed(2) }}</text>
-                <view class="btns">
-                  <u-button
-                    v-if="order.status === 'pending'"
-                    type="primary"
-                    size="mini"
-                    text="确认接单"
-                    @click="updateStatus(order._id, 'confirmed')"
-                  ></u-button>
-                  <u-button
-                    v-if="order.status === 'confirmed'"
-                    type="success"
-                    size="mini"
-                    text="确认送达"
-                    @click="updateStatus(order._id, 'completed')"
-                  ></u-button>
-                </view>
-              </view>
+              <view v-if="order.items.length > 3" class="more"
+                >等 {{ order.items.length }} 件商品...</view
+              >
             </view>
           </view>
-          <u-loadmore :status="data.length > 0 && hasMore ? 'loadmore' : 'nomore'" />
+
+          <view class="card-footer">
+            <view class="pay-info">
+              <text class="method">{{ order.payment_method === 'credit' ? '赊账' : '现结' }}</text>
+              <text class="amount"
+                >￥{{ priceHelper.format(order.total_amount || order.total_fee) }}</text
+              >
+            </view>
+
+            <view class="actions">
+              <u-button
+                v-if="order.status === 0"
+                type="primary"
+                size="small"
+                text="确认接单"
+                @click="updateStatus(order, 1)"
+              ></u-button>
+              <u-button
+                v-if="order.status === 1"
+                type="success"
+                size="small"
+                text="确认送达"
+                @click="updateStatus(order, 2)"
+              ></u-button>
+            </view>
+          </view>
         </view>
-      </unicloud-db>
+      </view>
     </view>
 
     <!-- 底部导航 -->
@@ -80,7 +86,7 @@
       :placeholder="true"
       :safe-area-inset-bottom="true"
       active-color="#1890ff"
-      @change="handleTabChange"
+      @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
       <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
@@ -91,144 +97,121 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { priceHelper } from '@/common/price-helper'
+import { importObject } from '@/utils/cloud'
 
-const tenant_id = uni.getStorageSync('tenant_id')
-const udb = ref(null)
-const currentTab = ref(0)
-
-const mockOrders = [
-  {
-    _id: 'o1',
-    order_no: 'ORD20250101001',
-    status: 'pending',
-    customer_name: '李老板',
-    create_time: Date.now() - 3600000,
-    total_amount: 5400,
-    items: [{ name: '农夫山泉', count: 2, unit: '箱' }]
-  },
-  {
-    _id: 'o2',
-    order_no: 'ORD20250101002',
-    status: 'confirmed',
-    customer_name: '张小店',
-    create_time: Date.now() - 7200000,
-    total_amount: 12000,
-    items: [{ name: '康师傅方便面', count: 2, unit: '箱' }]
-  },
-  {
-    _id: 'o3',
-    order_no: 'ORD20250101003',
-    status: 'completed',
-    customer_name: '王大妈',
-    create_time: Date.now() - 86400000,
-    total_amount: 3500,
-    items: [{ name: '雪碧', count: 1, unit: '箱' }]
-  },
-  {
-    _id: 'o4',
-    order_no: 'ORD20250101004',
-    status: 'pending',
-    customer_name: '赵记批发',
-    create_time: Date.now() - 1800000,
-    total_amount: 8500,
-    items: [{ name: '金龙鱼油', count: 1, unit: '桶' }]
-  }
-]
+const orderCo = importObject('wh-order-co')
 
 const tabList = [
-  { name: '全部', value: 'all' },
-  { name: '待接单', value: 'pending' },
-  { name: '待发货', value: 'confirmed' },
-  { name: '已完成', value: 'completed' }
+  { name: '全部', value: undefined },
+  { name: '待接单', value: 0 },
+  { name: '加工/配送', value: 1 },
+  { name: '已完成', value: 2 },
+  { name: '已取消', value: -1 }
 ]
 
-const whereClause = computed(() => {
-  let clause = `tenant_id == "${tenant_id}"`
-  const status = tabList[currentTab.value].value
-  if (status !== 'all') {
-    clause += ` && status == "${status}"`
-  }
-  return clause
+const currentTab = ref(0)
+const orders = ref<any[]>([])
+const loading = ref(false)
+
+onShow(() => {
+  uni.hideTabBar()
+  fetchOrders()
 })
 
-const tabClick = (index: number) => {
-  currentTab.value = index
+const handleTabChange = (item: any) => {
+  currentTab.value = tabList.findIndex(i => i.value === item.value)
+  fetchOrders()
 }
 
-const getStatusText = (status: string) => {
-  const map: any = {
-    pending: '待确认',
-    confirmed: '待发货',
-    completed: '已完成',
-    cancelled: '已取消'
-  }
-  return map[status] || status
-}
-
-const getStatusType = (status: string) => {
-  const map: any = { pending: 'error', confirmed: 'primary', completed: 'success' }
-  return map[status] || 'info'
-}
-
-const formatTime = (ts: number) => {
-  if (!ts) return ''
-  const d = new Date(ts)
-  return `${d.getMonth() + 1}-${d.getDate()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
-}
-
-const updateStatus = async (id: string, status: string) => {
+const fetchOrders = async () => {
+  loading.value = true
   try {
-    const orderCo = uniCloud.importObject('wh-order-co')
-    if (status === 'confirmed') {
-      await orderCo.confirmOrder(id)
-    } else if (status === 'completed') {
-      await orderCo.completeOrder(id)
+    const status = tabList[currentTab.value].value
+    const res: any = await orderCo.getOrderList({ status })
+    if (res.status === 0) {
+      orders.value = res.data
     }
-    uni.showToast({ title: '操作成功' })
-    // @ts-ignore
-    udb.value.refresh()
   } catch (e: any) {
-    uni.showToast({ title: e.msg || '操作失败', icon: 'none' })
+    uni.showToast({ title: e.message || '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
 }
 
-const handleTabChange = (index: number) => {
-  if (index === 1) return
+const updateStatus = async (order: any, newStatus: number) => {
+  const actionText = newStatus === 1 ? '确认接单？' : '确认送达并完成订单？'
+  uni.showModal({
+    title: '提示',
+    content: actionText,
+    success: async res => {
+      if (res.confirm) {
+        try {
+          let callRes: any
+          if (newStatus === 1) {
+            callRes = await orderCo.confirmOrder(order._id)
+          } else if (newStatus === 2) {
+            callRes = await orderCo.completeOrder(order._id)
+          }
+
+          if (callRes.status === 0) {
+            uni.showToast({ title: '操作成功', icon: 'success' })
+            fetchOrders()
+          } else {
+            uni.showToast({ title: callRes.message || '操作失败', icon: 'none' })
+          }
+        } catch (e: any) {
+          uni.showToast({ title: e.message || '操作异常', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+const getStatusTxt = (status: number) => {
+  switch (status) {
+    case 0:
+      return '待接单'
+    case 1:
+      return '加工/配送中'
+    case 2:
+      return '已完成'
+    case -1:
+      return '已取消'
+    default:
+      return '未知'
+  }
+}
+
+const handleModuleChange = (index: number) => {
   const paths = [
     '/pages/merchant/dashboard',
     '/pages/merchant/order/list',
     '/pages/merchant/goods/list',
     '/pages/merchant/customer/list'
   ]
-  uni.redirectTo({ url: paths[index] })
+  uni.switchTab({ url: paths[index] })
 }
 </script>
 
 <style lang="scss" scoped>
-.merchant-page {
+.order-list-container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 180rpx; // 预留 tabbar 与安全区
+  background-color: #f8f8f8;
 }
 
-.tabs-box {
+.list-content {
+  padding: 20rpx;
+}
+
+.order-card {
   background-color: #fff;
-  position: relative;
-  z-index: 10;
-}
-
-.list-container {
-  padding: 24rpx;
-}
-
-.card {
-  background-color: #ffffff;
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
 
   .card-header {
     display: flex;
@@ -237,24 +220,72 @@ const handleTabChange = (index: number) => {
     border-bottom: 1rpx solid #f5f5f5;
     padding-bottom: 16rpx;
     margin-bottom: 16rpx;
-    .no {
-      font-size: 24rpx;
+
+    .order-no {
+      font-size: 26rpx;
       color: #999;
+    }
+    .status-txt {
+      font-size: 26rpx;
+      font-weight: bold;
+      &.status-0 {
+        color: #ff9900;
+      }
+      &.status-1 {
+        color: #07c160;
+      }
+      &.status-2 {
+        color: #999;
+      }
+      &.status--1 {
+        color: #ff4d4f;
+      }
     }
   }
 
   .card-body {
-    .customer {
-      font-size: 30rpx;
-      font-weight: bold;
-      color: #333;
+    .customer-info,
+    .address-info {
+      display: flex;
+      align-items: center;
+      gap: 12rpx;
       margin-bottom: 12rpx;
-    }
-    .items {
-      .item-line {
+      .name {
+        font-size: 30rpx;
+        font-weight: bold;
+        color: #333;
+      }
+      .mobile {
         font-size: 26rpx;
         color: #666;
-        margin-bottom: 4rpx;
+      }
+      .addr {
+        font-size: 26rpx;
+        color: #666;
+        line-height: 1.4;
+      }
+    }
+
+    .items-summary {
+      background-color: #f9f9f9;
+      padding: 16rpx;
+      border-radius: 8rpx;
+      margin-top: 16rpx;
+      .item-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 26rpx;
+        color: #666;
+        margin-bottom: 8rpx;
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+      .more {
+        font-size: 24rpx;
+        color: #999;
+        text-align: center;
+        margin-top: 8rpx;
       }
     }
   }
@@ -264,27 +295,34 @@ const handleTabChange = (index: number) => {
     justify-content: space-between;
     align-items: center;
     margin-top: 24rpx;
-    padding-top: 16rpx;
+    padding-top: 24rpx;
     border-top: 1rpx solid #f5f5f5;
 
-    .time {
-      font-size: 24rpx;
-      color: #ccc;
-    }
-    .right {
-      display: flex;
-      align-items: center;
-      gap: 20rpx;
-      .total {
+    .pay-info {
+      .method {
+        font-size: 24rpx;
+        color: #999;
+        background-color: #f0f0f0;
+        padding: 4rpx 12rpx;
+        border-radius: 4rpx;
+        margin-right: 12rpx;
+      }
+      .amount {
         font-size: 32rpx;
-        color: #ff6b00;
         font-weight: bold;
+        color: #ff4d4f;
       }
-      .btns {
-        display: flex;
-        gap: 12rpx;
-      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 16rpx;
     }
   }
+}
+
+.loading-state,
+.empty-state {
+  padding-top: 200rpx;
 }
 </style>

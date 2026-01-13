@@ -10,7 +10,6 @@ module.exports = {
     let uid
 
     if (!token) {
-      // 下单接口可能允许匿名或由 H5 内部逻辑处理，但此处强制校验以确保 tenant_id
       throw new Error('未登录')
     }
 
@@ -39,70 +38,67 @@ module.exports = {
 
   /**
    * 创建订单
-   * @param {Object} data { items, payment_method, remark, address_info }
    */
-  async createOrder(data) {
-    const { items, payment_method = 'cash', remark = '', address_info = {} } = data
+  createOrder: async function (data) {
+    const { items, payment_method = 'cash', remark = '', address = {} } = data || {}
 
     if (!items || items.length === 0) {
-      return { code: 400, msg: '购物车不能为空' }
+      return { status: 400, message: '购物车不能为空' }
     }
 
     const db = uniCloud.database()
-    const dbCmd = db.command
 
-    // 计算金额并构建订单项
+    // 计算金额
     let total_amount = 0
     const orderItems = []
 
     for (const item of items) {
-      // 实际开发中应从数据库校验价格，此处先透传前端计算结果以保证流程通畅
-      total_amount += item.priceSmall * item.countSmall
-      if (item.countBig && item.priceBig) {
-        total_amount += item.priceBig * item.countBig
-      }
+      // 这里的 price 是后端校验的重点，目前简化处理
+      const itemTotal = (item.price || 0) * (item.count || 0)
+      total_amount += itemTotal
 
       orderItems.push({
-        goods_id: item._id,
+        goods_id: item.goods_id,
         name: item.name,
-        countSmall: item.countSmall || 0,
-        countBig: item.countBig || 0,
-        unitSmallName: item.unitSmallName,
-        unitBigName: item.unitBigName,
-        priceSmall: item.priceSmall,
-        priceBig: item.priceBig || 0
+        count: item.count,
+        unit_name: item.unit_name,
+        price: item.price
       })
     }
 
     const orderNo = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`
 
-    const res = await db.collection('wh_orders').add({
-      tenant_id: this.tenant_id,
-      customer_id: this.current_uid, // C端用户ID
-      order_no: orderNo,
-      items: orderItems,
-      total_amount,
-      status: 0, // 待确认
-      payment_method,
-      remark,
-      address_info,
-      create_time: Date.now()
-    })
+    try {
+      const res = await db.collection('wh_orders').add({
+        tenant_id: this.tenant_id,
+        customer_id: data.customer_id || this.current_uid,
+        order_no: orderNo,
+        items: orderItems,
+        total_amount: total_amount,
+        status: 0,
+        payment_method,
+        remark,
+        address,
+        create_time: Date.now()
+      })
 
-    return {
-      code: 0,
-      msg: '下单成功',
-      data: {
-        _id: res.id,
-        order_no: orderNo
+      return {
+        status: 0,
+        message: '下单成功',
+        data: {
+          _id: res.id,
+          order_no: orderNo
+        }
       }
+    } catch (e) {
+      return { status: 500, message: e.message }
     }
   },
 
   /**
    * 获取订单列表
    */
-  async getOrderList(params = {}) {
+  getOrderList: async function (params = {}) {
     const { status, page = 1, limit = 20 } = params
     const db = uniCloud.database()
 
@@ -111,46 +107,52 @@ module.exports = {
       where.status = parseInt(status)
     }
 
-    const countRes = await db.collection('wh_orders').where(where).count()
-    const skip = (page - 1) * limit
-    const listRes = await db
-      .collection('wh_orders')
-      .where(where)
-      .orderBy('create_time', 'desc')
-      .skip(skip)
-      .limit(limit)
-      .get()
+    try {
+      const countRes = await db.collection('wh_orders').where(where).count()
+      const skip = (page - 1) * limit
+      const listRes = await db
+        .collection('wh_orders')
+        .where(where)
+        .orderBy('create_time', 'desc')
+        .skip(skip)
+        .limit(limit)
+        .get()
 
-    return {
-      code: 0,
-      data: {
-        list: listRes.data,
+      return {
+        status: 0,
+        data: listRes.data,
         total: countRes.total
       }
+    } catch (e) {
+      return { status: 500, message: e.message }
     }
   },
 
   /**
    * 商家确认接单
    */
-  async confirmOrder(orderId) {
+  confirmOrder: async function (orderId) {
     const db = uniCloud.database()
     const orderRes = await db.collection('wh_orders').doc(orderId).get()
-    if (!orderRes.data || orderRes.data[0].tenant_id !== this.tenant_id) {
-      return { code: 403, msg: '无权操作' }
+    if (
+      !orderRes.data ||
+      orderRes.data.length === 0 ||
+      orderRes.data[0].tenant_id !== this.tenant_id
+    ) {
+      return { status: 403, message: '无权操作' }
     }
 
     await db.collection('wh_orders').doc(orderId).update({
       status: 1
     })
 
-    return { code: 0, msg: '已接单' }
+    return { status: 0, message: '已接单' }
   },
 
   /**
    * 商家确认送达并完成订单
    */
-  async completeOrder(orderId) {
+  completeOrder: async function (orderId) {
     const db = uniCloud.database()
     const dbCmd = db.command
 
@@ -158,61 +160,64 @@ module.exports = {
     const order = orderRes.data[0]
 
     if (!order || order.tenant_id !== this.tenant_id) {
-      return { code: 404, msg: '订单不存在' }
+      return { status: 404, message: '订单不存在' }
     }
 
     if (order.status === 2) {
-      return { code: 400, msg: '订单已完成' }
+      return { status: 400, message: '订单已完成' }
+    }
+
+    let targetCustomer = null
+    if (order.payment_method === 'credit') {
+      const customerId = order.customer_id
+      // 首先尝试通过 _id 查找
+      let customerRes = await db.collection('wh_customers').doc(customerId).get()
+      if (customerRes.data && customerRes.data.length > 0) {
+        targetCustomer = customerRes.data[0]
+      } else {
+        // 尝试通过 user_uid 查找
+        customerRes = await db
+          .collection('wh_customers')
+          .where({ user_uid: customerId, tenant_id: this.tenant_id })
+          .get()
+        if (customerRes.data && customerRes.data.length > 0) {
+          targetCustomer = customerRes.data[0]
+        }
+      }
     }
 
     const transaction = await db.startTransaction()
     try {
-      // 1. 更新订单状态
       await transaction.collection('wh_orders').doc(orderId).update({
         status: 2,
         complete_time: Date.now()
       })
 
-      // 2. 如果是赊账支付，处理账务
-      if (order.payment_method === 'credit') {
-        const customerId = order.customer_id
-
-        // 我们需要找到对应的客户记录。通常 C端用户关联一个客户记录。
-        // 这里简化逻辑：如果订单里有 customer_id (UID)，尝试匹配 wh_customers 表里的 user_uid
-        const customerLookup = await transaction
+      if (order.payment_method === 'credit' && targetCustomer) {
+        await transaction
           .collection('wh_customers')
-          .where({ user_uid: customerId, tenant_id: this.tenant_id })
-          .get()
-
-        if (customerLookup.data && customerLookup.data.length > 0) {
-          const customer = customerLookup.data[0]
-          // 更新欠款
-          await transaction
-            .collection('wh_customers')
-            .doc(customer._id)
-            .update({
-              total_debt: dbCmd.inc(order.total_amount),
-              last_trade_time: Date.now()
-            })
-
-          // 记录流水
-          await transaction.collection('wh_debt_logs').add({
-            tenant_id: this.tenant_id,
-            customer_id: customer._id,
-            amount: order.total_amount,
-            type: 'order',
-            source: orderId,
-            remark: `订单欠款: ${order.order_no}`,
-            create_time: Date.now()
+          .doc(targetCustomer._id)
+          .update({
+            total_debt: dbCmd.inc(order.total_amount),
+            last_trade_time: Date.now()
           })
-        }
+
+        await transaction.collection('wh_debt_logs').add({
+          tenant_id: this.tenant_id,
+          customer_id: targetCustomer._id,
+          amount: order.total_amount,
+          type: 'order',
+          source: orderId,
+          remark: `订单欠款: ${order.order_no}`,
+          create_time: Date.now()
+        })
       }
 
       await transaction.commit()
-      return { code: 0, msg: '订单已完成' }
+      return { status: 0, message: '订单已完成' }
     } catch (e) {
       await transaction.rollback()
-      return { code: 500, msg: e.message }
+      return { status: 500, message: e.message }
     }
   }
 }

@@ -13,7 +13,7 @@
     <view class="list-content">
       <u-list @scrolltolower="loadMore">
         <u-list-item v-for="item in list" :key="item._id">
-          <view class="customer-item card-box" hover-class="item-hover" @click="goDetail(item._id)">
+          <view class="customer-item card-box" hover-class="item-hover" @click="goDetail(item)">
             <view class="left">
               <view class="name-row">
                 <text class="name">{{ item.alias }}</text>
@@ -39,18 +39,38 @@
       </u-list>
 
       <u-loadmore :status="loadStatus" @loadmore="loadMore" />
-      <u-empty v-if="list.length === 0 && !loading" mode="list" text="暂无客户" />
+      <u-empty
+        v-if="list.length === 0 && !loading"
+        mode="list"
+        icon="/static/empty/list.png"
+        text="暂无客户"
+      />
     </view>
 
     <view class="add-btn" @click="navTo('/pages/merchant/customer/edit')">
       <u-icon name="plus" color="#fff" size="24"></u-icon>
     </view>
+
+    <!-- 底部导航 -->
+    <u-tabbar
+      :value="3"
+      :fixed="true"
+      :placeholder="true"
+      :safe-area-inset-bottom="true"
+      active-color="#1890ff"
+      @change="handleModuleChange"
+    >
+      <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
+      <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
+      <u-tabbar-item text="商品" icon="bag"></u-tabbar-item>
+      <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
+    </u-tabbar>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onLoad } from '@dcloudio/uni-app'
 import { importObject } from '@/utils/cloud'
 
 const customerCo = importObject('wh-customer-co')
@@ -59,6 +79,7 @@ const loading = ref(false)
 const keyword = ref('')
 const page = ref(1)
 const loadStatus = ref('loadmore')
+const isPicker = ref(false)
 
 const loadData = async (reset = false) => {
   if (loading.value) return
@@ -103,8 +124,13 @@ const loadMore = () => {
   }
 }
 
-const goDetail = (id: string) => {
-  uni.navigateTo({ url: `/pages/merchant/customer/detail?id=${id}` })
+const goDetail = (item: any) => {
+  if (isPicker.value) {
+    uni.$emit('select-customer', item)
+    uni.navigateBack()
+    return
+  }
+  uni.navigateTo({ url: `/pages/merchant/customer/detail?id=${item._id}` })
 }
 
 const navTo = (url: string) => {
@@ -117,15 +143,32 @@ const formatDate = (ts: any) => {
 }
 
 onShow(() => {
+  uni.hideTabBar()
   loadData(true)
 })
+
+onLoad((options: any) => {
+  if (options.mode === 'picker') {
+    isPicker.value = true
+  }
+})
+
+const handleModuleChange = (index: number) => {
+  const paths = [
+    '/pages/merchant/dashboard',
+    '/pages/merchant/order/list',
+    '/pages/merchant/goods/list',
+    '/pages/merchant/customer/list'
+  ]
+  uni.switchTab({ url: paths[index] })
+}
 </script>
 
 <style lang="scss" scoped>
 .customer-list-container {
   background-color: #f5f5f5;
   min-height: 100vh;
-  padding: 20rpx 0;
+  padding: 20rpx 0 180rpx;
 }
 
 .search-bar {

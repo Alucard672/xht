@@ -22,7 +22,7 @@
     <view class="list-container">
       <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
       <view v-else-if="goodsList.length === 0" class="empty-box">
-        <u-empty mode="list" text="暂无商品"></u-empty>
+        <u-empty mode="list" icon="/static/empty/list.png" text="暂无商品"></u-empty>
       </view>
       <view v-else class="card-list">
         <view v-for="item in goodsList" :key="item._id" class="card goods-card">
@@ -59,18 +59,17 @@
       </view>
     </view>
 
-    <!-- 底部导航 -->
     <u-tabbar
       :value="2"
       :fixed="true"
       :placeholder="true"
       :safe-area-inset-bottom="true"
       active-color="#1890ff"
-      @change="handleTabChange"
+      @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
       <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
-      <u-tabbar-item text="商品" icon="bag"></u-tabbar-item>
+      <u-tabbar-item text="商品" icon="bag-fill"></u-tabbar-item>
       <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
     </u-tabbar>
   </view>
@@ -132,15 +131,14 @@ const navTo = (url: string) => {
   uni.navigateTo({ url })
 }
 
-const handleTabChange = (index: number) => {
-  if (index === 2) return
+const handleModuleChange = (index: number) => {
   const paths = [
     '/pages/merchant/dashboard',
     '/pages/merchant/order/list',
     '/pages/merchant/goods/list',
     '/pages/merchant/customer/list'
   ]
-  uni.redirectTo({ url: paths[index] })
+  uni.switchTab({ url: paths[index] })
 }
 
 onMounted(() => {
@@ -148,6 +146,7 @@ onMounted(() => {
 })
 
 onShow(() => {
+  uni.hideTabBar()
   loadGoodsList()
 })
 </script>

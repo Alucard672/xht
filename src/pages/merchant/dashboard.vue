@@ -34,7 +34,7 @@
 
     <!-- 快速操作 -->
     <view class="quick-actions card-box">
-      <view class="action-item" @click="navTo('/pages/client/shop')">
+      <view class="action-item" @click="navTo('/pages/client/shop?mode=agent')">
         <view class="icon-box blue"><u-icon name="plus" color="#1890ff" size="24"></u-icon></view>
         <text>快速开单</text>
       </view>
@@ -82,7 +82,7 @@
       <u-empty
         v-if="pendingOrders.length === 0"
         mode="order"
-        icon="http://cdn.uviewui.com/uview/empty/order.png"
+        icon="/static/empty/order.png"
         text="暂无待处理订单"
       ></u-empty>
     </view>
@@ -131,7 +131,7 @@
         v-if="stockAlerts.length === 0"
         mode="list"
         text="库存充足"
-        icon="http://cdn.uviewui.com/uview/empty/list.png"
+        icon="/static/empty/list.png"
       ></u-empty>
     </view>
 
@@ -142,9 +142,9 @@
       :placeholder="true"
       :safe-area-inset-bottom="true"
       active-color="#1890ff"
-      @change="handleTabChange"
+      @change="handleModuleChange"
     >
-      <u-tabbar-item text="工作台" icon="home-fill"></u-tabbar-item>
+      <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
       <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
       <u-tabbar-item text="商品" icon="bag"></u-tabbar-item>
       <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
@@ -161,52 +161,20 @@ const merchantCo = uniCloud.importObject('wh-merchant-co')
 const shopName = ref('加载中...')
 const todayStr = ref(new Date().toISOString().split('T')[0])
 const stats = ref({
-  todayOrderCount: 23,
-  todayRevenue: 850000,
-  pendingOrderCount: 12,
-  unsettledOrderCount: 5
+  todayOrderCount: 0,
+  todayRevenue: 0,
+  pendingOrderCount: 0,
+  unsettledOrderCount: 0
 })
-const pendingOrders = ref<any[]>([
-  {
-    _id: '1',
-    order_no: '20250101001',
-    customer_name: '李老板',
-    status: 'pending',
-    create_time: Date.now() - 300000,
-    total_amount: 10800,
-    items: [{ name: '农夫山泉', countSmall: 2, unitSmallName: '箱' }]
-  },
-  {
-    _id: '2',
-    order_no: '20250101002',
-    customer_name: '张小店',
-    status: 'confirmed',
-    create_time: Date.now() - 900000,
-    total_amount: 18000,
-    items: [{ name: '可口可乐', countSmall: 3, unitSmallName: '箱' }]
-  },
-  {
-    _id: '3',
-    order_no: '20250101003',
-    customer_name: '王便利店',
-    status: 'confirmed',
-    create_time: Date.now() - 3600000,
-    total_amount: 23500,
-    items: [{ name: '金龙鱼油', countSmall: 2, unitSmallName: '桶' }]
-  }
-])
-const stockAlerts = ref<any[]>([
-  { _id: 'g1', name: '农夫山泉 550ml', stock: 5, unit_small: '瓶', image: '' },
-  { _id: 'g2', name: '康师傅红烧牛肉面', stock: 3, unit_small: '包', image: '' },
-  { _id: 'g3', name: '旺旺雪饼', stock: 8, unit_small: '包', image: '' }
-])
+const pendingOrders = ref<any[]>([])
+const stockAlerts = ref<any[]>([])
 
 const loadData = async () => {
   shopName.value = '王记粮油批发'
   // 保持异步调用，但不覆盖模拟数据（除非接口报错）
   try {
     const res = await merchantCo.getDashboardStats()
-    if (res.code === 0 && res.data.stats.todayOrderCount > 0) {
+    if (res.code === 0) {
       stats.value = res.data.stats
       pendingOrders.value = res.data.pendingOrders
       stockAlerts.value = res.data.stockAlerts
@@ -244,18 +212,18 @@ const showShopCode = () => {
   uni.showToast({ title: '演示功能', icon: 'none' })
 }
 
-const handleTabChange = (index: number) => {
-  if (index === 0) return
+const handleModuleChange = (index: number) => {
   const paths = [
     '/pages/merchant/dashboard',
     '/pages/merchant/order/list',
     '/pages/merchant/goods/list',
     '/pages/merchant/customer/list'
   ]
-  uni.redirectTo({ url: paths[index] })
+  uni.switchTab({ url: paths[index] })
 }
 
 onShow(() => {
+  uni.hideTabBar()
   loadData()
 })
 </script>

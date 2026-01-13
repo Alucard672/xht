@@ -1,6 +1,6 @@
 <template>
   <view class="shop-container">
-    <view class="shop-header">
+    <view v-if="mode !== 'agent'" class="shop-header">
       <view class="top-row">
         <text class="shop-name">{{ shopInfo?.name || '商家店铺' }}</text>
         <u-icon name="arrow-right" color="#fff" size="16"></u-icon>
@@ -47,7 +47,7 @@
         >
           <view v-if="error" class="error">{{ error.message }}</view>
           <view v-else class="goods-grid">
-            <view v-for="item in buildGoodsList(data)" :key="item._id" class="goods-card">
+            <view v-for="item in data" :key="item._id" class="goods-card">
               <image
                 :src="item.img_url || '/static/logo.png'"
                 mode="aspectFill"
@@ -106,16 +106,30 @@
             <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
             <view class="item-info">
               <view class="item-name">{{ item.name }}</view>
-              <view class="item-price"
-                >¥{{ priceHelper.format(item.priceSmall) }}/{{ item.unitSmallName }}</view
-              >
-            </view>
-            <view class="item-stepper">
-              <u-number-box
-                v-model="item.countSmall"
-                :min="0"
-                @change="onCartNumChange(item)"
-              ></u-number-box>
+              <view class="unit-controls">
+                <!-- 大单位控制 -->
+                <view v-if="item.unitBigName" class="unit-row">
+                  <text class="u-label">{{ item.unitBigName }}:</text>
+                  <u-number-box
+                    v-model="item.countBig"
+                    :min="0"
+                    size="24"
+                    @change="onCartNumChange(item)"
+                  ></u-number-box>
+                  <text class="u-price">¥{{ priceHelper.format(item.priceBig) }}</text>
+                </view>
+                <!-- 小单位控制 -->
+                <view class="unit-row">
+                  <text class="u-label">{{ item.unitSmallName }}:</text>
+                  <u-number-box
+                    v-model="item.countSmall"
+                    :min="0"
+                    size="24"
+                    @change="onCartNumChange(item)"
+                  ></u-number-box>
+                  <text class="u-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
+                </view>
+              </view>
             </view>
           </view>
           <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
@@ -189,6 +203,50 @@
       <view class="checkout-btn" @click.stop="goToCheckout">去结算</view>
     </view>
 
+    <!-- 单位选择弹窗 -->
+    <u-popup :show="showUnitPopup" mode="bottom" round="20" @close="showUnitPopup = false">
+      <view v-if="activeItem" class="unit-popup-content">
+        <view class="popup-header">
+          <image :src="activeItem.img_url || '/static/logo.png'" class="p-img"></image>
+          <view class="p-info">
+            <view class="p-name">{{ activeItem.name }}</view>
+            <view class="p-price"
+              >已选：{{ tempCartItem.countBig || 0 }}{{ activeItem.unit_big?.name || '' }}
+              {{ tempCartItem.countSmall || 0 }}{{ activeItem.unit_small?.name }}</view
+            >
+          </view>
+        </view>
+
+        <view class="popup-body">
+          <view v-if="activeItem.unit_big?.name" class="unit-select-item">
+            <view class="u-left">
+              <text class="u-name">{{ activeItem.unit_big.name }}</text>
+              <text class="u-sub"
+                >¥{{ priceHelper.format(activeItem.unit_big.price) }} /
+                {{ activeItem.unit_big.name }}</text
+              >
+            </view>
+            <u-number-box v-model="tempCartItem.countBig" :min="0"></u-number-box>
+          </view>
+
+          <view class="unit-select-item">
+            <view class="u-left">
+              <text class="u-name">{{ activeItem.unit_small.name }}</text>
+              <text class="u-sub"
+                >¥{{ priceHelper.format(activeItem.unit_small.price) }} /
+                {{ activeItem.unit_small.name }}</text
+              >
+            </view>
+            <u-number-box v-model="tempCartItem.countSmall" :min="0"></u-number-box>
+          </view>
+        </view>
+
+        <view class="popup-footer">
+          <u-button type="primary" text="加入购物车" @click="confirmAddToCart"></u-button>
+        </view>
+      </view>
+    </u-popup>
+
     <view class="bottom-tabbar">
       <view :class="['tab-item', currentTab === 0 ? 'active' : '']" @click="handleTabChange(0)">
         <u-icon name="home" :color="currentTab === 0 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
@@ -202,7 +260,11 @@
         ></u-icon>
         <text class="txt">购物车</text>
       </view>
-      <view :class="['tab-item', currentTab === 2 ? 'active' : '']" @click="handleTabChange(2)">
+      <view
+        v-if="mode !== 'agent'"
+        :class="['tab-item', currentTab === 2 ? 'active' : '']"
+        @click="handleTabChange(2)"
+      >
         <u-icon name="account" :color="currentTab === 2 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
         <text class="txt">我的</text>
       </view>
@@ -215,6 +277,7 @@ import { ref, computed, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 
+const mode = ref('')
 const tenant_id = ref('')
 const shopInfo = ref<any>(null)
 const udb = ref<any>(null)
@@ -227,179 +290,27 @@ const userInfo = ref({
   total_debt: 125000 // 1250.00
 })
 
-const categories = ref([
-  { _id: 'all', name: '全部商品' },
-  { _id: 'cat1', name: '酒水饮料' },
-  { _id: 'cat2', name: '粮油副食' },
-  { _id: 'cat3', name: '方便速食' },
-  { _id: 'cat4', name: '日用百货' }
-])
+const categories = ref([{ _id: 'all', name: '全部商品' }])
 
-// 保持你的 mock 数据逻辑不变
-const mockGoods = [
-  {
-    _id: 'g1',
-    name: '农夫山泉 550ml',
-    unit_small: { name: '瓶', price: 100 },
-    unit_big: { name: '箱', price: 2400 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g2',
-    name: '康师傅红烧牛肉面',
-    unit_small: { name: '包', price: 300 },
-    unit_big: { name: '箱', price: 6000 },
-    unit_rate: 20,
-    img_url: ''
-  },
-  {
-    _id: 'g3',
-    name: '可口可乐 330ml',
-    unit_small: { name: '瓶', price: 150 },
-    unit_big: { name: '箱', price: 3600 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g4',
-    name: '统一冰红茶 500ml',
-    unit_small: { name: '瓶', price: 150 },
-    unit_big: { name: '箱', price: 3000 },
-    unit_rate: 20,
-    img_url: ''
-  },
-  {
-    _id: 'g5',
-    name: '旺旺雪饼',
-    unit_small: { name: '包', price: 450 },
-    unit_big: { name: '箱', price: 4500 },
-    unit_rate: 10,
-    img_url: ''
-  },
-  {
-    _id: 'g6',
-    name: '百岁山矿泉水',
-    unit_small: { name: '瓶', price: 200 },
-    unit_big: { name: '箱', price: 4800 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g7',
-    name: '奥利奥饼干',
-    unit_small: { name: '包', price: 500 },
-    unit_big: { name: '箱', price: 6000 },
-    unit_rate: 12,
-    img_url: ''
-  },
-  {
-    _id: 'g8',
-    name: '乐事薯片 70g',
-    unit_small: { name: '包', price: 600 },
-    unit_big: { name: '箱', price: 7200 },
-    unit_rate: 12,
-    img_url: ''
-  },
-  {
-    _id: 'g9',
-    name: '怡宝纯净水 555ml',
-    unit_small: { name: '瓶', price: 120 },
-    unit_big: { name: '箱', price: 2880 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g10',
-    name: '脉动 600ml',
-    unit_small: { name: '瓶', price: 350 },
-    unit_big: { name: '箱', price: 8400 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g11',
-    name: '金龙鱼食用油 5L',
-    unit_small: { name: '桶', price: 6580 },
-    unit_big: { name: '箱', price: 13160 },
-    unit_rate: 2,
-    img_url: ''
-  },
-  {
-    _id: 'g12',
-    name: '蒙牛纯甄 200g',
-    unit_small: { name: '盒', price: 180 },
-    unit_big: { name: '箱', price: 4320 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g13',
-    name: '农心辛拉面 120g',
-    unit_small: { name: '包', price: 450 },
-    unit_big: { name: '箱', price: 5400 },
-    unit_rate: 12,
-    img_url: ''
-  },
-  {
-    _id: 'g14',
-    name: '达能酸牛奶 200ml',
-    unit_small: { name: '瓶', price: 260 },
-    unit_big: { name: '箱', price: 6240 },
-    unit_rate: 24,
-    img_url: ''
-  },
-  {
-    _id: 'g15',
-    name: '可比克薯片 70g',
-    unit_small: { name: '包', price: 550 },
-    unit_big: { name: '箱', price: 6600 },
-    unit_rate: 12,
-    img_url: ''
-  },
-  {
-    _id: 'g16',
-    name: '崂山可乐 500ml',
-    unit_small: { name: '瓶', price: 220 },
-    unit_big: { name: '箱', price: 5280 },
-    unit_rate: 24,
-    img_url: ''
-  }
-]
-
-const cart = reactive<any>({
-  g1: {
-    _id: 'g1',
-    name: '农夫山泉 550ml',
-    priceSmall: 100,
-    unitSmallName: '瓶',
-    countSmall: 5,
-    img_url: ''
-  },
-  g2: {
-    _id: 'g2',
-    name: '康师傅红烧牛肉面',
-    priceSmall: 300,
-    unitSmallName: '包',
-    countSmall: 2,
-    img_url: ''
-  },
-  g6: {
-    _id: 'g6',
-    name: '百岁山矿泉水',
-    priceSmall: 200,
-    unitSmallName: '瓶',
-    countSmall: 1,
-    img_url: ''
-  }
-})
+const cart = reactive<any>({})
 const showCartPopup = ref(false)
 
+const showUnitPopup = ref(false)
+const activeItem = ref<any>(null)
+const tempCartItem = reactive<any>({
+  countBig: 0,
+  countSmall: 0
+})
+
 onLoad(async options => {
+  if (options?.mode) {
+    mode.value = options.mode
+  }
   if (options?.tenant_id) {
     tenant_id.value = options.tenant_id
   } else {
-    tenant_id.value = 'demo-tenant-id'
+    // 尝试从存储或通过其他方式获取
+    tenant_id.value = uni.getStorageSync('tenant_id') || 'demo-tenant-id'
   }
   fetchShopInfo()
   fetchCategories()
@@ -435,39 +346,55 @@ const whereClause = computed(() => {
   return clause
 })
 
-const buildGoodsList = (data: any[]) => {
-  const base = Array.isArray(data) ? data.slice() : []
-  const ids = new Set(base.map((i: any) => i?._id).filter(Boolean))
-  for (const g of mockGoods) {
-    if (!ids.has(g._id)) base.push(g)
-    if (base.length >= 10) break
+const addToCart = (item: any) => {
+  activeItem.value = item
+  const existing = cart[item._id]
+  if (existing) {
+    tempCartItem.countBig = existing.countBig || 0
+    tempCartItem.countSmall = existing.countSmall || 0
+  } else {
+    tempCartItem.countBig = 0
+    tempCartItem.countSmall = 0
   }
-  return base
+  showUnitPopup.value = true
 }
 
-const addToCart = (item: any) => {
-  if (!cart[item._id]) {
+const confirmAddToCart = () => {
+  const item = activeItem.value
+  if (tempCartItem.countBig === 0 && tempCartItem.countSmall === 0) {
+    delete cart[item._id]
+  } else {
     cart[item._id] = {
       _id: item._id,
       name: item.name,
-      priceSmall: item.unit_small.price,
+      img_url: item.img_url,
       unitSmallName: item.unit_small.name,
-      countSmall: 0
+      priceSmall: item.unit_small.price,
+      countSmall: tempCartItem.countSmall,
+      unitBigName: item.unit_big?.name,
+      priceBig: item.unit_big?.price,
+      countBig: tempCartItem.countBig
     }
   }
-  cart[item._id].countSmall++
-  uni.showToast({ title: '已加入', icon: 'none' })
+  showUnitPopup.value = false
+  uni.showToast({ title: '已更新购物车', icon: 'none' })
 }
 
 const cartTotalCount = computed(() => {
-  return Object.values(cart).reduce((total: number, item: any) => total + item.countSmall, 0)
+  return Object.values(cart).reduce(
+    (total: number, item: any) => total + (item.countSmall || 0) + (item.countBig || 0),
+    0
+  )
 })
 
 const cartTotalAmount = computed(() => {
-  return Object.values(cart).reduce(
-    (total: number, item: any) => total + item.priceSmall * item.countSmall,
-    0
-  )
+  return Object.values(cart).reduce((total: number, item: any) => {
+    let sum = total + item.priceSmall * (item.countSmall || 0)
+    if (item.countBig && item.priceBig) {
+      sum += item.priceBig * item.countBig
+    }
+    return sum
+  }, 0)
 })
 
 const bottomSpaceHeight = computed(() => {
@@ -479,7 +406,7 @@ const bottomSpaceHeight = computed(() => {
 const goToCheckout = () => {
   if (cartTotalCount.value === 0) return
   uni.setStorageSync('current_cart', JSON.stringify(Object.values(cart)))
-  uni.navigateTo({ url: `/pages/client/checkout?tenant_id=${tenant_id.value}` })
+  uni.navigateTo({ url: `/pages/client/checkout?tenant_id=${tenant_id.value}&mode=${mode.value}` })
 }
 
 const clearCart = () => {
@@ -487,7 +414,7 @@ const clearCart = () => {
 }
 
 const onCartNumChange = (item: any) => {
-  if (item.countSmall <= 0) {
+  if (item.countSmall <= 0 && (item.countBig || 0) <= 0) {
     delete cart[item._id]
   }
 }
@@ -508,7 +435,7 @@ const logout = () => {
   uni.showModal({
     title: '提示',
     content: '确定要退出登录吗？',
-    success: res => {
+    success: (res: any) => {
       if (res.confirm) {
         uni.clearStorageSync()
         uni.reLaunch({ url: '/pages/index/index' })
