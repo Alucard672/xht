@@ -94,9 +94,9 @@ const selectedCustomer = ref<any>(null)
 const tenant_id = ref('')
 const cartItems = ref<any[]>([])
 const address = ref<any>({
-  name: '王大锤',
-  mobile: '13812345678',
-  fullAddress: '浙江省杭州市西湖区文三路 100 号王记超市'
+  name: '',
+  mobile: '',
+  fullAddress: ''
 })
 const paymentMethod = ref('cash')
 const remark = ref('')
@@ -172,13 +172,22 @@ const submitOrder = async () => {
       })
       .flat()
 
+    let finalAddress = address.value
+    if (mode.value === 'agent' && selectedCustomer.value) {
+      finalAddress = {
+        name: selectedCustomer.value.alias,
+        mobile: selectedCustomer.value.phone || '',
+        fullAddress: selectedCustomer.value.address || selectedCustomer.value.remark || ''
+      }
+    }
+
     const res: any = await orderCo.createOrder({
       tenant_id: tenant_id.value,
       items,
       total_amount: totalAmount.value,
       payment_method: paymentMethod.value,
       remark: remark.value,
-      address: address.value,
+      address: finalAddress,
       customer_id: selectedCustomer.value?._id // 如果是代客下单，传入选中的客户ID
     })
 

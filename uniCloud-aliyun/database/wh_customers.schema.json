@@ -38,10 +38,14 @@
       "description": "单位：分。正数表示客户欠商家钱",
       "defaultValue": 0
     },
+    "address": {
+      "bsonType": "string",
+      "title": "收货地址",
+      "trim": "both"
+    },
     "last_trade_time": {
       "bsonType": "timestamp",
       "title": "最后交易时间"
     }
   }
 }
-

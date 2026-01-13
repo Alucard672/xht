@@ -14,6 +14,10 @@
         />
       </u-form-item>
 
+      <u-form-item label="收货地址" prop="address" border-bottom>
+        <u-input v-model="form.address" placeholder="请输入详细地址" border="none" />
+      </u-form-item>
+
       <u-form-item label="备注信息" prop="remark" border-bottom>
         <u-textarea
           v-model="form.remark"
@@ -49,6 +53,7 @@ const customer_id = ref('')
 const form = reactive({
   alias: '',
   phone: '',
+  address: '',
   remark: ''
 })
 
@@ -67,6 +72,7 @@ const loadDetail = async () => {
       const info = res.data.info
       form.alias = info.alias
       form.phone = info.phone || ''
+      form.address = info.address || ''
       form.remark = info.remark || ''
     }
   } catch (e) {

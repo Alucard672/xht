@@ -145,6 +145,7 @@ module.exports = {
       tenant_id: this.tenant_id,
       alias,
       phone,
+      address: data.address || '',
       remark: remark || '',
       total_debt: 0,
       create_time: Date.now()
@@ -176,11 +177,15 @@ module.exports = {
       return { code: 404, msg: '客户不存在' }
     }
 
-    await db.collection('wh_customers').doc(id).update({
-      alias,
-      phone,
-      remark
-    })
+    await db
+      .collection('wh_customers')
+      .doc(id)
+      .update({
+        alias,
+        phone,
+        address: data.address || '',
+        remark
+      })
 
     return { code: 0, msg: '保存成功' }
   },
