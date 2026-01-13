@@ -1,247 +1,215 @@
 <template>
-  <view class="merchant-page">
-    <view class="stats-bar">
-      <view class="item">
-        <text class="label">客户总数</text>
-        <text class="val">{{ totalCount }}</text>
-      </view>
-      <view class="item">
-        <text class="label">合计欠款</text>
-        <text class="val warn">¥{{ (totalDebt / 100).toFixed(2) }}</text>
-      </view>
+  <view class="customer-list-container">
+    <view class="search-bar">
+      <u-search
+        v-model="keyword"
+        placeholder="搜索姓名或手机号"
+        :show-action="false"
+        @change="onSearch"
+        @clear="onSearch"
+      ></u-search>
     </view>
 
-    <view class="list-container">
-      <unicloud-db
-        ref="udb"
-        v-slot="{ data, loading, error, hasMore }"
-        collection="wh_customers"
-        :where="whereClause"
-        @load="onDataLoaded"
-      >
-        <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
-        <view v-else-if="error" class="error-box">{{ error.message }}</view>
-        <view v-else class="card-list">
-          <view
-            v-for="item in data.length > 0 ? data : mockCustomers"
-            :key="item._id"
-            class="card customer-card"
-          >
-            <view class="info">
+    <view class="list-content">
+      <u-list @scrolltolower="loadMore">
+        <u-list-item v-for="item in list" :key="item._id" @click="goDetail(item._id)">
+          <view class="customer-item card-box">
+            <view class="left">
               <view class="name-row">
                 <text class="name">{{ item.alias }}</text>
-                <text class="mobile">{{ item.mobile || '' }}</text>
+                <text v-if="item.phone" class="phone">{{ item.phone }}</text>
               </view>
-              <view class="debt-row">
-                欠款:
-                <text :class="{ warn: item.total_debt > 0 }"
-                  >¥{{ (item.total_debt / 100).toFixed(2) }}</text
+              <view class="time-row">
+                <text class="time"
+                  >最后交易：{{
+                    item.last_trade_time ? formatDate(item.last_trade_time) : '无'
+                  }}</text
                 >
               </view>
             </view>
-            <view class="actions">
-              <u-button
-                v-if="item.total_debt > 0"
-                type="warning"
-                size="mini"
-                text="还一笔"
-                plain
-                @click="openRepay(item)"
-              ></u-button>
+            <view class="right">
+              <view class="debt-box" :class="{ 'has-debt': item.total_debt > 0 }">
+                <text class="label">欠款</text>
+                <text class="amount">¥{{ (item.total_debt / 100).toFixed(2) }}</text>
+              </view>
+              <u-icon name="arrow-right" color="#ccc" size="16"></u-icon>
             </view>
           </view>
-          <u-loadmore :status="data.length > 0 && hasMore ? 'loadmore' : 'nomore'" />
-        </view>
-      </unicloud-db>
+        </u-list-item>
+      </u-list>
+
+      <u-loadmore :status="loadStatus" @loadmore="loadMore" />
+      <u-empty v-if="list.length === 0 && !loading" mode="list" text="暂无客户" />
     </view>
 
-    <!-- 还款弹窗 -->
-    <u-modal
-      :show="repayShow"
-      title="录入还款"
-      show-cancel-button
-      @confirm="submitRepay"
-      @cancel="repayShow = false"
-    >
-      <view class="repay-form">
-        <u-form label-width="140rpx">
-          <u-form-item label="还款金额">
-            <u-input v-model="repayAmount" type="digit" placeholder="元" border="bottom"></u-input>
-          </u-form-item>
-          <u-form-item label="备注">
-            <u-input v-model="repayRemark" placeholder="可选" border="bottom"></u-input>
-          </u-form-item>
-        </u-form>
-      </view>
-    </u-modal>
-
-    <!-- 底部导航 -->
-    <u-tabbar
-      :value="3"
-      :fixed="true"
-      :placeholder="true"
-      :safe-area-inset-bottom="true"
-      active-color="#1890ff"
-      @change="handleTabChange"
-    >
-      <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
-      <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
-      <u-tabbar-item text="商品" icon="bag"></u-tabbar-item>
-      <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
-    </u-tabbar>
+    <view class="add-btn" @click="navTo('/pages/merchant/customer/edit')">
+      <u-icon name="plus" color="#fff" size="24"></u-icon>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { importObject } from '@/utils/cloud'
 
-const tenant_id = uni.getStorageSync('tenant_id')
-const udb = ref(null)
-const totalCount = ref(0)
-const totalDebt = ref(0)
+const customerCo = importObject('wh-customer-co')
+const list = ref<any[]>([])
+const loading = ref(false)
+const keyword = ref('')
+const page = ref(1)
+const loadStatus = ref('loadmore')
 
-const mockCustomers = [
-  { _id: 'c1', alias: '李老板 (李四)', mobile: '13800001111', total_debt: 50000 },
-  { _id: 'c2', alias: '张小店', mobile: '13911112222', total_debt: 12500 },
-  { _id: 'c3', alias: '王便利店', mobile: '13733334444', total_debt: 0 },
-  { _id: 'c4', alias: '赵记副食', mobile: '13655556666', total_debt: 89000 },
-  { _id: 'c5', alias: '陈氏批发', mobile: '13577778888', total_debt: 0 }
-]
-
-const whereClause = `tenant_id == "${tenant_id}"`
-
-const onDataLoaded = (data: any[]) => {
-  const displayData = data.length > 0 ? data : mockCustomers
-  totalCount.value = displayData.length
-  totalDebt.value = displayData.reduce((sum, item) => sum + (item.total_debt || 0), 0)
-}
-
-// 还款逻辑
-const repayShow = ref(false)
-const currentCustomer = ref<any>(null)
-const repayAmount = ref('')
-const repayRemark = ref('')
-
-const openRepay = (customer: any) => {
-  currentCustomer.value = customer
-  repayAmount.value = (customer.total_debt / 100).toFixed(2)
-  repayRemark.value = ''
-  repayShow.value = true
-}
-
-const submitRepay = async () => {
-  const amountFen = Math.round(parseFloat(repayAmount.value) * 100)
-  if (isNaN(amountFen) || amountFen <= 0) {
-    return uni.showToast({ title: '金额不正确', icon: 'none' })
+const loadData = async (reset = false) => {
+  if (loading.value) return
+  if (reset) {
+    page.value = 1
+    list.value = []
+    loadStatus.value = 'loadmore'
   }
 
+  loading.value = true
   try {
-    const merchantCo = uniCloud.importObject('wh-merchant-co')
-    await merchantCo.repay({
-      customer_id: currentCustomer.value._id,
-      amount: amountFen,
-      remark: repayRemark.value
+    const res = await customerCo.getCustomerList({
+      page: page.value,
+      limit: 20,
+      keyword: keyword.value
     })
-    uni.showToast({ title: '还款成功' })
-    repayShow.value = false
-    // @ts-ignore
-    udb.value.refresh()
-  } catch (e: any) {
-    uni.showToast({ title: e.msg || '操作失败', icon: 'none' })
+
+    if (res.code === 0) {
+      const newList = res.data.list
+      list.value = [...list.value, ...newList]
+      if (list.value.length >= res.data.total) {
+        loadStatus.value = 'nomore'
+      } else {
+        loadStatus.value = 'loadmore'
+        page.value++
+      }
+    }
+  } catch (e) {
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
 }
 
-const handleTabChange = (index: number) => {
-  if (index === 3) return
-  const paths = [
-    '/pages/merchant/dashboard',
-    '/pages/merchant/order/list',
-    '/pages/merchant/goods/list',
-    '/pages/merchant/customer/list'
-  ]
-  uni.redirectTo({ url: paths[index] })
+const onSearch = () => {
+  loadData(true)
 }
+
+const loadMore = () => {
+  if (loadStatus.value === 'loadmore') {
+    loadData()
+  }
+}
+
+const goDetail = (id: string) => {
+  uni.navigateTo({ url: `/pages/merchant/customer/detail?id=${id}` })
+}
+
+const navTo = (url: string) => {
+  uni.navigateTo({ url })
+}
+
+const formatDate = (ts: any) => {
+  const d = new Date(ts)
+  return `${d.getMonth() + 1}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}`
+}
+
+onShow(() => {
+  loadData(true)
+})
 </script>
 
 <style lang="scss" scoped>
-.merchant-page {
-  min-height: 100vh;
+.customer-list-container {
   background-color: #f5f5f5;
-  padding-bottom: 180rpx; // 预留 tabbar 与安全区
+  min-height: 100vh;
+  padding: 20rpx 0;
 }
 
-.stats-bar {
-  display: flex;
+.search-bar {
+  padding: 0 30rpx 20rpx;
   background-color: #fff;
-  padding: 32rpx;
-  margin-bottom: 20rpx;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 10;
-  .item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    .label {
-      font-size: 24rpx;
-      color: #999;
-      margin-bottom: 8rpx;
-    }
-    .val {
-      font-size: 36rpx;
-      font-weight: bold;
-      color: #333;
-    }
-    .warn {
-      color: #ff4d4f;
-    }
-  }
 }
 
-.list-container {
-  padding: 24rpx;
-}
-
-.card {
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+.customer-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 30rpx;
+  margin: 10rpx 20rpx;
+  background-color: #fff;
+  border-radius: 16rpx;
 
-  .info {
-    .name-row {
+  .name-row {
+    margin-bottom: 10rpx;
+    .name {
+      font-size: 32rpx;
+      font-weight: bold;
+      color: #333;
+      margin-right: 20rpx;
+    }
+    .phone {
+      font-size: 26rpx;
+      color: #999;
+    }
+  }
+
+  .time-row {
+    .time {
+      font-size: 24rpx;
+      color: #ccc;
+    }
+  }
+
+  .right {
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+
+    .debt-box {
+      text-align: right;
       display: flex;
-      align-items: baseline;
-      gap: 12rpx;
-      margin-bottom: 8rpx;
-      .name {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
-      }
-      .mobile {
-        font-size: 24rpx;
+      flex-direction: column;
+
+      .label {
+        font-size: 22rpx;
         color: #999;
       }
-    }
-    .debt-row {
-      font-size: 26rpx;
-      color: #666;
-      .warn {
-        color: #ff4d4f;
-        font-weight: bold;
+      .amount {
+        font-size: 30rpx;
+        color: #666;
+      }
+
+      &.has-debt {
+        .amount {
+          color: #ff4d4f;
+          font-weight: bold;
+        }
       }
     }
   }
 }
 
-.repay-form {
-  padding: 20rpx;
-  width: 100%;
+.card-box {
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.add-btn {
+  position: fixed;
+  right: 40rpx;
+  bottom: 60rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background-color: #2979ff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 10rpx 20rpx rgba(41, 121, 255, 0.3);
 }
 </style>

@@ -1,0 +1,132 @@
+<template>
+  <view class="customer-edit-container">
+    <u-form ref="uForm" :model="form" label-width="180rpx">
+      <u-form-item label="姓名/备注" prop="alias" border-bottom required>
+        <u-input v-model="form.alias" placeholder="请输入客户姓名或称呼" border="none" />
+      </u-form-item>
+
+      <u-form-item label="手机号" prop="phone" border-bottom>
+        <u-input
+          v-model="form.phone"
+          type="number"
+          placeholder="请输入手机号(可选)"
+          border="none"
+        />
+      </u-form-item>
+
+      <u-form-item label="备注信息" prop="remark" border-bottom>
+        <u-textarea
+          v-model="form.remark"
+          placeholder="其他备注信息..."
+          border="none"
+          auto-height
+        ></u-textarea>
+      </u-form-item>
+    </u-form>
+
+    <view class="footer-btn">
+      <u-button
+        type="primary"
+        :text="isEdit ? '保存修改' : '确认添加'"
+        :loading="loading"
+        @click="save"
+      ></u-button>
+      <view v-if="isEdit" class="delete-link" @click="handleDelete">删除客户</view>
+    </view>
+  </view>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
+import { importObject } from '@/utils/cloud'
+
+const customerCo = importObject('wh-customer-co')
+const loading = ref(false)
+const isEdit = ref(false)
+const customer_id = ref('')
+
+const form = reactive({
+  alias: '',
+  phone: '',
+  remark: ''
+})
+
+onLoad(options => {
+  if (options && options.id) {
+    customer_id.value = options.id
+    isEdit.value = true
+    loadDetail()
+  }
+})
+
+const loadDetail = async () => {
+  try {
+    const res = await customerCo.getCustomerDetail(customer_id.value)
+    if (res.code === 0) {
+      const info = res.data.info
+      form.alias = info.alias
+      form.phone = info.phone || ''
+      form.remark = info.remark || ''
+    }
+  } catch (e) {
+    uni.showToast({ title: '加载失败', icon: 'none' })
+  }
+}
+
+const save = async () => {
+  if (!form.alias) return uni.showToast({ title: '请输入姓名', icon: 'none' })
+
+  loading.value = true
+  try {
+    let res
+    if (isEdit.value) {
+      res = await customerCo.updateCustomer(customer_id.value, form)
+    } else {
+      res = await customerCo.createCustomer(form)
+    }
+
+    if (res.code === 0) {
+      uni.showToast({ title: res.msg })
+      setTimeout(() => uni.navigateBack(), 1500)
+    } else {
+      uni.showToast({ title: res.msg || '操作失败', icon: 'none' })
+    }
+  } catch (e: any) {
+    uni.showToast({ title: e.message || '操作失败', icon: 'none' })
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleDelete = () => {
+  uni.showModal({
+    title: '提示',
+    content: '确定要删除该客户吗？',
+    success: async res => {
+      if (res.confirm) {
+        // 后端暂未实现删除接口，或者我们需要在这里调用
+        uni.showToast({ title: '演示环境，暂不支持删除', icon: 'none' })
+      }
+    }
+  })
+}
+</script>
+
+<style lang="scss" scoped>
+.customer-edit-container {
+  padding: 30rpx;
+  background-color: #fff;
+  min-height: 100vh;
+}
+
+.footer-btn {
+  margin-top: 100rpx;
+  .delete-link {
+    text-align: center;
+    margin-top: 40rpx;
+    color: #ff4d4f;
+    font-size: 28rpx;
+  }
+}
+</style>

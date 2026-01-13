@@ -1,112 +1,126 @@
 {
-	"easycom": {
-		"custom": {
-			"^u-(.*)": "uview-plus/components/u-$1/u-$1.vue"
-		}
-	},
-	"pages": [
-		{
-			"path": "pages/index/index",
-			"style": {
-				"navigationBarTitleText": "乡货通 - 首页"
-			}
-		},
-		{
-			"path": "pages/merchant/login",
-			"style": {
-				"navigationBarTitleText": "商家登录"
-			}
-		},
-		{
-			"path": "pages/merchant/register",
-			"style": {
-				"navigationBarTitleText": "商家入驻"
-			}
-		},
-		{
-			"path": "pages/merchant/dashboard",
-			"style": {
-				"navigationBarTitleText": "工作台",
-				"navigationBarBackgroundColor": "#1890ff",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/merchant/goods/list",
-			"style": {
-				"navigationBarTitleText": "商品管理",
-				"navigationBarBackgroundColor": "#ffffff"
-			}
-		},
-		{
-			"path": "pages/merchant/goods/edit",
-			"style": {
-				"navigationBarTitleText": "编辑商品",
-				"navigationBarBackgroundColor": "#ffffff"
-			}
-		},
-		{
-			"path": "pages/merchant/goods/category",
-			"style": {
-				"navigationBarTitleText": "分类管理",
-				"navigationBarBackgroundColor": "#ffffff"
-			}
-		},
-		{
-			"path": "pages/merchant/order/list",
-			"style": {
-				"navigationBarTitleText": "订单管理",
-				"navigationBarBackgroundColor": "#ffffff"
-			}
-		},
-		{
-			"path": "pages/merchant/customer/list",
-			"style": {
-				"navigationBarTitleText": "欠款对账",
-				"navigationBarBackgroundColor": "#ffffff"
-			}
-		},
-		{
-			"path": "pages/client/shop",
-			"style": {
-				"navigationBarTitleText": "订货"
-			}
-		},
-		{
-			"path": "pages/client/checkout",
-			"style": {
-				"navigationBarTitleText": "确认订单"
-			}
-		},
-		{
-			"path": "pages/admin/merchant/list",
-			"style": {
-				"navigationBarTitleText": "商户管理",
-				"navigationBarBackgroundColor": "#722ed1",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/admin/statistics/index",
-			"style": {
-				"navigationBarTitleText": "数据统计",
-				"navigationBarBackgroundColor": "#722ed1",
-				"navigationBarTextStyle": "white"
-			}
-		},
-		{
-			"path": "pages/admin/employee/list",
-			"style": {
-				"navigationBarTitleText": "员工管理",
-				"navigationBarBackgroundColor": "#722ed1",
-				"navigationBarTextStyle": "white"
-			}
-		}
-	],
-	"globalStyle": {
-		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "乡货通",
-		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
-	}
+  "easycom": {
+    "custom": {
+      "^u-(.*)": "uview-plus/components/u-$1/u-$1.vue"
+    }
+  },
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "乡货通 - 首页"
+      }
+    },
+    {
+      "path": "pages/merchant/login",
+      "style": {
+        "navigationBarTitleText": "商家登录"
+      }
+    },
+    {
+      "path": "pages/merchant/register",
+      "style": {
+        "navigationBarTitleText": "商家入驻"
+      }
+    },
+    {
+      "path": "pages/merchant/dashboard",
+      "style": {
+        "navigationBarTitleText": "工作台",
+        "navigationBarBackgroundColor": "#1890ff",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/merchant/goods/list",
+      "style": {
+        "navigationBarTitleText": "商品管理",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/merchant/goods/edit",
+      "style": {
+        "navigationBarTitleText": "编辑商品",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/merchant/goods/category",
+      "style": {
+        "navigationBarTitleText": "分类管理",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/merchant/order/list",
+      "style": {
+        "navigationBarTitleText": "订单管理",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/merchant/customer/list",
+      "style": {
+        "navigationBarTitleText": "客户账本",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/merchant/customer/edit",
+      "style": {
+        "navigationBarTitleText": "编辑客户",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/merchant/customer/detail",
+      "style": {
+        "navigationBarTitleText": "客户详情",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
+      "path": "pages/client/shop",
+      "style": {
+        "navigationBarTitleText": "订货"
+      }
+    },
+    {
+      "path": "pages/client/checkout",
+      "style": {
+        "navigationBarTitleText": "确认订单"
+      }
+    },
+    {
+      "path": "pages/admin/merchant/list",
+      "style": {
+        "navigationBarTitleText": "商户管理",
+        "navigationBarBackgroundColor": "#722ed1",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/admin/statistics/index",
+      "style": {
+        "navigationBarTitleText": "数据统计",
+        "navigationBarBackgroundColor": "#722ed1",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/admin/employee/list",
+      "style": {
+        "navigationBarTitleText": "员工管理",
+        "navigationBarBackgroundColor": "#722ed1",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "乡货通",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  }
 }
