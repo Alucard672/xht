@@ -7,19 +7,23 @@
     </view>
 
     <view class="menu-grid">
-      <view class="menu-item merchant" @click="goMerchant">
+      <view
+        v-if="!appMode || appMode === 'merchant'"
+        class="menu-item merchant"
+        @click="goMerchant"
+      >
         <u-icon name="home-fill" color="#fff" size="30"></u-icon>
         <text class="menu-text">商家端</text>
         <text class="menu-sub">管账、管货、管客户</text>
       </view>
 
-      <view class="menu-item client" @click="goClient">
+      <view v-if="!appMode || appMode === 'client'" class="menu-item client" @click="goClient">
         <u-icon name="shopping-cart-fill" color="#fff" size="30"></u-icon>
         <text class="menu-text">客户端</text>
         <text class="menu-sub">扫码下单、对账</text>
       </view>
 
-      <view class="menu-item admin" @click="goAdmin">
+      <view v-if="!appMode || appMode === 'admin'" class="menu-item admin" @click="goAdmin">
         <u-icon name="setting-fill" color="#fff" size="30"></u-icon>
         <text class="menu-text">系统管理端</text>
         <text class="menu-sub">平台商户与概览</text>
@@ -27,13 +31,25 @@
     </view>
 
     <view class="footer-tips">
-      <text>开发调试模式：点击各入口时检查登录</text>
+      <text v-if="appMode"
+        >生产模式：{{
+          appMode === 'merchant' ? '商家端' : appMode === 'client' ? '客户端' : '管理端'
+        }}</text
+      >
+      <text v-else>开发调试模式：点击各入口时检查登录</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { checkLogin } from '@/utils/auth'
+
+const appMode = computed(() => {
+  // @ts-ignore
+  return process.env.VITE_APP_MODE || ''
+})
 
 const goMerchant = () => {
   if (!checkLogin()) {
@@ -46,8 +62,8 @@ const goMerchant = () => {
     return uni.navigateTo({ url: '/pages/merchant/register' })
   }
 
-  // 直接进入工作台
-  uni.switchTab({ url: '/pages/merchant/dashboard' })
+  // 直接进入工作台 (使用 reLaunch 确保无法返回当前页)
+  uni.reLaunch({ url: '/pages/merchant/dashboard' })
 }
 
 const goAdmin = () => {
@@ -55,14 +71,14 @@ const goAdmin = () => {
     // 统一跳商家登录页（或专门的管理员登录页）
     return uni.navigateTo({ url: '/pages/merchant/login' })
   }
-  uni.navigateTo({ url: '/pages/admin/merchant/list' })
+  uni.reLaunch({ url: '/pages/admin/merchant/list' })
 }
 
 const goClient = () => {
   // 客户端暂时允许未登录访问（扫码场景），或者带入演示ID
   const tenant_id = uni.getStorageSync('tenant_id')
   if (tenant_id) {
-    uni.navigateTo({ url: `/pages/client/shop?tenant_id=${tenant_id}` })
+    uni.reLaunch({ url: `/pages/client/shop?tenant_id=${tenant_id}` })
   } else {
     // 模拟一个演示 tenant_id 或者提示
     // uni.showToast({ title: '体验模式：进入演示店铺', icon: 'none' })
@@ -73,6 +89,17 @@ const goClient = () => {
     uni.showToast({ title: '请先登录商户端获取体验ID', icon: 'none' })
   }
 }
+
+onLoad(() => {
+  // 如果指定了模式，自动执行跳转逻辑
+  if (appMode.value === 'merchant') {
+    goMerchant()
+  } else if (appMode.value === 'client') {
+    goClient()
+  } else if (appMode.value === 'admin') {
+    goAdmin()
+  }
+})
 </script>
 
 <style lang="scss" scoped>
