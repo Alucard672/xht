@@ -81,6 +81,13 @@
       }
     },
     {
+      "path": "pages/merchant/customer/picker",
+      "style": {
+        "navigationBarTitleText": "选择客户",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
       "path": "pages/client/shop",
       "style": {
         "navigationBarTitleText": "订货"

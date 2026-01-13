@@ -17,7 +17,6 @@
 
     <!-- 商家代客下单：选择客户 -->
     <view v-if="mode === 'agent'" class="section customer-section" @click="selectCustomer">
-      <view class="section-title">下单客户</view>
       <view v-if="selectedCustomer" class="customer-info">
         <view class="top">
           <text class="name">{{ selectedCustomer.alias }}</text>
@@ -64,18 +63,20 @@
     </view>
 
     <view class="footer-bar">
-      <view class="left">
+      <view class="total-price">
         <text class="label">合计:</text>
         <text class="symbol">¥</text>
         <text class="amount">{{ priceHelper.format(totalAmount) }}</text>
       </view>
-      <u-button
-        type="primary"
-        text="提交订单"
-        :loading="submitting"
-        custom-style="width: 280rpx; height: 80rpx; border-radius: 40rpx;"
-        @click="submitOrder"
-      ></u-button>
+      <view class="submit-action">
+        <u-button
+          type="primary"
+          text="提交订单"
+          :loading="submitting"
+          custom-style="width: 240rpx; height: 80rpx; border-radius: 40rpx;"
+          @click="submitOrder"
+        ></u-button>
+      </view>
     </view>
   </view>
 </template>
@@ -131,7 +132,7 @@ const selectAddress = () => {
 }
 
 const selectCustomer = () => {
-  uni.navigateTo({ url: '/pages/merchant/customer/list?mode=picker' })
+  uni.navigateTo({ url: '/pages/merchant/customer/picker' })
   uni.$once('select-customer', customer => {
     selectedCustomer.value = customer
   })
@@ -363,16 +364,17 @@ const submitOrder = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 110rpx;
+  height: calc(120rpx + env(safe-area-inset-bottom));
   background-color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 32rpx env(safe-area-inset-bottom);
+  padding: 0 40rpx env(safe-area-inset-bottom);
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
   z-index: 100;
+  box-sizing: border-box;
 
-  .left {
+  .total-price {
     display: flex;
     align-items: baseline;
     .label {
@@ -386,10 +388,15 @@ const submitOrder = async () => {
       font-weight: bold;
     }
     .amount {
-      font-size: 40rpx;
+      font-size: 44rpx;
       color: #ff4d4f;
       font-weight: bold;
     }
+  }
+
+  .submit-action {
+    display: flex;
+    justify-content: flex-end;
   }
 }
 </style>

@@ -48,4 +48,5 @@ export interface GoodsFormData {
   }
   rate: number
   stock: number
+  is_on_sale?: boolean
 }

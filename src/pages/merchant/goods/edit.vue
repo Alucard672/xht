@@ -38,6 +38,10 @@
         <u-switch v-model="form.is_multi_unit"></u-switch>
       </u-form-item>
 
+      <u-form-item label="是否上架销售" border-bottom>
+        <u-switch v-model="form.is_on_sale" active-color="#07c160"></u-switch>
+      </u-form-item>
+
       <view v-if="form.is_multi_unit" class="unit-section">
         <u-form-item label="大单位名称" border-bottom>
           <u-input v-model="form.unit_big.name" placeholder="如：箱" border="none" />
@@ -124,6 +128,7 @@ const form = reactive<
   category_id: '',
   img_url: '',
   is_multi_unit: false,
+  is_on_sale: true,
   rate: 1,
   unit_big: { name: '箱', price: 0 },
   unit_small: { name: '瓶', price: 0 },
@@ -188,6 +193,7 @@ const loadGoodsDetail = async () => {
       form.unit_big = data.unit_big
       form.unit_small = data.unit_small
       form.stock = data.stock
+      form.is_on_sale = data.is_on_sale !== false
 
       // 转换价格显示
       form.unit_small_price_display = priceHelper.format(data.unit_small.price)
@@ -278,6 +284,7 @@ const saveGoods = async () => {
     category_id: form.category_id,
     img_url: form.img_url,
     is_multi_unit: form.is_multi_unit,
+    is_on_sale: form.is_on_sale,
     rate: parseInt(String(form.rate)) || 1,
     unit_small: {
       name: form.unit_small.name,

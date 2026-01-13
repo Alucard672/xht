@@ -26,35 +26,34 @@
       </view>
       <view v-else class="card-list">
         <view v-for="item in goodsList" :key="item._id" class="card goods-card">
-          <image
-            :src="item.img_url || '/static/logo.png'"
-            mode="aspectFill"
-            class="goods-img"
-            @click="navTo('/pages/merchant/goods/edit?id=' + item._id)"
-          ></image>
-          <view class="goods-info" @click="navTo('/pages/merchant/goods/edit?id=' + item._id)">
-            <view class="name-row">
-              <text class="name u-line-1">{{ item.name }}</text>
-              <view class="goods-actions">
-                <u-switch
-                  :value="item.is_on_sale"
-                  size="18"
-                  active-color="#07c160"
-                  @change="handleToggleSale(item)"
-                  @click.stop
-                ></u-switch>
+          <view class="card-main" @click="navTo('/pages/merchant/goods/edit?id=' + item._id)">
+            <image
+              :src="item.img_url || '/static/logo.png'"
+              mode="aspectFill"
+              class="goods-img"
+            ></image>
+            <view class="goods-info">
+              <view class="name-row">
+                <text class="name u-line-1">{{ item.name }}</text>
+              </view>
+              <view class="stock-row">
+                库存: <text :class="{ warn: item.stock < 10 }">{{ item.stock }}</text>
+                {{ item.unit_small.name }}
+              </view>
+              <view class="price-row">
+                <text class="price"
+                  >¥{{ (item.unit_small.price / 100).toFixed(2) }}/{{ item.unit_small.name }}</text
+                >
               </view>
             </view>
-            <view class="stock-row">
-              库存: <text :class="{ warn: item.stock < 10 }">{{ item.stock }}</text>
-              {{ item.unit_small.name }}
+          </view>
+          <view class="card-right">
+            <view class="status-box">
+              <text :class="['status-text', item.is_on_sale !== false ? 'on' : 'off']">
+                {{ item.is_on_sale !== false ? '已上架' : '已下架' }}
+              </text>
             </view>
-            <view class="price-row">
-              <text class="price"
-                >¥{{ (item.unit_small.price / 100).toFixed(2) }}/{{ item.unit_small.name }}</text
-              >
-              <u-icon name="arrow-right" color="#ccc" size="18"></u-icon>
-            </view>
+            <u-icon name="arrow-right" color="#ccc" size="18"></u-icon>
           </view>
         </view>
       </view>
@@ -106,8 +105,9 @@ const handleClear = () => {
   loadGoodsList()
 }
 
-const handleToggleSale = async (item: any) => {
-  const success = await toggleOnSale(item._id, !item.is_on_sale)
+const handleToggleSale = async (item: any, newVal: any) => {
+  // 立即触发，无需取反，组件直接返回新值
+  const success = await toggleOnSale(item._id, !!newVal)
   if (success) {
     loadGoodsList()
   }
@@ -229,10 +229,35 @@ onShow(() => {
       }
     }
   }
-}
 
-.goods-actions {
-  display: flex;
-  align-items: center;
+  .card-main {
+    flex: 1;
+    display: flex;
+    gap: 24rpx;
+  }
+
+  .card-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 10rpx 0;
+
+    .status-box {
+      .status-text {
+        font-size: 20rpx;
+        padding: 4rpx 12rpx;
+        border-radius: 6rpx;
+        &.on {
+          color: #07c160;
+          background-color: rgba(7, 193, 96, 0.1);
+        }
+        &.off {
+          color: #999;
+          background-color: #f0f0f0;
+        }
+      }
+    }
+  }
 }
 </style>

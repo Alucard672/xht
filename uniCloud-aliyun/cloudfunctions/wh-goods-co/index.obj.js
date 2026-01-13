@@ -72,7 +72,7 @@ module.exports = {
     }
 
     if (on_sale_only) {
-      where.is_on_sale = true
+      where.is_on_sale = dbCmd.neq(false)
     }
 
     // 查询总数
