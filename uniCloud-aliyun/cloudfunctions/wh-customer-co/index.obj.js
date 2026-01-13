@@ -199,10 +199,22 @@ module.exports = {
     const transaction = await db.startTransaction()
 
     try {
+      console.log(
+        `[Repay] 开始还款, customer_id: ${customer_id}, amount: ${amount}, current_tenant: ${this.tenant_id}`
+      )
+
       const customerRes = await transaction.collection('wh_customers').doc(customer_id).get()
-      const customer = customerRes.data[0]
-      if (!customer || customer.tenant_id !== this.tenant_id) {
-        throw new Error('客户不存在')
+      console.log('[Repay] 数据库查询结果:', JSON.stringify(customerRes))
+
+      const customer =
+        customerRes.data && customerRes.data.length > 0 ? customerRes.data[0] : customerRes.data
+
+      if (!customer) {
+        throw new Error(`找不到该客户记录 (ID: ${customer_id})`)
+      }
+
+      if (customer.tenant_id !== this.tenant_id) {
+        throw new Error(`租户不匹配: 记录租户=${customer.tenant_id}, 当前租户=${this.tenant_id}`)
       }
 
       // 1. 更新总欠款

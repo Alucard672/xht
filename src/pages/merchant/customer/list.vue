@@ -12,8 +12,8 @@
 
     <view class="list-content">
       <u-list @scrolltolower="loadMore">
-        <u-list-item v-for="item in list" :key="item._id" @click="goDetail(item._id)">
-          <view class="customer-item card-box">
+        <u-list-item v-for="item in list" :key="item._id">
+          <view class="customer-item card-box" hover-class="item-hover" @click="goDetail(item._id)">
             <view class="left">
               <view class="name-row">
                 <text class="name">{{ item.alias }}</text>
