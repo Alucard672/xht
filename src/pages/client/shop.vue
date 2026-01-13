@@ -56,20 +56,24 @@
               <view class="goods-info">
                 <view class="name u-line-1">{{ item.name }}</view>
                 <view class="spec">{{
-                  item.unit_big.name
-                    ? `${item.unit_rate}${item.unit_small.name}/${item.unit_big.name}`
-                    : item.unit_small.name
+                  item.unit_big?.name
+                    ? `${item.rate || 1}${item.unit_small?.name || ''}/${item.unit_big.name}`
+                    : item.unit_small?.name || ''
                 }}</view>
                 <view class="price-row">
                   <view class="price-main">
                     <text class="symbol">¥</text>
                     <text class="val">{{
-                      priceHelper.format(item.unit_big.price || item.unit_small.price)
+                      priceHelper.format(item.unit_big?.price || item.unit_small?.price || 0)
                     }}</text>
-                    <text class="unit">/{{ item.unit_big.name || item.unit_small.name }}</text>
+                    <text class="unit"
+                      >/{{ item.unit_big?.name || item.unit_small?.name || '' }}</text
+                    >
                   </view>
-                  <view v-if="item.unit_big.name" class="price-sub">
-                    ¥{{ priceHelper.format(item.unit_small.price) }}/{{ item.unit_small.name }}
+                  <view v-if="item.unit_big?.name" class="price-sub">
+                    ¥{{ priceHelper.format(item.unit_small?.price || 0) }}/{{
+                      item.unit_small?.name || ''
+                    }}
                   </view>
                 </view>
                 <view class="add-btn" @click.stop="addToCart(item)">
@@ -336,7 +340,8 @@ const fetchCategories = async () => {
 }
 
 const whereClause = computed(() => {
-  let clause = `tenant_id == "${tenant_id.value}" && is_on_sale == true`
+  // 修改为 ！= false，兼容旧数据或属性缺失的情况
+  let clause = `tenant_id == "${tenant_id.value}" && is_on_sale != false`
   if (activeCat.value !== 'all') {
     clause += ` && category_id == "${activeCat.value}"`
   }
