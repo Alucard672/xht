@@ -35,6 +35,15 @@
           <view class="goods-info" @click="navTo('/pages/merchant/goods/edit?id=' + item._id)">
             <view class="name-row">
               <text class="name u-line-1">{{ item.name }}</text>
+              <view class="goods-actions">
+                <u-switch
+                  :value="item.is_on_sale"
+                  size="18"
+                  active-color="#07c160"
+                  @change="handleToggleSale(item)"
+                  @click.stop
+                ></u-switch>
+              </view>
             </view>
             <view class="stock-row">
               库存: <text :class="{ warn: item.stock < 10 }">{{ item.stock }}</text>
@@ -44,16 +53,8 @@
               <text class="price"
                 >¥{{ (item.unit_small.price / 100).toFixed(2) }}/{{ item.unit_small.name }}</text
               >
-              <u-icon name="edit-pen" color="#999" size="18"></u-icon>
+              <u-icon name="arrow-right" color="#ccc" size="18"></u-icon>
             </view>
-          </view>
-          <view class="goods-actions">
-            <u-switch
-              :value="item.is_on_sale"
-              size="16"
-              @change="handleToggleSale(item)"
-              @click.stop
-            ></u-switch>
           </view>
         </view>
       </view>
@@ -228,5 +229,10 @@ onShow(() => {
       }
     }
   }
+}
+
+.goods-actions {
+  display: flex;
+  align-items: center;
 }
 </style>

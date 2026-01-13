@@ -16,7 +16,7 @@
       </view>
     </view>
 
-    <view class="notice-bar">
+    <view v-if="mode !== 'agent'" class="notice-bar">
       <u-notice-bar
         text="通知：本周新品上架，茅台酒特价优惠中！欢迎选购！"
         color="#d48806"
@@ -110,28 +110,32 @@
             <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
             <view class="item-info">
               <view class="item-name">{{ item.name }}</view>
-              <view class="unit-controls">
+              <view class="unit-controls-list">
                 <!-- 大单位控制 -->
-                <view v-if="item.unitBigName" class="unit-row">
-                  <text class="u-label">{{ item.unitBigName }}:</text>
-                  <u-number-box
-                    v-model="item.countBig"
-                    :min="0"
-                    size="24"
-                    @change="onCartNumChange(item)"
-                  ></u-number-box>
-                  <text class="u-price">¥{{ priceHelper.format(item.priceBig) }}</text>
+                <view v-if="item.unitBigName" class="unit-control-row">
+                  <text class="unit-label">{{ item.unitBigName }}</text>
+                  <view class="control-right">
+                    <u-number-box
+                      v-model="item.countBig"
+                      :min="0"
+                      size="22"
+                      @change="onCartNumChange(item)"
+                    ></u-number-box>
+                    <text class="unit-price">¥{{ priceHelper.format(item.priceBig) }}</text>
+                  </view>
                 </view>
                 <!-- 小单位控制 -->
-                <view class="unit-row">
-                  <text class="u-label">{{ item.unitSmallName }}:</text>
-                  <u-number-box
-                    v-model="item.countSmall"
-                    :min="0"
-                    size="24"
-                    @change="onCartNumChange(item)"
-                  ></u-number-box>
-                  <text class="u-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
+                <view class="unit-control-row">
+                  <text class="unit-label">{{ item.unitSmallName }}</text>
+                  <view class="control-right">
+                    <u-number-box
+                      v-model="item.countSmall"
+                      :min="0"
+                      size="22"
+                      @change="onCartNumChange(item)"
+                    ></u-number-box>
+                    <text class="unit-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
+                  </view>
                 </view>
               </view>
             </view>
@@ -793,11 +797,34 @@ const loadMore = () => {
             font-size: 30rpx;
             font-weight: bold;
             color: #333;
-            margin-bottom: 8rpx;
+            margin-bottom: 12rpx;
           }
-          .item-price {
-            font-size: 26rpx;
-            color: #ff4d4f;
+          .unit-controls-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16rpx;
+            .unit-control-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              .unit-label {
+                font-size: 26rpx;
+                color: #666;
+                min-width: 60rpx;
+              }
+              .control-right {
+                display: flex;
+                align-items: center;
+                gap: 16rpx;
+                .unit-price {
+                  font-size: 28rpx;
+                  color: #333;
+                  font-weight: 500;
+                  min-width: 100rpx;
+                  text-align: right;
+                }
+              }
+            }
           }
         }
       }
