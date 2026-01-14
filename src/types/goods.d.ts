@@ -31,6 +31,7 @@ export interface GoodsListParams {
   page?: number
   limit?: number
   on_sale_only?: boolean
+  showLowStock?: boolean
 }
 
 export interface GoodsFormData {

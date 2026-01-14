@@ -126,6 +126,14 @@
       }
     },
     {
+      "path": "pages/merchant/notification/list",
+      "style": {
+        "navigationBarTitleText": "消息通知",
+        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/client/shop",
       "style": {
         "navigationBarTitleText": "订货"

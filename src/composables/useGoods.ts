@@ -16,7 +16,13 @@ export function useGoods() {
     try {
       const res = await goodsCo.getGoodsList(params)
       if (res.code === 0) {
-        goodsList.value = res.data.list
+        let list = res.data.list
+        // 前端过滤低库存
+        if (params.showLowStock) {
+          const LOW_THRESHOLD = 10
+          list = list.filter((item: any) => item.stock > 0 && item.stock <= LOW_THRESHOLD)
+        }
+        goodsList.value = list
         total.value = res.data.total
         return true
       } else {

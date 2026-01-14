@@ -30,7 +30,49 @@
             :show-action="false"
             shape="round"
             bg-color="#ffffff"
+            @focus="showSearchPanel = true"
+            @blur="handleSearchBlur"
+            @search="handleSearch"
           ></u-search>
+        </view>
+
+        <!-- 搜索面板 -->
+        <view v-if="showSearchPanel && !keyword" class="search-panel">
+          <!-- 热门搜索 -->
+          <view v-if="hotSearch.length > 0" class="search-section">
+            <view class="section-header">
+              <text class="section-title">热门搜索</text>
+            </view>
+            <view class="tag-list">
+              <view
+                v-for="(item, index) in hotSearch"
+                :key="index"
+                class="tag-item"
+                @click="handleHotSearch(item)"
+              >
+                {{ item }}
+              </view>
+            </view>
+          </view>
+
+          <!-- 搜索历史 -->
+          <view v-if="searchHistory.length > 0" class="search-section">
+            <view class="section-header">
+              <text class="section-title">搜索历史</text>
+              <text class="clear-btn" @click="clearSearchHistory">清空</text>
+            </view>
+            <view class="history-list">
+              <view
+                v-for="(item, index) in searchHistory"
+                :key="index"
+                class="history-item"
+                @click="handleHistorySearch(item)"
+              >
+                <u-icon name="clock" size="16" color="#999"></u-icon>
+                <text class="history-text">{{ item }}</text>
+              </view>
+            </view>
+          </view>
         </view>
       </view>
 
@@ -342,6 +384,78 @@ const tempCartItem = reactive<any>({
   countSmall: 0
 })
 
+// 搜索相关
+const showSearchPanel = ref(false)
+const searchHistory = ref<string[]>([])
+const hotSearch = ref<string[]>(['茅台', '五粮液', '食用油', '方便面', '矿泉水'])
+
+const getSearchHistoryKey = () => `search_history_${tenant_id.value}`
+
+const loadSearchHistory = () => {
+  const key = getSearchHistoryKey()
+  const saved = uni.getStorageSync(key)
+  if (saved) {
+    try {
+      searchHistory.value = JSON.parse(saved)
+    } catch (e) {
+      searchHistory.value = []
+    }
+  }
+}
+
+const saveSearchHistory = (keyword: string) => {
+  if (!keyword.trim()) return
+  const key = getSearchHistoryKey()
+  const list = [...searchHistory.value]
+  const index = list.indexOf(keyword)
+  if (index > -1) {
+    list.splice(index, 1)
+  }
+  list.unshift(keyword)
+  if (list.length > 20) {
+    list.pop()
+  }
+  searchHistory.value = list
+  uni.setStorageSync(key, JSON.stringify(list))
+}
+
+const clearSearchHistory = () => {
+  uni.showModal({
+    title: '提示',
+    content: '确定要清空搜索历史吗？',
+    success: res => {
+      if (res.confirm) {
+        searchHistory.value = []
+        uni.removeStorageSync(getSearchHistoryKey())
+      }
+    }
+  })
+}
+
+const handleSearch = () => {
+  if (keyword.value.trim()) {
+    saveSearchHistory(keyword.value)
+    showSearchPanel.value = false
+  }
+}
+
+const handleSearchBlur = () => {
+  setTimeout(() => {
+    showSearchPanel.value = false
+  }, 200)
+}
+
+const handleHotSearch = (item: string) => {
+  keyword.value = item
+  saveSearchHistory(item)
+  showSearchPanel.value = false
+}
+
+const handleHistorySearch = (item: string) => {
+  keyword.value = item
+  showSearchPanel.value = false
+}
+
 onLoad(async options => {
   if (options?.mode) {
     mode.value = options.mode
@@ -349,12 +463,12 @@ onLoad(async options => {
   if (options?.tenant_id) {
     tenant_id.value = options.tenant_id
   } else {
-    // 尝试从存储或通过其他方式获取
     tenant_id.value = uni.getStorageSync('tenant_id') || 'demo-tenant-id'
   }
   fetchShopInfo()
   fetchCategories()
-  loadCartFromStorage() // 加载持久化购物车
+  loadCartFromStorage()
+  loadSearchHistory()
 })
 
 const getCartKey = () => `cart_${tenant_id.value}`
@@ -547,8 +661,7 @@ const loadMore = () => {
 .shop-header {
   flex-shrink: 0;
   background-color: #07c160;
-  // 增加顶部安全区适配，防止刘海屏遮挡
-  padding: calc(40rpx + env(safe-area-inset-top)) 32rpx 32rpx;
+  padding: calc(40rpx + env(safe-area-inset-top)) 32rpx 0;
 
   .top-row {
     display: flex;
@@ -567,6 +680,78 @@ const loadMore = () => {
       color: #fff;
       font-size: 34rpx;
       font-weight: bold;
+    }
+  }
+
+  .search-box {
+    margin-bottom: 16rpx;
+  }
+
+  .search-panel {
+    position: absolute;
+    top: calc(100% + 16rpx);
+    left: 32rpx;
+    right: 32rpx;
+    background-color: #fff;
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 100;
+
+    .search-section {
+      padding: 20rpx 24rpx;
+      border-bottom: 1rpx solid #f5f5f5;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16rpx;
+
+        .section-title {
+          font-size: 26rpx;
+          color: #333;
+          font-weight: 500;
+        }
+
+        .clear-btn {
+          font-size: 24rpx;
+          color: #999;
+        }
+      }
+
+      .tag-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16rpx;
+
+        .tag-item {
+          padding: 12rpx 24rpx;
+          background-color: #f5f5f5;
+          border-radius: 8rpx;
+          font-size: 26rpx;
+          color: #666;
+        }
+      }
+
+      .history-list {
+        .history-item {
+          display: flex;
+          align-items: center;
+          gap: 12rpx;
+          padding: 16rpx 0;
+
+          .history-text {
+            font-size: 28rpx;
+            color: #333;
+          }
+        }
+      }
     }
   }
 }
