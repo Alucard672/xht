@@ -1,108 +1,123 @@
 <template>
-  <view class="goods-edit-container">
-    <u-form ref="uForm" :model="form" label-width="180rpx">
-      <u-form-item label="商品名称" prop="name" border-bottom required>
-        <u-input v-model="form.name" placeholder="请输入商品名称" border="none" />
-      </u-form-item>
+  <wh-page-container>
+    <view class="goods-edit-container">
+      <u-form ref="uForm" :model="form" label-width="180rpx">
+        <wh-form-section title="基础信息">
+          <u-form-item label="商品名称" prop="name" border-bottom required>
+            <u-input v-model="form.name" placeholder="请输入商品名称" border="none" />
+          </u-form-item>
 
-      <u-form-item label="所属分类" border-bottom required @click="showCategoryPicker = true">
-        <u-input
-          v-model="categoryName"
-          placeholder="请选择分类"
-          border="none"
-          disabled
-          disabled-color="#ffffff"
-        />
-        <template #right>
-          <u-icon name="arrow-right"></u-icon>
-        </template>
-      </u-form-item>
+          <u-form-item label="所属分类" border-bottom required @click="showCategoryPicker = true">
+            <u-input
+              v-model="categoryName"
+              placeholder="请选择分类"
+              border="none"
+              disabled
+              disabled-color="#ffffff"
+            />
+            <template #right>
+              <u-icon name="arrow-right"></u-icon>
+            </template>
+          </u-form-item>
 
-      <!-- 添加快速入口 -->
-      <view class="form-tip-row">
-        <text class="link-text" @click="goToCategoryManage">没有分类？去新增</text>
-      </view>
+          <view class="form-tip-row">
+            <text class="link-text" @click="goToCategoryManage">没有分类？去新增</text>
+          </view>
 
-      <u-form-item label="商品图片" border-bottom>
-        <u-upload
-          :file-list="fileList"
-          name="goods_img"
-          multiple
-          :max-count="1"
-          @after-read="afterRead"
-          @delete="deletePic"
-        ></u-upload>
-      </u-form-item>
+          <u-form-item label="商品图片" border-bottom>
+            <u-upload
+              :file-list="fileList"
+              name="goods_img"
+              multiple
+              :max-count="1"
+              @after-read="afterRead"
+              @delete="deletePic"
+            ></u-upload>
+          </u-form-item>
+        </wh-form-section>
 
-      <u-form-item label="多单位设置" border-bottom>
-        <u-switch v-model="form.is_multi_unit"></u-switch>
-      </u-form-item>
+        <wh-form-section title="价格与单位">
+          <u-form-item label="多单位设置" border-bottom>
+            <u-switch v-model="form.is_multi_unit"></u-switch>
+          </u-form-item>
 
-      <u-form-item label="是否上架销售" border-bottom>
-        <u-switch v-model="form.is_on_sale" active-color="#07c160"></u-switch>
-      </u-form-item>
+          <view v-if="form.is_multi_unit" class="unit-section">
+            <u-form-item label="大单位名称" border-bottom>
+              <u-input v-model="form.unit_big.name" placeholder="如：箱" border="none" />
+            </u-form-item>
+            <u-form-item label="换算率" border-bottom>
+              <u-input
+                v-model="form.rate"
+                type="number"
+                placeholder="1大单位 = N小单位"
+                border="none"
+              />
+            </u-form-item>
+            <u-form-item label="大单位价格" border-bottom>
+              <u-input
+                v-model="form.unit_big_price_display"
+                type="digit"
+                placeholder="大单位单价（元）"
+                border="none"
+              />
+            </u-form-item>
+          </view>
 
-      <view v-if="form.is_multi_unit" class="unit-section">
-        <u-form-item label="大单位名称" border-bottom>
-          <u-input v-model="form.unit_big.name" placeholder="如：箱" border="none" />
-        </u-form-item>
-        <u-form-item label="换算率" border-bottom>
-          <u-input
-            v-model="form.rate"
-            type="number"
-            placeholder="1大单位 = N小单位"
-            border="none"
-          />
-        </u-form-item>
-        <u-form-item label="大单位价格" border-bottom>
-          <u-input
-            v-model="form.unit_big_price_display"
-            type="digit"
-            placeholder="大单位单价"
-            border="none"
-          />
-        </u-form-item>
-      </view>
+          <u-form-item
+            :label="form.is_multi_unit ? '小单位名称' : '计量单位'"
+            border-bottom
+            required
+          >
+            <u-input v-model="form.unit_small.name" placeholder="如：瓶/包/个" border="none" />
+          </u-form-item>
 
-      <u-form-item :label="form.is_multi_unit ? '小单位名称' : '计量单位'" border-bottom required>
-        <u-input v-model="form.unit_small.name" placeholder="如：瓶/包/个" border="none" />
-      </u-form-item>
+          <u-form-item
+            :label="form.is_multi_unit ? '小单位价格' : '销售价格'"
+            border-bottom
+            required
+          >
+            <u-input
+              v-model="form.unit_small_price_display"
+              type="digit"
+              placeholder="请输入单价（元）"
+              border="none"
+            />
+          </u-form-item>
+        </wh-form-section>
 
-      <u-form-item :label="form.is_multi_unit ? '小单位价格' : '销售价格'" border-bottom required>
-        <u-input
-          v-model="form.unit_small_price_display"
-          type="digit"
-          placeholder="单价"
-          border="none"
-        />
-      </u-form-item>
+        <wh-form-section title="库存与上架">
+          <u-form-item label="当前总库存" border-bottom required>
+            <u-input
+              v-model="form.stock"
+              type="number"
+              :placeholder="'以' + (form.unit_small.name || '最小单位') + '计'"
+              border="none"
+            />
+            <template #right>
+              <text class="unit-tip">{{ form.unit_small.name }}</text>
+            </template>
+          </u-form-item>
 
-      <u-form-item label="当前总库存" border-bottom required>
-        <u-input
-          v-model="form.stock"
-          type="number"
-          :placeholder="'以' + (form.unit_small.name || '最小单位') + '计'"
-          border="none"
-        />
-        <template #right>
-          <text class="unit-tip">{{ form.unit_small.name }}</text>
-        </template>
-      </u-form-item>
-    </u-form>
+          <u-form-item label="是否上架销售" border-bottom>
+            <u-switch v-model="form.is_on_sale" active-color="#07c160"></u-switch>
+          </u-form-item>
+        </wh-form-section>
+      </u-form>
 
-    <view class="footer-btn">
-      <u-button type="primary" text="保存商品" :loading="loading" @click="saveGoods"></u-button>
+      <wh-primary-button-bar>
+        <u-button type="primary" text="保存商品" :loading="loading" @click="saveGoods"></u-button>
+      </wh-primary-button-bar>
+
+      <!-- 分类选择器 -->
+      <u-picker
+        :show="showCategoryPicker"
+        :columns="[categories]"
+        key-name="name"
+        @confirm="confirmCategory"
+        @cancel="showCategoryPicker = false"
+      ></u-picker>
     </view>
-
-    <!-- 分类选择器 -->
-    <u-picker
-      :show="showCategoryPicker"
-      :columns="[categories]"
-      key-name="name"
-      @confirm="confirmCategory"
-      @cancel="showCategoryPicker = false"
-    ></u-picker>
-  </view>
+  </wh-page-container>
 </template>
 
 <script setup lang="ts">
@@ -110,9 +125,12 @@ import { ref, reactive, onMounted } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import type { GoodsFormData } from '@/types/goods'
+import { importObject } from '@/utils/cloud'
+import WhPageContainer from '@/components/wh/PageContainer.vue'
+import WhFormSection from '@/components/wh/FormSection.vue'
+import WhPrimaryButtonBar from '@/components/wh/PrimaryButtonBar.vue'
 
 const loading = ref(false)
-import { importObject } from '@/utils/cloud'
 
 const goodsCo = importObject('wh-goods-co')
 const goods_id = ref('')
@@ -323,33 +341,35 @@ const saveGoods = async () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+
 .goods-edit-container {
-  padding: 30rpx;
-  background-color: #fff;
-  min-height: 100vh;
-  .form-tip-row {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10rpx 0;
-    .link-text {
-      font-size: 24rpx;
-      color: #2979ff;
-      text-decoration: underline;
-    }
+  padding: $wh-spacing-md;
+  padding-bottom: 260rpx;
+}
+
+.form-tip-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: $wh-spacing-xs 0 $wh-spacing-sm;
+
+  .link-text {
+    @include text-secondary;
+    color: $wh-color-primary;
+    font-size: $wh-font-size-sm;
+    text-decoration: underline;
   }
-  .unit-section {
-    background-color: #f9f9f9;
-    padding: 0 20rpx;
-    border-radius: 8rpx;
-    margin: 20rpx 0;
-  }
-  .unit-tip {
-    font-size: 24rpx;
-    color: #999;
-  }
-  .footer-btn {
-    margin-top: 60rpx;
-    padding-bottom: 40rpx;
-  }
+}
+
+.unit-section {
+  background-color: $wh-bg-color-hover;
+  padding: 0 $wh-spacing-md;
+  border-radius: $wh-border-radius-md;
+  margin: $wh-spacing-md 0;
+}
+
+.unit-tip {
+  @include text-tertiary;
 }
 </style>

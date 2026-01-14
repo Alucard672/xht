@@ -40,7 +40,7 @@
     <!-- 快速操作 -->
     <view class="quick-actions card-box">
       <view class="action-item" @click="navTo('/pages/client/shop?mode=agent')">
-        <view class="icon-box blue"><u-icon name="plus" color="#1890ff" size="24"></u-icon></view>
+        <view class="icon-box blue"><u-icon name="plus" color="#07c160" size="24"></u-icon></view>
         <text>快速开单</text>
       </view>
       <view class="action-item" @click="navTo('/pages/merchant/goods/list')">
@@ -146,7 +146,7 @@
       :fixed="true"
       :placeholder="true"
       :safe-area-inset-bottom="true"
-      active-color="#1890ff"
+      active-color="#07c160"
       @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
@@ -250,6 +250,9 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+
 .dashboard-container {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -257,7 +260,7 @@ onShow(() => {
 }
 
 .header-stats {
-  background-color: #2979ff;
+  background-color: $wh-color-primary;
   color: #ffffff;
   padding: 40rpx 30rpx 60rpx;
 
@@ -328,7 +331,7 @@ onShow(() => {
       position: absolute;
       right: 10rpx;
       top: 10rpx;
-      background-color: #ff4d4f;
+      background-color: $wh-color-danger;
       color: #fff;
       font-size: 18rpx;
       padding: 2rpx 10rpx;
@@ -374,7 +377,7 @@ onShow(() => {
       align-items: center;
 
       &.blue {
-        background-color: #e6f7ff;
+        background-color: $wh-color-primary-light;
       }
       &.orange {
         background-color: #fff7e6;
@@ -407,7 +410,7 @@ onShow(() => {
   }
   .more {
     font-size: 24rpx;
-    color: #1890ff;
+    color: $wh-color-primary;
   }
 }
 
@@ -452,7 +455,7 @@ onShow(() => {
       .amount {
         font-size: 32rpx;
         font-weight: bold;
-        color: #ff6b00;
+        color: $wh-color-warning;
       }
     }
   }

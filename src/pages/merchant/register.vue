@@ -34,7 +34,7 @@
       <u-button
         type="primary"
         text="立即开通"
-        custom-style="margin-top: 50rpx; background: linear-gradient(90deg, #722ed1, #1890ff); border: none;"
+        custom-style="margin-top: 50rpx; background: linear-gradient(90deg, #07c160, #06ad56); border: none;"
         :loading="loading"
         @click="handleRegister"
       ></u-button>

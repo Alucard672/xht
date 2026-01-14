@@ -85,7 +85,7 @@
       :fixed="true"
       :placeholder="true"
       :safe-area-inset-bottom="true"
-      active-color="#1890ff"
+      active-color="#07c160"
       @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
