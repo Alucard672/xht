@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onShow } from 'vue'
+import { ref, computed, onShow } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 
 const customerId = uni.getStorageSync('customer_id')
