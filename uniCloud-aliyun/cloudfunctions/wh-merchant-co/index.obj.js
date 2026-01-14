@@ -219,5 +219,60 @@ module.exports = {
         stockAlerts: stockAlerts.data
       }
     }
+  },
+
+  /**
+   * 获取店铺基础设置
+   */
+  async getTenantInfo() {
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
+
+    if (!tenant_id) return { code: 403, msg: '未绑定店铺' }
+
+    const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
+    if (!tenantRes.data[0]) return { code: 404, msg: '店铺不存在' }
+
+    return {
+      code: 0,
+      data: tenantRes.data[0]
+    }
+  },
+
+  /**
+   * 更新店铺基础设置
+   * @param {Object} data { name, logo_url, phone, settings }
+   */
+  async updateTenantInfo(data) {
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
+
+    if (!tenant_id) return { code: 403, msg: '无权修改' }
+
+    // 过滤允许修改的字段，防止意外覆盖敏感字段
+    const allowedData = {}
+    if (data.name) allowedData.name = data.name
+    if (data.logo_url) allowedData.logo_url = data.logo_url
+    if (data.phone) allowedData.phone = data.phone
+    if (data.settings) allowedData.settings = data.settings
+
+    await db.collection('wh_tenants').doc(tenant_id).update(allowedData)
+
+    return {
+      code: 0,
+      msg: '更新成功'
+    }
   }
 }

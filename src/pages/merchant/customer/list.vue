@@ -81,8 +81,16 @@ const page = ref(1)
 const loadStatus = ref('loadmore')
 const isPicker = ref(false)
 
+let lastLoadTime = 0
 const loadData = async (reset = false) => {
   if (loading.value) return
+
+  const now = Date.now()
+  // 节流逻辑：非强制重置 且 5分钟内加载过，则直接跳过
+  if (!reset && lastLoadTime && now - lastLoadTime < 300000) {
+    return
+  }
+
   if (reset) {
     page.value = 1
     list.value = []
@@ -106,6 +114,7 @@ const loadData = async (reset = false) => {
         loadStatus.value = 'loadmore'
         page.value++
       }
+      lastLoadTime = now
     }
   } catch (e) {
     uni.showToast({ title: '加载失败', icon: 'none' })

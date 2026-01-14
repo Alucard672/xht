@@ -21,6 +21,14 @@
       "description": "店主UID",
       "foreignKey": "uni-id-users._id"
     },
+    "logo_url": {
+      "bsonType": "string",
+      "description": "店铺Logo"
+    },
+    "phone": {
+      "bsonType": "string",
+      "description": "联系电话"
+    },
     "expired_at": {
       "bsonType": "timestamp",
       "description": "服务到期时间"

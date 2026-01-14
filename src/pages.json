@@ -88,6 +88,13 @@
       }
     },
     {
+      "path": "pages/merchant/setting/index",
+      "style": {
+        "navigationBarTitleText": "店铺设置",
+        "navigationBarBackgroundColor": "#ffffff"
+      }
+    },
+    {
       "path": "pages/client/shop",
       "style": {
         "navigationBarTitleText": "订货"

@@ -86,30 +86,36 @@ const keyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
 
-const loadGoodsList = async () => {
+let lastLoadTime = 0
+const loadGoodsList = async (force = false) => {
+  const now = Date.now()
+  if (!force && lastLoadTime && now - lastLoadTime < 300000) {
+    return
+  }
   await fetchGoodsList({
     keyword: keyword.value,
     page: currentPage.value,
     limit: pageSize.value
   })
+  lastLoadTime = now
 }
 
 const handleSearch = () => {
   currentPage.value = 1
-  loadGoodsList()
+  loadGoodsList(true)
 }
 
 const handleClear = () => {
   keyword.value = ''
   currentPage.value = 1
-  loadGoodsList()
+  loadGoodsList(true)
 }
 
 const handleToggleSale = async (item: any, newVal: any) => {
   // 立即触发，无需取反，组件直接返回新值
   const success = await toggleOnSale(item._id, !!newVal)
   if (success) {
-    loadGoodsList()
+    loadGoodsList(true)
   }
 }
 
@@ -121,7 +127,7 @@ const handleDelete = (item: any) => {
       if (res.confirm) {
         const success = await deleteGoods(item._id)
         if (success) {
-          loadGoodsList()
+          loadGoodsList(true)
         }
       }
     }

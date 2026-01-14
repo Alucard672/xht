@@ -2,7 +2,12 @@
   <view class="dashboard-container">
     <!-- 顶部蓝色统计区 -->
     <view class="header-stats">
-      <view class="shop-name">{{ shopName }} - 工作台</view>
+      <view class="header-top">
+        <view class="shop-name">{{ shopName }} - 工作台</view>
+        <view class="setting-btn" @click="navTo('/pages/merchant/setting/index')">
+          <u-icon name="setting" color="#fff" size="24"></u-icon>
+        </view>
+      </view>
       <view class="date-text">{{ todayStr }}</view>
       <view class="stats-grid">
         <view class="stats-item">
@@ -168,13 +173,21 @@ const stats = ref({
 })
 const pendingOrders = ref<any[]>([])
 const stockAlerts = ref<any[]>([])
+let lastLoadTime = 0
 
-const loadData = async () => {
+const loadData = async (force = false) => {
+  const now = Date.now()
+  if (!force && now - lastLoadTime < 300000) {
+    // 5分钟内不重复加载
+    return
+  }
+
   shopName.value = '王记粮油批发'
   // 保持异步调用，但不覆盖模拟数据（除非接口报错）
   try {
     const res = await merchantCo.getDashboardStats()
     if (res.code === 0) {
+      lastLoadTime = now
       stats.value = res.data.stats
       pendingOrders.value = res.data.pendingOrders
       stockAlerts.value = res.data.stockAlerts
@@ -236,14 +249,27 @@ onShow(() => {
 }
 
 .header-stats {
-  background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
-  padding: 40rpx 32rpx 100rpx;
-  color: #fff;
+  background-color: #2979ff;
+  color: #ffffff;
+  padding: 40rpx 30rpx 60rpx;
 
-  .shop-name {
-    font-size: 36rpx;
-    font-weight: bold;
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 8rpx;
+
+    .shop-name {
+      font-size: 36rpx;
+      font-weight: bold;
+    }
+
+    .setting-btn {
+      padding: 10rpx;
+      &:active {
+        opacity: 0.7;
+      }
+    }
   }
 
   .date-text {

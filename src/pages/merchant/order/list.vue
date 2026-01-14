@@ -116,6 +116,7 @@ const currentTab = ref(0)
 const orders = ref<any[]>([])
 const loading = ref(false)
 
+let lastLoadTime = 0
 onShow(() => {
   uni.hideTabBar()
   fetchOrders()
@@ -123,16 +124,21 @@ onShow(() => {
 
 const handleTabChange = (item: any) => {
   currentTab.value = tabList.findIndex(i => i.value === item.value)
-  fetchOrders()
+  fetchOrders(true)
 }
 
-const fetchOrders = async () => {
+const fetchOrders = async (force = false) => {
+  const now = Date.now()
+  if (!force && lastLoadTime && now - lastLoadTime < 300000) {
+    return
+  }
   loading.value = true
   try {
     const status = tabList[currentTab.value].value
     const res: any = await orderCo.getOrderList({ status })
     if (res.status === 0) {
       orders.value = res.data
+      lastLoadTime = now
     }
   } catch (e: any) {
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })
@@ -158,7 +164,7 @@ const updateStatus = async (order: any, newStatus: number) => {
 
           if (callRes.status === 0) {
             uni.showToast({ title: '操作成功', icon: 'success' })
-            fetchOrders()
+            fetchOrders(true)
           } else {
             uni.showToast({ title: callRes.message || '操作失败', icon: 'none' })
           }
