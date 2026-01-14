@@ -1,61 +1,44 @@
 <template>
-  <view class="merchant-page">
-    <view class="action-bar">
-      <view class="search">
-        <u-search
-          v-model="keyword"
-          placeholder="搜索商品或拼音"
-          :show-action="false"
-          @search="handleSearch"
-          @clear="handleClear"
-        ></u-search>
-      </view>
-      <u-button
-        type="primary"
-        icon="plus"
-        text="加商品"
-        custom-style="width: 180rpx; height: 64rpx; border-radius: 32rpx;"
-        @click="navTo('/pages/merchant/goods/edit')"
-      ></u-button>
-    </view>
+  <wh-page-container>
+    <wh-filter-bar
+      v-model="keyword"
+      placeholder="搜索商品或拼音"
+      @search="handleSearch"
+      @clear="handleClear"
+    >
+      <template #action>
+        <u-button
+          type="primary"
+          icon="plus"
+          text="加商品"
+          custom-style="width: 180rpx; height: 64rpx; border-radius: 32rpx;"
+          @click="navTo('/pages/merchant/goods/edit')"
+        ></u-button>
+      </template>
+    </wh-filter-bar>
 
     <view class="list-container">
-      <view v-if="loading" class="loading-box"><u-loading-icon></u-loading-icon></view>
-      <view v-else-if="goodsList.length === 0" class="empty-box">
-        <u-empty mode="list" icon="/static/empty/list.png" text="暂无商品"></u-empty>
+      <view v-if="loading" class="loading-box">
+        <u-loading-icon></u-loading-icon>
       </view>
+      <wh-empty-state
+        v-else-if="goodsList.length === 0"
+        icon="/static/empty/list.png"
+        text="暂无商品"
+      >
+        <u-button
+          type="primary"
+          text="去添加商品"
+          @click="navTo('/pages/merchant/goods/edit')"
+        ></u-button>
+      </wh-empty-state>
       <view v-else class="card-list">
-        <view v-for="item in goodsList" :key="item._id" class="card goods-card">
-          <view class="card-main" @click="navTo('/pages/merchant/goods/edit?id=' + item._id)">
-            <image
-              :src="item.img_url || '/static/logo.png'"
-              mode="aspectFill"
-              class="goods-img"
-            ></image>
-            <view class="goods-info">
-              <view class="name-row">
-                <text class="name u-line-1">{{ item.name }}</text>
-              </view>
-              <view class="stock-row">
-                库存: <text :class="{ warn: item.stock < 10 }">{{ item.stock }}</text>
-                {{ item.unit_small.name }}
-              </view>
-              <view class="price-row">
-                <text class="price"
-                  >¥{{ (item.unit_small.price / 100).toFixed(2) }}/{{ item.unit_small.name }}</text
-                >
-              </view>
-            </view>
-          </view>
-          <view class="card-right">
-            <view class="status-box">
-              <text :class="['status-text', item.is_on_sale !== false ? 'on' : 'off']">
-                {{ item.is_on_sale !== false ? '已上架' : '已下架' }}
-              </text>
-            </view>
-            <u-icon name="arrow-right" color="#ccc" size="18"></u-icon>
-          </view>
-        </view>
+        <wh-goods-card
+          v-for="item in goodsList"
+          :key="item._id"
+          :goods="item"
+          @click="handleGoodsClick"
+        ></wh-goods-card>
       </view>
     </view>
 
@@ -64,7 +47,7 @@
       :fixed="true"
       :placeholder="true"
       :safe-area-inset-bottom="true"
-      active-color="#1890ff"
+      active-color="#07c160"
       @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
@@ -72,13 +55,18 @@
       <u-tabbar-item text="商品" icon="bag-fill"></u-tabbar-item>
       <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
     </u-tabbar>
-  </view>
+  </wh-page-container>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useGoods } from '@/composables/useGoods'
+import WhPageContainer from '@/components/wh/PageContainer.vue'
+import WhFilterBar from '@/components/wh/FilterBar.vue'
+import WhEmptyState from '@/components/wh/EmptyState.vue'
+import WhGoodsCard from '@/components/wh/GoodsCard.vue'
+import type { Goods } from '@/types/goods'
 
 const { goodsList, loading, total, fetchGoodsList, toggleOnSale, deleteGoods } = useGoods()
 
@@ -100,7 +88,8 @@ const loadGoodsList = async (force = false) => {
   lastLoadTime = now
 }
 
-const handleSearch = () => {
+const handleSearch = (value: string) => {
+  keyword.value = value
   currentPage.value = 1
   loadGoodsList(true)
 }
@@ -109,6 +98,10 @@ const handleClear = () => {
   keyword.value = ''
   currentPage.value = 1
   loadGoodsList(true)
+}
+
+const handleGoodsClick = (goods: Goods) => {
+  navTo('/pages/merchant/goods/edit?id=' + goods._id)
 }
 
 const handleToggleSale = async (item: any, newVal: any) => {
@@ -159,111 +152,19 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
-.merchant-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 180rpx; // 预留 tabbar 与安全区
-}
-
-.action-bar {
-  display: flex;
-  align-items: center;
-  gap: 20rpx;
-  padding: 24rpx;
-  background-color: #fff;
-  position: relative;
-  z-index: 10;
-  .search {
-    flex: 1;
-  }
-}
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
 
 .list-container {
-  padding: 24rpx;
+  padding: $wh-spacing-md;
 }
 
-.card {
-  background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
-  display: flex;
-  gap: 24rpx;
+.loading-box {
+  @include flex-center;
+  padding: $wh-spacing-xxl;
+}
 
-  .goods-img {
-    width: 160rpx;
-    height: 160rpx;
-    border-radius: 12rpx;
-    background-color: #f9f9f9;
-  }
-
-  .goods-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-
-    .name-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      .name {
-        font-size: 30rpx;
-        font-weight: bold;
-        color: #333;
-      }
-    }
-
-    .stock-row {
-      font-size: 24rpx;
-      color: #999;
-      .warn {
-        color: #ff4d4f;
-        font-weight: bold;
-      }
-    }
-
-    .price-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      .price {
-        color: #ff6b00;
-        font-size: 32rpx;
-        font-weight: bold;
-      }
-    }
-  }
-
-  .card-main {
-    flex: 1;
-    display: flex;
-    gap: 24rpx;
-  }
-
-  .card-right {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-end;
-    padding: 10rpx 0;
-
-    .status-box {
-      .status-text {
-        font-size: 20rpx;
-        padding: 4rpx 12rpx;
-        border-radius: 6rpx;
-        &.on {
-          color: #07c160;
-          background-color: rgba(7, 193, 96, 0.1);
-        }
-        &.off {
-          color: #999;
-          background-color: #f0f0f0;
-        }
-      }
-    }
-  }
+.card-list {
+  // 卡片间距由 GoodsCard 组件内部 margin-bottom 控制
 }
 </style>

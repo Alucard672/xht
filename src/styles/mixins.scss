@@ -1,0 +1,135 @@
+/**
+ * 样式混入 - Mixins
+ * 可复用的样式片段
+ */
+
+@import '@/styles/design-tokens.scss';
+
+/* ==================== 卡片混入 ==================== */
+
+@mixin card-base {
+  background-color: $wh-bg-color-card;
+  border-radius: $wh-border-radius-md;
+  padding: $wh-spacing-md;
+  box-shadow: $wh-shadow-sm;
+}
+
+@mixin card-large {
+  @include card-base;
+  border-radius: $wh-border-radius-lg;
+  padding: $wh-spacing-lg;
+}
+
+/* ==================== 文本混入 ==================== */
+
+@mixin text-primary {
+  font-size: $wh-font-size-base;
+  color: $wh-text-color-primary;
+  font-weight: $wh-font-weight-normal;
+  line-height: $wh-line-height-normal;
+}
+
+@mixin text-secondary {
+  font-size: $wh-font-size-sm;
+  color: $wh-text-color-secondary;
+  font-weight: $wh-font-weight-normal;
+  line-height: $wh-line-height-normal;
+}
+
+@mixin text-tertiary {
+  font-size: $wh-font-size-sm;
+  color: $wh-text-color-tertiary;
+  font-weight: $wh-font-weight-normal;
+  line-height: $wh-line-height-normal;
+}
+
+@mixin text-title {
+  font-size: $wh-font-size-lg;
+  color: $wh-text-color-primary;
+  font-weight: $wh-font-weight-bold;
+  line-height: $wh-line-height-tight;
+}
+
+@mixin text-price {
+  font-size: $wh-font-size-md;
+  color: $wh-color-primary;
+  font-weight: $wh-font-weight-bold;
+  line-height: $wh-line-height-normal;
+}
+
+/* ==================== 按钮混入 ==================== */
+
+@mixin button-primary {
+  background-color: $wh-color-primary;
+  color: $wh-text-color-inverse;
+  border-radius: $wh-border-radius-sm;
+  font-size: $wh-font-size-base;
+  font-weight: $wh-font-weight-medium;
+  transition: background-color $wh-transition-fast $wh-easing-base;
+
+  &:active {
+    background-color: $wh-color-primary-dark;
+  }
+}
+
+@mixin button-ghost {
+  background-color: transparent;
+  color: $wh-color-primary;
+  border: 1rpx solid $wh-color-primary;
+  border-radius: $wh-border-radius-sm;
+  font-size: $wh-font-size-base;
+  font-weight: $wh-font-weight-medium;
+}
+
+/* ==================== 布局混入 ==================== */
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==================== 截断混入 ==================== */
+
+@mixin text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin text-ellipsis-line($lines: 2) {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: $lines;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==================== 安全区混入 ==================== */
+
+@mixin safe-area-bottom {
+  padding-bottom: constant(safe-area-inset-bottom);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@mixin safe-area-top {
+  padding-top: constant(safe-area-inset-top);
+  padding-top: env(safe-area-inset-top);
+}

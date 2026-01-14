@@ -76,7 +76,7 @@
         <view class="order-goods u-line-1">
           <text v-for="(g, i) in order.items" :key="i"
             >{{ g.name }} x{{ g.countSmall }}{{ g.unitSmallName
-            }}{{ i < order.items.length - 1 ? '，' : '' }}</text
+            }}{{ i !== order.items.length - 1 ? '，' : '' }}</text
           >
         </view>
         <view class="order-footer">
@@ -158,7 +158,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 
 const merchantCo = uniCloud.importObject('wh-merchant-co')
@@ -182,8 +182,6 @@ const loadData = async (force = false) => {
     return
   }
 
-  shopName.value = '王记粮油批发'
-  // 保持异步调用，但不覆盖模拟数据（除非接口报错）
   try {
     const res = await merchantCo.getDashboardStats()
     if (res.code === 0) {
@@ -191,11 +189,21 @@ const loadData = async (force = false) => {
       stats.value = res.data.stats
       pendingOrders.value = res.data.pendingOrders
       stockAlerts.value = res.data.stockAlerts
+      shopName.value = res.data.tenantName || '我的店铺'
     }
   } catch (e) {
     // ignore
   }
 }
+
+// 监听设置页面的更新通知
+uni.$on('refresh-dashboard', () => {
+  loadData(true)
+})
+
+onUnmounted(() => {
+  uni.$off('refresh-dashboard')
+})
 
 const getStatusText = (status: string) => {
   const map: any = { pending: '待确认', confirmed: '待发货', completed: '已完成' }

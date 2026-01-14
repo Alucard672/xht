@@ -1,55 +1,34 @@
 <template>
-  <view class="customer-list-container">
-    <view class="search-bar">
-      <u-search
-        v-model="keyword"
-        placeholder="搜索姓名或手机号"
-        :show-action="false"
-        @change="onSearch"
-        @clear="onSearch"
-      ></u-search>
-    </view>
+  <wh-page-container>
+    <wh-filter-bar
+      v-model="keyword"
+      placeholder="搜索姓名或手机号"
+      @change="onSearch"
+      @clear="onSearch"
+    ></wh-filter-bar>
 
     <view class="list-content">
       <u-list @scrolltolower="loadMore">
         <u-list-item v-for="item in list" :key="item._id">
-          <view class="customer-item card-box" hover-class="item-hover" @click="goDetail(item)">
-            <view class="left">
-              <view class="name-row">
-                <text class="name">{{ item.alias }}</text>
-                <text v-if="item.phone" class="phone">{{ item.phone }}</text>
-              </view>
-              <view class="time-row">
-                <text class="time"
-                  >最后交易：{{
-                    item.last_trade_time ? formatDate(item.last_trade_time) : '无'
-                  }}</text
-                >
-              </view>
-            </view>
-            <view class="right">
-              <view class="debt-box" :class="{ 'has-debt': item.total_debt > 0 }">
-                <text class="label">欠款</text>
-                <text class="amount">¥{{ (item.total_debt / 100).toFixed(2) }}</text>
-              </view>
-              <u-icon name="arrow-right" color="#ccc" size="16"></u-icon>
-            </view>
-          </view>
+          <wh-customer-card :customer="item" @click="handleCustomerClick"></wh-customer-card>
         </u-list-item>
       </u-list>
 
       <u-loadmore :status="loadStatus" @loadmore="loadMore" />
-      <u-empty
+      <wh-empty-state
         v-if="list.length === 0 && !loading"
-        mode="list"
         icon="/static/empty/list.png"
         text="暂无客户"
-      />
+      >
+        <u-button
+          type="primary"
+          text="去添加客户"
+          @click="navTo('/pages/merchant/customer/edit')"
+        ></u-button>
+      </wh-empty-state>
     </view>
 
-    <view class="add-btn" @click="navTo('/pages/merchant/customer/edit')">
-      <u-icon name="plus" color="#fff" size="24"></u-icon>
-    </view>
+    <wh-fab-button @click="navTo('/pages/merchant/customer/edit')"></wh-fab-button>
 
     <!-- 底部导航 -->
     <u-tabbar
@@ -57,7 +36,7 @@
       :fixed="true"
       :placeholder="true"
       :safe-area-inset-bottom="true"
-      active-color="#1890ff"
+      active-color="#07c160"
       @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
@@ -65,13 +44,18 @@
       <u-tabbar-item text="商品" icon="bag"></u-tabbar-item>
       <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
     </u-tabbar>
-  </view>
+  </wh-page-container>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import { importObject } from '@/utils/cloud'
+import WhPageContainer from '@/components/wh/PageContainer.vue'
+import WhFilterBar from '@/components/wh/FilterBar.vue'
+import WhEmptyState from '@/components/wh/EmptyState.vue'
+import WhCustomerCard from '@/components/wh/CustomerCard.vue'
+import WhFabButton from '@/components/wh/FabButton.vue'
 
 const customerCo = importObject('wh-customer-co')
 const list = ref<any[]>([])
@@ -123,7 +107,10 @@ const loadData = async (reset = false) => {
   }
 }
 
-const onSearch = () => {
+const onSearch = (value?: string) => {
+  if (value !== undefined) {
+    keyword.value = value
+  }
   loadData(true)
 }
 
@@ -133,22 +120,17 @@ const loadMore = () => {
   }
 }
 
-const goDetail = (item: any) => {
+const handleCustomerClick = (customer: any) => {
   if (isPicker.value) {
-    uni.$emit('select-customer', item)
+    uni.$emit('select-customer', customer)
     uni.navigateBack()
     return
   }
-  uni.navigateTo({ url: `/pages/merchant/customer/detail?id=${item._id}` })
+  uni.navigateTo({ url: `/pages/merchant/customer/detail?id=${customer._id}` })
 }
 
 const navTo = (url: string) => {
   uni.navigateTo({ url })
-}
-
-const formatDate = (ts: any) => {
-  const d = new Date(ts)
-  return `${d.getMonth() + 1}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}`
 }
 
 onShow(() => {
@@ -174,94 +156,10 @@ const handleModuleChange = (index: number) => {
 </script>
 
 <style lang="scss" scoped>
-.customer-list-container {
-  background-color: #f5f5f5;
-  min-height: 100vh;
-  padding: 20rpx 0 180rpx;
-}
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
 
-.search-bar {
-  padding: 0 30rpx 20rpx;
-  background-color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.customer-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 30rpx;
-  margin: 10rpx 20rpx;
-  background-color: #fff;
-  border-radius: 16rpx;
-
-  .name-row {
-    margin-bottom: 10rpx;
-    .name {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #333;
-      margin-right: 20rpx;
-    }
-    .phone {
-      font-size: 26rpx;
-      color: #999;
-    }
-  }
-
-  .time-row {
-    .time {
-      font-size: 24rpx;
-      color: #ccc;
-    }
-  }
-
-  .right {
-    display: flex;
-    align-items: center;
-    gap: 20rpx;
-
-    .debt-box {
-      text-align: right;
-      display: flex;
-      flex-direction: column;
-
-      .label {
-        font-size: 22rpx;
-        color: #999;
-      }
-      .amount {
-        font-size: 30rpx;
-        color: #666;
-      }
-
-      &.has-debt {
-        .amount {
-          color: #ff4d4f;
-          font-weight: bold;
-        }
-      }
-    }
-  }
-}
-
-.card-box {
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.add-btn {
-  position: fixed;
-  right: 40rpx;
-  bottom: 60rpx;
-  width: 100rpx;
-  height: 100rpx;
-  background-color: #2979ff;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 10rpx 20rpx rgba(41, 121, 255, 0.3);
+.list-content {
+  padding: $wh-spacing-sm $wh-spacing-md;
 }
 </style>

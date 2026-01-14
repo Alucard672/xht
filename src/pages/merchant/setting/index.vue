@@ -144,6 +144,7 @@ const saveSettings = async () => {
     const res = await merchantCo.updateTenantInfo(updateData)
     if (res.code === 0) {
       uni.showToast({ title: '保存成功' })
+      uni.$emit('refresh-dashboard')
       setTimeout(() => uni.navigateBack(), 1500)
     } else {
       uni.showToast({ title: res.msg || '保存失败', icon: 'none' })

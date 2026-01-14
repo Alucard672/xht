@@ -90,7 +90,24 @@ const goClient = () => {
   }
 }
 
-onLoad(() => {
+onLoad((options: any) => {
+  // 处理扫码入店或带参数访问
+  let tenant_id = options.tenant_id
+
+  // 处理微信小程序扫码 (scene 参数)
+  if (options.scene) {
+    const scene = decodeURIComponent(options.scene)
+    const sceneParams = scene.split('=')
+    if (sceneParams[0] === 't') {
+      tenant_id = sceneParams[1]
+    }
+  }
+
+  if (tenant_id) {
+    uni.setStorageSync('tenant_id', tenant_id)
+    return uni.reLaunch({ url: `/pages/client/shop?tenant_id=${tenant_id}` })
+  }
+
   // 如果指定了模式，自动执行跳转逻辑
   if (appMode.value === 'merchant') {
     goMerchant()

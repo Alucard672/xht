@@ -1,0 +1,175 @@
+/**
+ * 基础样式 - Base Styles
+ * 重置样式和通用工具类
+ */
+
+@import '@/styles/design-tokens.scss';
+
+/* ==================== 通用工具类 ==================== */
+
+/* 文本颜色 */
+.text-primary {
+  color: $wh-text-color-primary;
+}
+
+.text-secondary {
+  color: $wh-text-color-secondary;
+}
+
+.text-tertiary {
+  color: $wh-text-color-tertiary;
+}
+
+.text-placeholder {
+  color: $wh-text-color-placeholder;
+}
+
+.text-success {
+  color: $wh-color-success;
+}
+
+.text-warning {
+  color: $wh-color-warning;
+}
+
+.text-danger {
+  color: $wh-color-danger;
+}
+
+.text-info {
+  color: $wh-color-info;
+}
+
+/* 文本大小 */
+.text-xs {
+  font-size: $wh-font-size-xs;
+}
+
+.text-sm {
+  font-size: $wh-font-size-sm;
+}
+
+.text-base {
+  font-size: $wh-font-size-base;
+}
+
+.text-md {
+  font-size: $wh-font-size-md;
+}
+
+.text-lg {
+  font-size: $wh-font-size-lg;
+}
+
+.text-xl {
+  font-size: $wh-font-size-xl;
+}
+
+/* 字重 */
+.font-normal {
+  font-weight: $wh-font-weight-normal;
+}
+
+.font-medium {
+  font-weight: $wh-font-weight-medium;
+}
+
+.font-bold {
+  font-weight: $wh-font-weight-bold;
+}
+
+/* 文本截断 */
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-ellipsis-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-ellipsis-3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 间距工具类 */
+.m-xs {
+  margin: $wh-spacing-xs;
+}
+
+.m-sm {
+  margin: $wh-spacing-sm;
+}
+
+.m-md {
+  margin: $wh-spacing-md;
+}
+
+.m-lg {
+  margin: $wh-spacing-lg;
+}
+
+.m-xl {
+  margin: $wh-spacing-xl;
+}
+
+.p-xs {
+  padding: $wh-spacing-xs;
+}
+
+.p-sm {
+  padding: $wh-spacing-sm;
+}
+
+.p-md {
+  padding: $wh-spacing-md;
+}
+
+.p-lg {
+  padding: $wh-spacing-lg;
+}
+
+.p-xl {
+  padding: $wh-spacing-xl;
+}
+
+/* Flex 布局 */
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-1 {
+  flex: 1;
+}

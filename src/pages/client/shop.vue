@@ -1,282 +1,305 @@
 <template>
   <view class="shop-container">
-    <view v-if="mode !== 'agent'" class="shop-header">
-      <view class="top-row">
-        <text class="shop-name">{{ shopInfo?.name || '商家店铺' }}</text>
-        <u-icon name="arrow-right" color="#fff" size="16"></u-icon>
-      </view>
-      <view class="search-box">
-        <u-search
-          v-model="keyword"
-          placeholder="搜索商品或首字母"
-          :show-action="false"
-          shape="round"
-          bg-color="#ffffff"
-        ></u-search>
-      </view>
+    <!-- 店铺无法访问时的状态 -->
+    <view v-if="shopInvalid" class="invalid-shop">
+      <u-empty mode="permission" text="店铺不存在或已关闭"></u-empty>
+      <u-button
+        type="primary"
+        text="返回首页"
+        custom-style="margin-top: 40rpx; width: 300rpx;"
+        @click="navTo('/pages/index/index')"
+      ></u-button>
     </view>
 
-    <view v-if="mode !== 'agent'" class="notice-bar">
-      <u-notice-bar
-        text="通知：本周新品上架，茅台酒特价优惠中！欢迎选购！"
-        color="#d48806"
-        bg-color="#fff7e6"
-        mode="horizontal"
-      ></u-notice-bar>
-    </view>
-
-    <view v-if="currentTab === 0" class="content">
-      <scroll-view class="category-list" scroll-y>
-        <view
-          v-for="cat in categories"
-          :key="cat._id"
-          :class="['cat-item', activeCat === cat._id ? 'active' : '']"
-          @click="activeCat = cat._id"
-        >
-          <text class="cat-name">{{ cat.name }}</text>
+    <template v-else>
+      <view v-if="mode !== 'agent'" class="shop-header">
+        <view class="top-row">
+          <image
+            v-if="shopInfo?.logo_url"
+            :src="shopInfo.logo_url"
+            mode="aspectFill"
+            class="shop-logo"
+          ></image>
+          <text class="shop-name">{{ shopInfo?.name || '商家店铺' }}</text>
+          <u-icon name="arrow-right" color="#fff" size="14"></u-icon>
         </view>
-      </scroll-view>
+        <view class="search-box">
+          <u-search
+            v-model="keyword"
+            placeholder="搜索商品或首字母"
+            :show-action="false"
+            shape="round"
+            bg-color="#ffffff"
+          ></u-search>
+        </view>
+      </view>
 
-      <scroll-view class="goods-list" scroll-y @scrolltolower="loadMore">
-        <unicloud-db
-          ref="udb"
-          v-slot="{ data, loading, error }"
-          collection="wh_goods"
-          :where="whereClause"
-          :page-size="20"
-        >
-          <view v-if="error" class="error">{{ error.message }}</view>
-          <view v-else class="goods-grid">
-            <view v-for="item in data" :key="item._id" class="goods-card">
-              <image
-                :src="item.img_url || '/static/logo.png'"
-                mode="aspectFill"
-                class="goods-img"
-              ></image>
-              <view class="goods-info">
-                <view class="name u-line-1">{{ item.name }}</view>
-                <view class="spec">{{
-                  item.unit_big?.name
-                    ? `${item.rate || 1}${item.unit_small?.name || ''}/${item.unit_big.name}`
-                    : item.unit_small?.name || ''
-                }}</view>
-                <view class="price-row">
-                  <view class="price-main">
-                    <text class="symbol">¥</text>
-                    <text class="val">{{
-                      priceHelper.format(item.unit_big?.price || item.unit_small?.price || 0)
-                    }}</text>
-                    <text class="unit"
-                      >/{{ item.unit_big?.name || item.unit_small?.name || '' }}</text
-                    >
+      <view v-if="mode !== 'agent'" class="notice-bar">
+        <u-notice-bar
+          text="通知：本周新品上架，茅台酒特价优惠中！欢迎选购！"
+          color="#d48806"
+          bg-color="#fff7e6"
+          mode="horizontal"
+        ></u-notice-bar>
+      </view>
+
+      <view v-if="currentTab === 0" class="content">
+        <scroll-view class="category-list" scroll-y>
+          <view
+            v-for="cat in categories"
+            :key="cat._id"
+            :class="['cat-item', activeCat === cat._id ? 'active' : '']"
+            @click="activeCat = cat._id"
+          >
+            <text class="cat-name">{{ cat.name }}</text>
+          </view>
+        </scroll-view>
+
+        <scroll-view class="goods-list" scroll-y @scrolltolower="loadMore">
+          <unicloud-db
+            ref="udb"
+            v-slot="{ data, loading, error }"
+            collection="wh_goods"
+            :where="whereClause"
+            :page-size="20"
+          >
+            <view v-if="error" class="error">{{ error.message }}</view>
+            <view v-else class="goods-grid">
+              <view v-for="item in data" :key="item._id" class="goods-card">
+                <image
+                  :src="item.img_url || '/static/logo.png'"
+                  mode="aspectFill"
+                  class="goods-img"
+                ></image>
+                <view class="goods-info">
+                  <view class="name u-line-1">{{ item.name }}</view>
+                  <view class="spec">{{
+                    item.unit_big?.name
+                      ? `${item.rate || 1}${item.unit_small?.name || ''}/${item.unit_big.name}`
+                      : item.unit_small?.name || ''
+                  }}</view>
+                  <view class="price-row">
+                    <view class="price-main">
+                      <text class="symbol">¥</text>
+                      <text class="val">{{
+                        priceHelper.format(item.unit_big?.price || item.unit_small?.price || 0)
+                      }}</text>
+                      <text class="unit"
+                        >/{{ item.unit_big?.name || item.unit_small?.name || '' }}</text
+                      >
+                    </view>
+                    <view v-if="item.unit_big?.name" class="price-sub">
+                      ¥{{ priceHelper.format(item.unit_small?.price || 0) }}/{{
+                        item.unit_small?.name || ''
+                      }}
+                    </view>
                   </view>
-                  <view v-if="item.unit_big?.name" class="price-sub">
-                    ¥{{ priceHelper.format(item.unit_small?.price || 0) }}/{{
-                      item.unit_small?.name || ''
-                    }}
+                  <view class="add-btn" @click.stop="addToCart(item)">
+                    <u-icon name="plus" color="#fff" size="14"></u-icon>
                   </view>
                 </view>
-                <view class="add-btn" @click.stop="addToCart(item)">
-                  <u-icon name="plus" color="#fff" size="14"></u-icon>
+              </view>
+              <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
+            </view>
+            <u-loading-icon v-if="loading"></u-loading-icon>
+          </unicloud-db>
+        </scroll-view>
+      </view>
+
+      <view v-if="currentTab === 1" class="cart-page">
+        <view class="cart-header">
+          <text class="title">购物车 ({{ cartTotalCount }})</text>
+          <text class="clear" @click="clearCart">清空</text>
+        </view>
+
+        <scroll-view class="cart-list" scroll-y>
+          <view v-if="cartTotalCount === 0" class="empty-cart">
+            <u-empty mode="car" text="购物车是空的"></u-empty>
+            <u-button
+              type="primary"
+              text="去凑单"
+              size="small"
+              custom-style="margin-top: 40rpx; width: 200rpx;"
+              @click="currentTab = 0"
+            ></u-button>
+          </view>
+          <view v-else class="cart-items">
+            <view v-for="(item, id) in cart" :key="id" class="cart-item">
+              <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
+              <view class="item-info">
+                <view class="item-name">{{ item.name }}</view>
+                <view class="unit-controls-list">
+                  <!-- 大单位控制 -->
+                  <view v-if="item.unitBigName" class="unit-control-row">
+                    <text class="unit-label">{{ item.unitBigName }}</text>
+                    <view class="control-right">
+                      <u-number-box
+                        v-model="item.countBig"
+                        :min="0"
+                        size="22"
+                        @change="onCartNumChange(item)"
+                      ></u-number-box>
+                      <text class="unit-price">¥{{ priceHelper.format(item.priceBig) }}</text>
+                    </view>
+                  </view>
+                  <!-- 小单位控制 -->
+                  <view class="unit-control-row">
+                    <text class="unit-label">{{ item.unitSmallName }}</text>
+                    <view class="control-right">
+                      <u-number-box
+                        v-model="item.countSmall"
+                        :min="0"
+                        size="22"
+                        @change="onCartNumChange(item)"
+                      ></u-number-box>
+                      <text class="unit-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
+                    </view>
+                  </view>
                 </view>
               </view>
             </view>
             <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
           </view>
-          <u-loading-icon v-if="loading"></u-loading-icon>
-        </unicloud-db>
-      </scroll-view>
-    </view>
+        </scroll-view>
 
-    <view v-if="currentTab === 1" class="cart-page">
-      <view class="cart-header">
-        <text class="title">购物车 ({{ cartTotalCount }})</text>
-        <text class="clear" @click="clearCart">清空</text>
-      </view>
-
-      <scroll-view class="cart-list" scroll-y>
-        <view v-if="cartTotalCount === 0" class="empty-cart">
-          <u-empty mode="car" text="购物车是空的"></u-empty>
+        <view v-if="cartTotalCount > 0" class="cart-footer">
+          <view class="total-info">
+            <text class="label">合计:</text>
+            <text class="symbol">¥</text>
+            <text class="amount">{{ priceHelper.format(cartTotalAmount) }}</text>
+          </view>
           <u-button
             type="primary"
-            text="去凑单"
-            size="small"
-            custom-style="margin-top: 40rpx; width: 200rpx;"
-            @click="currentTab = 0"
+            text="提交订单"
+            custom-style="width: 240rpx; height: 80rpx; border-radius: 40rpx;"
+            @click="goToCheckout"
           ></u-button>
         </view>
-        <view v-else class="cart-items">
-          <view v-for="(item, id) in cart" :key="id" class="cart-item">
-            <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
-            <view class="item-info">
-              <view class="item-name">{{ item.name }}</view>
-              <view class="unit-controls-list">
-                <!-- 大单位控制 -->
-                <view v-if="item.unitBigName" class="unit-control-row">
-                  <text class="unit-label">{{ item.unitBigName }}</text>
-                  <view class="control-right">
-                    <u-number-box
-                      v-model="item.countBig"
-                      :min="0"
-                      size="22"
-                      @change="onCartNumChange(item)"
-                    ></u-number-box>
-                    <text class="unit-price">¥{{ priceHelper.format(item.priceBig) }}</text>
-                  </view>
-                </view>
-                <!-- 小单位控制 -->
-                <view class="unit-control-row">
-                  <text class="unit-label">{{ item.unitSmallName }}</text>
-                  <view class="control-right">
-                    <u-number-box
-                      v-model="item.countSmall"
-                      :min="0"
-                      size="22"
-                      @change="onCartNumChange(item)"
-                    ></u-number-box>
-                    <text class="unit-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
-                  </view>
-                </view>
-              </view>
+      </view>
+
+      <scroll-view v-if="currentTab === 2" class="my-page" scroll-y>
+        <view class="my-header">
+          <view class="user-info">
+            <image class="avatar" src="/static/logo.png"></image>
+            <view class="info-right">
+              <view class="nickname">{{ userInfo.nickname }}</view>
+              <view class="mobile">{{ userInfo.mobile }}</view>
             </view>
           </view>
-          <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
+          <view class="debt-card">
+            <view class="label">当前欠款 (元)</view>
+            <view class="amount">{{ priceHelper.format(userInfo.total_debt) }}</view>
+            <view class="btn-row">
+              <text class="btn" @click="navTo('/pages/client/orders')">账单详情 ></text>
+            </view>
+          </view>
         </view>
+
+        <view class="menu-list">
+          <view class="menu-item" @click="navTo('/pages/client/orders')">
+            <u-icon name="order" size="24" color="#07c160"></u-icon>
+            <text class="menu-text">历史订单</text>
+            <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+          </view>
+          <view class="menu-item" @click="showToast('演示功能')">
+            <u-icon name="map" size="24" color="#07c160"></u-icon>
+            <text class="menu-text">收货地址</text>
+            <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+          </view>
+          <view class="menu-item" @click="showToast('演示功能')">
+            <u-icon name="kefu-ermai" size="24" color="#07c160"></u-icon>
+            <text class="menu-text">联系商家</text>
+            <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+          </view>
+        </view>
+
+        <view class="logout-btn" @click="logout">退出登录</view>
+        <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
       </scroll-view>
 
-      <view v-if="cartTotalCount > 0" class="cart-footer">
-        <view class="total-info">
-          <text class="label">合计:</text>
-          <text class="symbol">¥</text>
-          <text class="amount">{{ priceHelper.format(cartTotalAmount) }}</text>
+      <view v-if="currentTab === 0 && cartTotalCount > 0" class="cart-bar" @click="currentTab = 1">
+        <view class="cart-icon">
+          <u-icon name="shopping-cart-fill" color="#fff" size="28"></u-icon>
+          <view class="badge">{{ cartTotalCount }}</view>
         </view>
-        <u-button
-          type="primary"
-          text="提交订单"
-          custom-style="width: 240rpx; height: 80rpx; border-radius: 40rpx;"
-          @click="goToCheckout"
-        ></u-button>
-      </view>
-    </view>
-
-    <scroll-view v-if="currentTab === 2" class="my-page" scroll-y>
-      <view class="my-header">
-        <view class="user-info">
-          <image class="avatar" src="/static/logo.png"></image>
-          <view class="info-right">
-            <view class="nickname">{{ userInfo.nickname }}</view>
-            <view class="mobile">{{ userInfo.mobile }}</view>
-          </view>
+        <view class="cart-info">
+          <text class="total-price">¥{{ priceHelper.format(cartTotalAmount) }}</text>
+          <text class="delivery-tip">免费配送</text>
         </view>
-        <view class="debt-card">
-          <view class="label">当前欠款 (元)</view>
-          <view class="amount">{{ priceHelper.format(userInfo.total_debt) }}</view>
-          <view class="btn-row">
-            <text class="btn" @click="navTo('/pages/client/orders')">账单详情 ></text>
-          </view>
-        </view>
+        <view class="checkout-btn" @click.stop="goToCheckout">去结算</view>
       </view>
 
-      <view class="menu-list">
-        <view class="menu-item" @click="navTo('/pages/client/orders')">
-          <u-icon name="order" size="24" color="#07c160"></u-icon>
-          <text class="menu-text">历史订单</text>
-          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
-        </view>
-        <view class="menu-item" @click="showToast('演示功能')">
-          <u-icon name="map" size="24" color="#07c160"></u-icon>
-          <text class="menu-text">收货地址</text>
-          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
-        </view>
-        <view class="menu-item" @click="showToast('演示功能')">
-          <u-icon name="kefu-ermai" size="24" color="#07c160"></u-icon>
-          <text class="menu-text">联系商家</text>
-          <u-icon name="arrow-right" size="16" color="#999"></u-icon>
-        </view>
-      </view>
-
-      <view class="logout-btn" @click="logout">退出登录</view>
-      <view class="list-bottom-space" :style="{ height: bottomSpaceHeight }"></view>
-    </scroll-view>
-
-    <view v-if="currentTab === 0 && cartTotalCount > 0" class="cart-bar" @click="currentTab = 1">
-      <view class="cart-icon">
-        <u-icon name="shopping-cart-fill" color="#fff" size="28"></u-icon>
-        <view class="badge">{{ cartTotalCount }}</view>
-      </view>
-      <view class="cart-info">
-        <text class="total-price">¥{{ priceHelper.format(cartTotalAmount) }}</text>
-        <text class="delivery-tip">免费配送</text>
-      </view>
-      <view class="checkout-btn" @click.stop="goToCheckout">去结算</view>
-    </view>
-
-    <!-- 单位选择弹窗 -->
-    <u-popup :show="showUnitPopup" mode="bottom" round="20" @close="showUnitPopup = false">
-      <view v-if="activeItem" class="unit-popup-content">
-        <view class="popup-header">
-          <image :src="activeItem.img_url || '/static/logo.png'" class="p-img"></image>
-          <view class="p-info">
-            <view class="p-name">{{ activeItem.name }}</view>
-            <view class="p-price"
-              >已选：{{ tempCartItem.countBig || 0 }}{{ activeItem.unit_big?.name || '' }}
-              {{ tempCartItem.countSmall || 0 }}{{ activeItem.unit_small?.name }}</view
-            >
-          </view>
-        </view>
-
-        <view class="popup-body">
-          <view v-if="activeItem.unit_big?.name" class="unit-select-item">
-            <view class="u-left">
-              <text class="u-name">{{ activeItem.unit_big.name }}</text>
-              <text class="u-sub"
-                >¥{{ priceHelper.format(activeItem.unit_big.price) }} /
-                {{ activeItem.unit_big.name }}</text
+      <!-- 单位选择弹窗 -->
+      <u-popup :show="showUnitPopup" mode="bottom" round="20" @close="showUnitPopup = false">
+        <view v-if="activeItem" class="unit-popup-content">
+          <view class="popup-header">
+            <image :src="activeItem.img_url || '/static/logo.png'" class="p-img"></image>
+            <view class="p-info">
+              <view class="p-name">{{ activeItem.name }}</view>
+              <view class="p-price"
+                >已选：{{ tempCartItem.countBig || 0 }}{{ activeItem.unit_big?.name || '' }}
+                {{ tempCartItem.countSmall || 0 }}{{ activeItem.unit_small?.name }}</view
               >
             </view>
-            <u-number-box v-model="tempCartItem.countBig" :min="0"></u-number-box>
           </view>
 
-          <view class="unit-select-item">
-            <view class="u-left">
-              <text class="u-name">{{ activeItem.unit_small.name }}</text>
-              <text class="u-sub"
-                >¥{{ priceHelper.format(activeItem.unit_small.price) }} /
-                {{ activeItem.unit_small.name }}</text
-              >
+          <view class="popup-body">
+            <view v-if="activeItem.unit_big?.name" class="unit-select-item">
+              <view class="u-left">
+                <text class="u-name">{{ activeItem.unit_big.name }}</text>
+                <text class="u-sub"
+                  >¥{{ priceHelper.format(activeItem.unit_big.price) }} /
+                  {{ activeItem.unit_big.name }}</text
+                >
+              </view>
+              <u-number-box v-model="tempCartItem.countBig" :min="0"></u-number-box>
             </view>
-            <u-number-box v-model="tempCartItem.countSmall" :min="0"></u-number-box>
+
+            <view class="unit-select-item">
+              <view class="u-left">
+                <text class="u-name">{{ activeItem.unit_small.name }}</text>
+                <text class="u-sub"
+                  >¥{{ priceHelper.format(activeItem.unit_small.price) }} /
+                  {{ activeItem.unit_small.name }}</text
+                >
+              </view>
+              <u-number-box v-model="tempCartItem.countSmall" :min="0"></u-number-box>
+            </view>
+          </view>
+
+          <view class="popup-footer">
+            <u-button type="primary" text="加入购物车" @click="confirmAddToCart"></u-button>
           </view>
         </view>
+      </u-popup>
 
-        <view class="popup-footer">
-          <u-button type="primary" text="加入购物车" @click="confirmAddToCart"></u-button>
+      <view class="bottom-tabbar">
+        <view :class="['tab-item', currentTab === 0 ? 'active' : '']" @click="handleTabChange(0)">
+          <u-icon name="home" :color="currentTab === 0 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
+          <text class="txt">首页</text>
+        </view>
+        <view :class="['tab-item', currentTab === 1 ? 'active' : '']" @click="handleTabChange(1)">
+          <u-icon
+            name="shopping-cart"
+            :color="currentTab === 1 ? '#07c160' : '#7d7e80'"
+            size="26"
+          ></u-icon>
+          <text class="txt">购物车</text>
+        </view>
+        <view
+          v-if="mode !== 'agent'"
+          :class="['tab-item', currentTab === 2 ? 'active' : '']"
+          @click="handleTabChange(2)"
+        >
+          <u-icon
+            name="account"
+            :color="currentTab === 2 ? '#07c160' : '#7d7e80'"
+            size="26"
+          ></u-icon>
+          <text class="txt">我的</text>
         </view>
       </view>
-    </u-popup>
-
-    <view class="bottom-tabbar">
-      <view :class="['tab-item', currentTab === 0 ? 'active' : '']" @click="handleTabChange(0)">
-        <u-icon name="home" :color="currentTab === 0 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
-        <text class="txt">首页</text>
-      </view>
-      <view :class="['tab-item', currentTab === 1 ? 'active' : '']" @click="handleTabChange(1)">
-        <u-icon
-          name="shopping-cart"
-          :color="currentTab === 1 ? '#07c160' : '#7d7e80'"
-          size="26"
-        ></u-icon>
-        <text class="txt">购物车</text>
-      </view>
-      <view
-        v-if="mode !== 'agent'"
-        :class="['tab-item', currentTab === 2 ? 'active' : '']"
-        @click="handleTabChange(2)"
-      >
-        <u-icon name="account" :color="currentTab === 2 ? '#07c160' : '#7d7e80'" size="26"></u-icon>
-        <text class="txt">我的</text>
-      </view>
-    </view>
+    </template>
   </view>
 </template>
 
@@ -284,10 +307,14 @@
 import { ref, computed, reactive } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
+import { importObject } from '@/utils/cloud'
+
+const merchantCo = importObject('wh-merchant-co')
 
 const mode = ref('')
 const tenant_id = ref('')
 const shopInfo = ref<any>(null)
+const shopInvalid = ref(false)
 const udb = ref<any>(null)
 const activeCat = ref('all')
 const keyword = ref('')
@@ -322,12 +349,43 @@ onLoad(async options => {
   }
   fetchShopInfo()
   fetchCategories()
+  loadCartFromStorage() // 加载持久化购物车
 })
 
+const getCartKey = () => `cart_${tenant_id.value}`
+
+const loadCartFromStorage = () => {
+  const key = getCartKey()
+  const saved = uni.getStorageSync(key)
+  if (saved) {
+    try {
+      const data = JSON.parse(saved)
+      // 清空当前内存购物车并恢复
+      Object.keys(cart).forEach(k => delete cart[k])
+      Object.assign(cart, data)
+    } catch (e) {
+      console.error('Failed to parse saved cart:', e)
+    }
+  }
+}
+
+const saveCartToStorage = () => {
+  const key = getCartKey()
+  uni.setStorageSync(key, JSON.stringify(cart))
+}
+
 const fetchShopInfo = async () => {
-  shopInfo.value = {
-    _id: tenant_id.value,
-    name: '王记粮油批发'
+  shopInvalid.value = false
+  try {
+    const res = await merchantCo.getTenantInfo({ tenantId: tenant_id.value })
+    if (res.code === 0 && res.data) {
+      shopInfo.value = res.data
+    } else {
+      shopInvalid.value = true
+    }
+  } catch (e) {
+    console.error('Fetch shop info failed:', e)
+    shopInvalid.value = true
   }
 }
 
@@ -385,8 +443,14 @@ const confirmAddToCart = () => {
       countBig: tempCartItem.countBig
     }
   }
+  saveCartToStorage() // 持久化保存
   showUnitPopup.value = false
   uni.showToast({ title: '已更新购物车', icon: 'none' })
+}
+
+const clearCart = () => {
+  Object.keys(cart).forEach(k => delete cart[k])
+  saveCartToStorage()
 }
 
 const cartTotalCount = computed(() => {
@@ -418,14 +482,11 @@ const goToCheckout = () => {
   uni.navigateTo({ url: `/pages/client/checkout?tenant_id=${tenant_id.value}&mode=${mode.value}` })
 }
 
-const clearCart = () => {
-  Object.keys(cart).forEach(key => delete cart[key])
-}
-
 const onCartNumChange = (item: any) => {
   if (item.countSmall <= 0 && (item.countBig || 0) <= 0) {
     delete cart[item._id]
   }
+  saveCartToStorage()
 }
 
 const handleTabChange = (index: number) => {
@@ -467,6 +528,15 @@ const loadMore = () => {
   // 关键修改：背景改为白色，避免用户觉得有灰色蒙层
   background-color: #ffffff;
   overflow: hidden;
+
+  .invalid-shop {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 200rpx;
+  }
 }
 
 .shop-header {
@@ -478,11 +548,19 @@ const loadMore = () => {
   .top-row {
     display: flex;
     align-items: center;
-    gap: 8rpx;
+    gap: 16rpx;
     margin-bottom: 24rpx;
+
+    .shop-logo {
+      width: 80rpx;
+      height: 80rpx;
+      border-radius: 12rpx;
+      border: 2rpx solid rgba(255, 255, 255, 0.4);
+    }
+
     .shop-name {
       color: #fff;
-      font-size: 36rpx;
+      font-size: 34rpx;
       font-weight: bold;
     }
   }

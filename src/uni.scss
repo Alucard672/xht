@@ -1,5 +1,10 @@
 @import 'uview-plus/theme.scss';
 
+/* 引入设计系统 */
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/base.scss';
+
 /**
  * 这里是uni-app内置的常用样式变量
  *

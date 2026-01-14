@@ -1,0 +1,103 @@
+/**
+ * 设计系统 - Design Tokens
+ * 类微信原生风格
+ */
+
+/* ==================== 颜色系统 ==================== */
+
+/* 主色 */
+$wh-color-primary: #07c160; // 微信绿，用于主要操作
+$wh-color-primary-light: rgba(7, 193, 96, 0.1);
+$wh-color-primary-dark: #06ad56;
+
+/* 文字颜色 */
+$wh-text-color-primary: #333333; // 主文字
+$wh-text-color-secondary: #666666; // 次要文字
+$wh-text-color-tertiary: #999999; // 辅助文字
+$wh-text-color-placeholder: #cccccc; // 占位文字
+$wh-text-color-inverse: #ffffff; // 反色文字
+
+/* 背景颜色 */
+$wh-bg-color-page: #f7f7f7; // 页面背景
+$wh-bg-color-card: #ffffff; // 卡片背景
+$wh-bg-color-hover: #f1f1f1; // 点击状态
+$wh-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩
+$wh-bg-color-divider: #ededed; // 分割线
+
+/* 状态颜色 */
+$wh-color-success: #07c160; // 成功
+$wh-color-warning: #ff9500; // 警告
+$wh-color-danger: #fa5151; // 危险
+$wh-color-info: #10aeff; // 信息
+
+/* 状态颜色 - 浅色背景 */
+$wh-color-success-light: rgba(7, 193, 96, 0.1);
+$wh-color-warning-light: rgba(255, 149, 0, 0.1);
+$wh-color-danger-light: rgba(250, 81, 81, 0.1);
+$wh-color-info-light: rgba(16, 174, 255, 0.1);
+
+/* ==================== 字体系统 ==================== */
+
+/* 字号 */
+$wh-font-size-xs: 20rpx; // 极小
+$wh-font-size-sm: 24rpx; // 辅助文字
+$wh-font-size-base: 28rpx; // 正文
+$wh-font-size-md: 30rpx; // 中等
+$wh-font-size-lg: 32rpx; // 标题
+$wh-font-size-xl: 36rpx; // 大标题
+
+/* 字重 */
+$wh-font-weight-normal: 400; // 常规
+$wh-font-weight-medium: 500; // 中等
+$wh-font-weight-bold: 600; // 加粗
+
+/* 行高 */
+$wh-line-height-tight: 1.2;
+$wh-line-height-normal: 1.5;
+$wh-line-height-relaxed: 1.8;
+
+/* ==================== 间距系统 ==================== */
+
+/* 基础单位 */
+$wh-spacing-unit: 8rpx;
+
+/* 间距值 */
+$wh-spacing-xs: $wh-spacing-unit; // 8rpx
+$wh-spacing-sm: $wh-spacing-unit * 2; // 16rpx
+$wh-spacing-md: $wh-spacing-unit * 3; // 24rpx
+$wh-spacing-lg: $wh-spacing-unit * 4; // 32rpx
+$wh-spacing-xl: $wh-spacing-unit * 6; // 48rpx
+$wh-spacing-xxl: $wh-spacing-unit * 8; // 64rpx
+
+/* ==================== 圆角系统 ==================== */
+
+$wh-border-radius-sm: 8rpx; // 标签、小按钮
+$wh-border-radius-md: 12rpx; // 卡片、输入框
+$wh-border-radius-lg: 16rpx; // 大卡片
+$wh-border-radius-xl: 24rpx; // 超大卡片
+$wh-border-radius-circle: 50%; // 圆形
+
+/* ==================== 阴影系统 ==================== */
+
+$wh-shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04); // 列表卡片
+$wh-shadow-md: 0 4rpx 12rpx rgba(0, 0, 0, 0.08); // 浮层
+$wh-shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12); // 弹窗
+
+/* ==================== 层级系统 ==================== */
+
+$wh-z-index-base: 1;
+$wh-z-index-sticky: 10;
+$wh-z-index-dropdown: 100;
+$wh-z-index-overlay: 200;
+$wh-z-index-modal: 300;
+$wh-z-index-toast: 400;
+
+/* ==================== 动画系统 ==================== */
+
+$wh-transition-fast: 0.15s;
+$wh-transition-base: 0.3s;
+$wh-transition-slow: 0.5s;
+
+$wh-easing-base: cubic-bezier(0.4, 0, 0.2, 1);
+$wh-easing-in: cubic-bezier(0.4, 0, 1, 1);
+$wh-easing-out: cubic-bezier(0, 0, 0.2, 1);

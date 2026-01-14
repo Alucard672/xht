@@ -211,37 +211,56 @@ module.exports = {
       .limit(3)
       .get()
 
+    // 4. 获取店铺信息 (用于展示店名)
+    const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
+    const tenantInfo = tenantRes.data[0] || {}
+
     return {
       code: 0,
       data: {
         stats,
         pendingOrders: pendingOrders.data,
-        stockAlerts: stockAlerts.data
+        stockAlerts: stockAlerts.data,
+        tenantName: tenantInfo.name || '我的店铺'
       }
     }
   },
 
   /**
-   * 获取店铺基础设置
+   * 获取店铺基础设置 (支持 C 端通过 tenant_id 获取)
+   * @param {String} tenant_id 可选，传入则获取对应店铺信息
    */
-  async getTenantInfo() {
-    let token = this.getUniIdToken()
-    if (typeof token === 'object' && token.token) token = token.token
-    const auth = await this.uniID.checkToken(token)
-    if (auth.code !== 0) return auth
-
+  async getTenantInfo(params = {}) {
+    let { tenantId } = params
     const db = uniCloud.database()
-    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
-    const tenant_id = userRes.data[0].tenant_id
 
-    if (!tenant_id) return { code: 403, msg: '未绑定店铺' }
+    // 如果未传 tenantId，则尝试从当前登录用户获取（商家管理模式）
+    if (!tenantId) {
+      let token = this.getUniIdToken()
+      if (typeof token === 'object' && token.token) token = token.token
+      const auth = await this.uniID.checkToken(token)
+      if (auth.code !== 0) return auth
 
-    const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
+      const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+      tenantId = userRes.data[0].tenant_id
+    }
+
+    if (!tenantId) return { code: 403, msg: '未指定店铺' }
+
+    const tenantRes = await db.collection('wh_tenants').doc(tenantId).get()
     if (!tenantRes.data[0]) return { code: 404, msg: '店铺不存在' }
 
+    const data = tenantRes.data[0]
+    // 过滤敏感字段，只返回公开信息
     return {
       code: 0,
-      data: tenantRes.data[0]
+      data: {
+        _id: data._id,
+        name: data.name,
+        logo_url: data.logo_url,
+        phone: data.phone,
+        settings: data.settings || {}
+      }
     }
   },
 
