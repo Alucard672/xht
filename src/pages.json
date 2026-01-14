@@ -12,6 +12,12 @@
       }
     },
     {
+      "path": "pages/client/scan",
+      "style": {
+        "navigationBarTitleText": "扫码进店"
+      }
+    },
+    {
       "path": "pages/merchant/login",
       "style": {
         "navigationBarTitleText": "商家登录"

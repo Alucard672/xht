@@ -248,5 +248,13 @@ module.exports = {
       await transaction.rollback()
       return { code: 500, msg: e.message }
     }
+  },
+
+  /**
+   * 客户还款 (客户端调用)
+   * @param {Object} params { customer_id, amount, remark }
+   */
+  async repay(params) {
+    return this.repayDebt(params)
   }
 }

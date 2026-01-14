@@ -201,6 +201,11 @@
             <text class="menu-text">历史订单</text>
             <u-icon name="arrow-right" size="16" color="#999"></u-icon>
           </view>
+          <view class="menu-item" @click="navTo('/pages/client/assets')">
+            <u-icon name="rmb-circle" size="24" color="#07c160"></u-icon>
+            <text class="menu-text">我的资产</text>
+            <u-icon name="arrow-right" size="16" color="#999"></u-icon>
+          </view>
           <view class="menu-item" @click="showToast('演示功能')">
             <u-icon name="map" size="24" color="#07c160"></u-icon>
             <text class="menu-text">收货地址</text>

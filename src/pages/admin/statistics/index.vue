@@ -63,7 +63,6 @@
           </view>
         </view>
       </view>
-    </view>
 
     <!-- 底部导航 -->
     <u-tabbar
@@ -88,40 +87,31 @@ import { onShow } from '@dcloudio/uni-app'
 const adminCo = uniCloud.importObject('wh-admin-co')
 
 const summary = ref({
-  totalMerchants: 125,
-  activeMerchants: 98,
-  totalCustomers: 3400,
-  totalOrders: 45700,
-  totalRevenue: 895000000,
-  growthRate: '+12.5%'
+    totalMerchants: 0,
+    activeMerchants: 0,
+    totalCustomers: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    growthRate: '0%'
 })
-const trends = ref<any[]>([
-  { month: '12月', merchants: 125, orders: 45680, revenue: 895000000, growth: '+9.1%' },
-  { month: '11月', merchants: 118, orders: 42500, revenue: 820000000, growth: '+6.8%' },
-  { month: '10月', merchants: 112, orders: 39200, revenue: 768000000, growth: '+8.9%' },
-  { month: '9月', merchants: 105, orders: 36800, revenue: 705000000, growth: '+15.6%' },
-  { month: '8月', merchants: 92, orders: 32100, revenue: 610000000, growth: '+17.3%' },
-  { month: '7月', merchants: 85, orders: 28500, revenue: 520000000, growth: '0.0%' }
-])
-const topMerchants = ref<any[]>([
-  { _id: '1', name: '王记粮油批发', order_count: 2580, total_revenue: 51200000 },
-  { _id: '2', name: '李氏日用百货', order_count: 2340, total_revenue: 46800000 },
-  { _id: '3', name: '张家食品批发', order_count: 2120, total_revenue: 42500000 },
-  { _id: '4', name: '刘记副食', order_count: 1980, total_revenue: 39600000 },
-  { _id: '5', name: '陈氏批发部', order_count: 1850, total_revenue: 37000000 }
-])
+const trends = ref<any[]>([])
+const topMerchants = ref<any[]>([])
+const loading = ref(false)
 
 const loadData = async () => {
-  try {
-    const res = await adminCo.getPlatformStats()
-    if (res.code === 0 && res.data.trends.length > 0) {
-      summary.value = res.data.summary
-      trends.value = res.data.trends
-      topMerchants.value = res.data.topMerchants
+    loading.value = true
+    try {
+        const res: any = await adminCo.getPlatformStats()
+        if (res.code === 0 && res.data) {
+            summary.value = res.data.summary || summary.value
+            trends.value = res.data.trends || []
+            topMerchants.value = res.data.topMerchants || []
+        }
+    } catch (e: any) {
+        console.error('Load statistics failed:', e)
+    } finally {
+        loading.value = false
     }
-  } catch (e: any) {
-    // ignore
-  }
 }
 
 const formatCount = (num: number) => {

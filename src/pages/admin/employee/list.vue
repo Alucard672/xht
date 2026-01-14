@@ -55,7 +55,10 @@
 
     <!-- 列表区 -->
     <view class="list-content">
-      <scroll-view scroll-y class="list-scroll">
+      <view v-if="loading && list.length === 0" class="loading-state">
+        <u-loading-icon></u-loading-icon>
+      </view>
+      <scroll-view v-else scroll-y class="list-scroll">
         <view v-for="item in list" :key="item._id" class="employee-card">
           <view class="info">
             <view class="top">
@@ -100,74 +103,42 @@ import { onShow } from '@dcloudio/uni-app'
 const adminCo = uniCloud.importObject('wh-admin-co')
 
 const keyword = ref('')
-const activeStatus = ref(0)
+const activeStatus = ref(-1)
 const statusTabs = ref([
-  { name: '全部', status: null },
+  { name: '全部', status: -1 },
   { name: '在职', status: 0 },
   { name: '离职', status: 1 }
 ])
 
-const list = ref<any[]>([
-  {
-    _id: 'e1',
-    nickname: '张三',
-    mobile: '138-0000-0001',
-    role: ['admin'],
-    status: 0,
-    register_date: Date.now() - 86400000 * 300
-  },
-  {
-    _id: 'e2',
-    nickname: '李四',
-    mobile: '138-0000-0002',
-    role: ['operator'],
-    status: 0,
-    register_date: Date.now() - 86400000 * 200
-  },
-  {
-    _id: 'e3',
-    nickname: '王五',
-    mobile: '138-0000-0003',
-    role: ['operator'],
-    status: 0,
-    register_date: Date.now() - 86400000 * 100
-  },
-  {
-    _id: 'e4',
-    nickname: '赵六',
-    mobile: '138-0000-0004',
-    role: ['operator'],
-    status: 0,
-    register_date: Date.now() - 86400000 * 50
-  },
-  {
-    _id: 'e5',
-    nickname: '钱七',
-    mobile: '138-0000-0005',
-    role: ['operator'],
-    status: 1,
-    register_date: Date.now() - 86400000 * 10
-  }
-])
+const list = ref<any[]>([])
 const stats = ref({
-  total: 5,
-  active: 4,
-  admins: 1,
+  total: 0,
+  active: 0,
+  admins: 0,
   newThisMonth: 0
 })
+const loading = ref(false)
 
 const loadData = async () => {
+  loading.value = true
   try {
-    const res = await adminCo.getEmployeeList({
+    const res: any = await adminCo.getEmployeeList({
       status: activeStatus.value,
       keyword: keyword.value
     })
-    if (res.code === 0 && res.data.list.length > 0) {
-      list.value = res.data.list
-      stats.value = res.data.stats
+    if (res.code === 0) {
+      list.value = res.data.list || []
+      stats.value = res.data.stats || {
+        total: 0,
+        active: 0,
+        admins: 0,
+        newThisMonth: 0
+      }
     }
   } catch (e: any) {
-    // ignore
+    console.error('Load employee list failed:', e)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -308,5 +279,11 @@ onShow(() => {
 
 .list-scroll {
   height: calc(100vh - 550rpx);
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding-top: 100rpx;
 }
 </style>
