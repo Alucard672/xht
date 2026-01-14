@@ -105,18 +105,12 @@ const tabIndex = ref(0)
 const keyword = ref('')
 const page = ref(1)
 const loadStatus = ref('loadmore')
-const list = ref<any[]>([
-  { _id: 'm1', name: '王记粮油批发', owner_mobile: '138-0000-1234', status: 1 },
-  { _id: 'm2', name: '李氏日用百货', owner_mobile: '139-0000-5678', status: 0 },
-  { _id: 'm3', name: '张家食品批发', owner_mobile: '136-0000-9012', status: 0 },
-  { _id: 'm4', name: '刘记副食', owner_mobile: '137-0000-3456', status: 1 },
-  { _id: 'm5', name: '陈氏批发部', owner_mobile: '135-0000-7890', status: 1 }
-])
+const list = ref<any[]>([])
 const stats = ref({
-  totalMerchants: 5,
-  activeMerchants: 4,
-  totalCustomers: 202,
-  totalOrders: 6200
+  totalMerchants: 0,
+  activeMerchants: 0,
+  totalCustomers: 0,
+  totalOrders: 0
 })
 
 const loadData = async (reset = false) => {
@@ -125,14 +119,17 @@ const loadData = async (reset = false) => {
   }
   loadStatus.value = 'loading'
   try {
-    const res = await adminCo.getMerchantList({
+    const res: any = await adminCo.getMerchantList({
       page: page.value,
       limit: 20,
       keyword: keyword.value
     })
-    if (res.code === 0 && res.data.list.length > 0) {
-      if (reset) list.value = res.data.list
-      else list.value = [...list.value, ...res.data.list]
+    if (res.code === 0) {
+      if (reset) {
+        list.value = res.data.list
+      } else {
+        list.value = [...list.value, ...res.data.list]
+      }
       stats.value = res.data.stats
       loadStatus.value = res.data.list.length < 20 ? 'nomore' : 'loadmore'
     } else {
@@ -160,7 +157,28 @@ const formatCount = (num: number) => {
 }
 
 const addMerchant = () => {
-  uni.showToast({ title: '演示功能', icon: 'none' })
+  uni.showModal({
+    title: '添加商户',
+    editable: true,
+    placeholderText: '请输入店铺名称',
+    success: async res => {
+      if (res.confirm && res.content) {
+        try {
+          const addRes: any = await adminCo.addMerchant({
+            name: res.content
+          })
+          if (addRes.code === 0) {
+            uni.showToast({ title: '添加成功', icon: 'success' })
+            loadData(true)
+          } else {
+            uni.showToast({ title: addRes.msg || '添加失败', icon: 'none' })
+          }
+        } catch (e: any) {
+          uni.showToast({ title: e.message || '添加失败', icon: 'none' })
+        }
+      }
+    }
+  })
 }
 
 const handleTabChange = (index: number) => {

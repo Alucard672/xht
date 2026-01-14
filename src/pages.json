@@ -122,6 +122,12 @@
       }
     },
     {
+      "path": "pages/client/assets",
+      "style": {
+        "navigationBarTitleText": "我的资产"
+      }
+    },
+    {
       "path": "pages/admin/merchant/list",
       "style": {
         "navigationBarTitleText": "商户管理",

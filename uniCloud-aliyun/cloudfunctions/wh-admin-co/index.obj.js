@@ -43,45 +43,37 @@ module.exports = {
   /**
    * 获取商户列表及统计信息
    */
-  async getMerchantList({ page = 1, limit = 10, keyword = '' }) {
+  async getMerchantList({ page = 1, limit = 20, keyword = '' }) {
     const db = uniCloud.database()
     const dbCmd = db.command
 
     let where = {}
     if (keyword) {
-      where = dbCmd.or([{ name: new RegExp(keyword, 'i') }])
+      where.name = new RegExp(keyword, 'i')
     }
 
-    // 统计数据
-    const totalMerchants = await db.collection('wh_tenants').count()
+    const [countRes, listRes] = await Promise.all([
+      db.collection('wh_tenants').where(where).count(),
+      db
+        .collection('wh_tenants')
+        .where(where)
+        .orderBy('created_at', 'desc')
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .get()
+    ])
+
     const totalCustomers = await db.collection('wh_customers').count()
     const totalOrders = await db.collection('wh_orders').count()
-
-    // 列表数据 (联表查询老板手机号)
-    const listRes = await db
-      .collection('wh_tenants')
-      .aggregate()
-      .match(where)
-      .lookup({
-        from: 'uni-id-users',
-        localField: 'owner_uid',
-        foreignField: '_id',
-        as: 'owner'
-      })
-      .addFields({
-        owner_mobile: { $arrayElemAt: ['$owner.mobile', 0] }
-      })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .end()
 
     return {
       code: 0,
       data: {
         list: listRes.data,
+        total: countRes.total,
         stats: {
-          totalMerchants: totalMerchants.total,
-          activeMerchants: totalMerchants.total, // 简单演示
+          totalMerchants: countRes.total,
+          activeMerchants: listRes.data.filter(m => m.status === 1).length,
           totalCustomers: totalCustomers.total,
           totalOrders: totalOrders.total
         }
