@@ -143,8 +143,17 @@ module.exports = {
    * @returns {Promise<{code: 0, data: {_id: String}}>}
    */
   async createGoods(goodsData) {
-    const { name, category_id, img_url, is_multi_unit, unit_small, unit_big, rate, stock } =
-      goodsData
+    const {
+      name,
+      category_id,
+      img_url,
+      is_multi_unit,
+      unit_small,
+      unit_big,
+      rate,
+      stock,
+      is_on_sale
+    } = goodsData
 
     // 参数校验
     if (!name || !name.trim()) {
@@ -181,7 +190,8 @@ module.exports = {
       },
       rate: parseInt(rate) || 1,
       stock: parseInt(stock) || 0,
-      is_on_sale: true
+      // 若前端未传则默认上架
+      is_on_sale: typeof is_on_sale === 'boolean' ? !!is_on_sale : true
     }
 
     // 多单位配置
@@ -217,8 +227,17 @@ module.exports = {
       return { code: 4001, msg: '商品ID不能为空', data: null }
     }
 
-    const { name, category_id, img_url, is_multi_unit, unit_small, unit_big, rate, stock } =
-      goodsData
+    const {
+      name,
+      category_id,
+      img_url,
+      is_multi_unit,
+      unit_small,
+      unit_big,
+      rate,
+      stock,
+      is_on_sale
+    } = goodsData
 
     // 参数校验
     if (!name || !name.trim()) {
@@ -263,7 +282,9 @@ module.exports = {
         price: parseInt(unit_small.price) || 0
       },
       rate: parseInt(rate) || 1,
-      stock: parseInt(stock) || 0
+      stock: parseInt(stock) || 0,
+      // 保持与 toggleOnSale 一致，允许从编辑页直接控制上下架
+      is_on_sale: typeof is_on_sale === 'boolean' ? !!is_on_sale : undefined
     }
 
     // 多单位配置
@@ -274,6 +295,11 @@ module.exports = {
       }
     } else {
       updateData.unit_big = { name: '', price: 0 }
+    }
+
+    // 如果未显式传递 is_on_sale，则不更新该字段
+    if (updateData.is_on_sale === undefined) {
+      delete updateData.is_on_sale
     }
 
     await db.collection('wh_goods').doc(goods_id).update(updateData)
