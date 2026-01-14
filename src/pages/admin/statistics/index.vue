@@ -29,7 +29,7 @@
     </view>
 
     <!-- 月度趋势 -->
-    <view class="section-title">月度数据趋势 (最近3个月)</view>
+    <text class="section-title">月度数据趋势 (最近3个月)</text>
     <view class="card-box">
       <view class="trend-table">
         <view class="tr th">
@@ -48,7 +48,7 @@
     </view>
 
     <!-- TOP 商户 -->
-    <view class="section-title">TOP 商户排行 (按订单量)</view>
+    <text class="section-title">TOP 商户排行 (按订单量)</text>
     <view class="card-box">
       <view class="rank-list">
         <view v-for="(item, index) in topMerchants" :key="item._id" class="rank-item">
@@ -63,6 +63,7 @@
           </view>
         </view>
       </view>
+    </view>
 
     <!-- 底部导航 -->
     <u-tabbar
@@ -87,31 +88,31 @@ import { onShow } from '@dcloudio/uni-app'
 const adminCo = uniCloud.importObject('wh-admin-co')
 
 const summary = ref({
-    totalMerchants: 0,
-    activeMerchants: 0,
-    totalCustomers: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    growthRate: '0%'
+  totalMerchants: 0,
+  activeMerchants: 0,
+  totalCustomers: 0,
+  totalOrders: 0,
+  totalRevenue: 0,
+  growthRate: '0%'
 })
 const trends = ref<any[]>([])
 const topMerchants = ref<any[]>([])
 const loading = ref(false)
 
 const loadData = async () => {
-    loading.value = true
-    try {
-        const res: any = await adminCo.getPlatformStats()
-        if (res.code === 0 && res.data) {
-            summary.value = res.data.summary || summary.value
-            trends.value = res.data.trends || []
-            topMerchants.value = res.data.topMerchants || []
-        }
-    } catch (e: any) {
-        console.error('Load statistics failed:', e)
-    } finally {
-        loading.value = false
+  loading.value = true
+  try {
+    const res: any = await adminCo.getPlatformStats()
+    if (res.code === 0 && res.data) {
+      summary.value = res.data.summary || summary.value
+      trends.value = res.data.trends || []
+      topMerchants.value = res.data.topMerchants || []
     }
+  } catch (e: any) {
+    console.error('Load statistics failed:', e)
+  } finally {
+    loading.value = false
+  }
 }
 
 const formatCount = (num: number) => {
