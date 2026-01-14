@@ -70,6 +70,14 @@
       }
     },
     {
+      "path": "pages/merchant/order/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情",
+        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/merchant/customer/list",
       "style": {
         "navigationBarTitleText": "客户账本",
@@ -102,6 +110,14 @@
       }
     },
     {
+      "path": "pages/merchant/customer/debt-add",
+      "style": {
+        "navigationBarTitleText": "记一笔",
+        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/merchant/setting/index",
       "style": {
         "navigationBarTitleText": "店铺设置",
@@ -125,6 +141,18 @@
       "path": "pages/client/orders",
       "style": {
         "navigationBarTitleText": "我的订单"
+      }
+    },
+    {
+      "path": "pages/client/order/detail",
+      "style": {
+        "navigationBarTitleText": "订单详情"
+      }
+    },
+    {
+      "path": "pages/client/credit/apply",
+      "style": {
+        "navigationBarTitleText": "赊账申请"
       }
     },
     {
