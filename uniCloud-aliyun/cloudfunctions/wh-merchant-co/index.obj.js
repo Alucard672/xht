@@ -70,7 +70,6 @@ module.exports = {
     let userInfo
 
     if (userRes.data.length === 0) {
-      // uni-id-common 不提供 addUser，这里直接写 uni-id-users（仅开发期免密登录用）
       const role = mobile === '13003629527' ? ['admin'] : ['merchant']
       const now = Date.now()
       const addRes = await db.collection('uni-id-users').add({
@@ -123,12 +122,10 @@ module.exports = {
     const transaction = await db.startTransaction()
 
     try {
-      // 1. 获取客户当前状态
       const customerRes = await transaction.collection('wh_customers').doc(customer_id).get()
       const customer = customerRes.data[0]
       if (!customer) throw new Error('客户不存在')
 
-      // 2. 更新总欠款 (减去还款金额)
       await transaction
         .collection('wh_customers')
         .doc(customer_id)
@@ -136,11 +133,10 @@ module.exports = {
           total_debt: dbCmd.inc(-amount)
         })
 
-      // 3. 记录流水
       await transaction.collection('wh_debt_logs').add({
         tenant_id: customer.tenant_id,
         customer_id,
-        amount: -amount, // 负数代表欠款减少
+        amount: -amount,
         type: 'repayment',
         source: 'manual',
         remark: remark || '客户还款',
@@ -170,7 +166,6 @@ module.exports = {
 
     if (!tenant_id) return { code: 403, msg: '未入驻商户' }
 
-    // 1. 今日订单 & 销售额 (此处为演示，简化逻辑)
     const now = new Date()
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
 
@@ -193,7 +188,6 @@ module.exports = {
       ).total
     }
 
-    // 2. 待处理订单
     const pendingOrders = await db
       .collection('wh_orders')
       .where({ tenant_id, status: db.command.in(['pending', 'confirmed']) })
@@ -201,17 +195,15 @@ module.exports = {
       .limit(3)
       .get()
 
-    // 3. 库存预警
     const stockAlerts = await db
       .collection('wh_goods')
       .where({
         tenant_id,
-        stock: db.command.lte(10) // 假设小于10为预警
+        stock: db.command.lte(10)
       })
       .limit(3)
       .get()
 
-    // 4. 获取店铺信息 (用于展示店名)
     const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
     const tenantInfo = tenantRes.data[0] || {}
 
@@ -234,7 +226,6 @@ module.exports = {
     let { tenantId } = params
     const db = uniCloud.database()
 
-    // 如果未传 tenantId，则尝试从当前登录用户获取（商家管理模式）
     if (!tenantId) {
       let token = this.getUniIdToken()
       if (typeof token === 'object' && token.token) token = token.token
@@ -251,7 +242,6 @@ module.exports = {
     if (!tenantRes.data[0]) return { code: 404, msg: '店铺不存在' }
 
     const data = tenantRes.data[0]
-    // 过滤敏感字段，只返回公开信息
     return {
       code: 0,
       data: {
@@ -280,7 +270,6 @@ module.exports = {
 
     if (!tenant_id) return { code: 403, msg: '无权修改' }
 
-    // 过滤允许修改的字段，防止意外覆盖敏感字段
     const allowedData = {}
     if (data.name) allowedData.name = data.name
     if (data.logo_url) allowedData.logo_url = data.logo_url
@@ -292,6 +281,128 @@ module.exports = {
     return {
       code: 0,
       msg: '更新成功'
+    }
+  },
+
+  /**
+   * 生成店铺二维码
+   * @returns {Object}
+   */
+  async generateShopCode() {
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
+
+    if (!tenant_id) return { code: 403, msg: '未入驻商户' }
+
+    const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
+    const tenant = tenantRes.data[0]
+    if (!tenant) return { code: 404, msg: '店铺不存在' }
+
+    // 检查是否已有有效的二维码
+    const existRes = await db
+      .collection('wh_shop_codes')
+      .where({ tenant_id, is_active: true })
+      .get()
+
+    if (existRes.data.length > 0) {
+      // 返回已有的二维码
+      return {
+        code: 0,
+        data: {
+          code: existRes.data[0].code,
+          qr_url: existRes.data[0].qr_url
+        }
+      }
+    }
+
+    // 生成新的店铺码
+    const codeData = {
+      tenant_id: tenant_id,
+      timestamp: Date.now()
+    }
+    const code = Buffer.from(JSON.stringify(codeData)).toString('base64')
+
+    // 生成二维码图片 URL (使用 uni-app 的二维码生成 API)
+    // 这里使用前端组件生成二维码图片
+    const qr_url = `/api/qrcode?content=${encodeURIComponent(code)}`
+
+    // 保存到数据库
+    await db.collection('wh_shop_codes').add({
+      tenant_id,
+      code,
+      qr_url,
+      is_active: true,
+      scan_count: 0,
+      created_at: Date.now()
+    })
+
+    return {
+      code: 0,
+      data: {
+        code,
+        qr_url
+      }
+    }
+  },
+
+  /**
+   * 获取店铺二维码信息
+   * @returns {Object}
+   */
+  async getShopCode() {
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
+
+    if (!tenant_id) return { code: 403, msg: '未入驻商户' }
+
+    const res = await db.collection('wh_shop_codes').where({ tenant_id, is_active: true }).get()
+
+    if (res.data.length === 0) {
+      return { code: 404, message: '暂二维码' }
+    }
+
+    return {
+      code: 0,
+      data: res.data[0]
+    }
+  },
+
+  /**
+   * 停用店铺二维码
+   * @returns {Object}
+   */
+  async deactivateShopCode() {
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
+
+    if (!tenant_id) return { code: 403, msg: '未入驻商户' }
+
+    await db
+      .collection('wh_shop_codes')
+      .where({ tenant_id, is_active: true })
+      .update({ is_active: false })
+
+    return {
+      code: 0,
+      message: '已停用'
     }
   }
 }

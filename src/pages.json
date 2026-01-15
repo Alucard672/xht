@@ -97,6 +97,22 @@
       }
     },
     {
+      "path": "pages/merchant/setting/qrcode",
+      "style": {
+        "navigationBarTitleText": "店铺二维码",
+        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/merchant/setting/qrcode-image",
+      "style": {
+        "navigationBarTitleText": "二维码图片",
+        "navigationBarBackgroundColor": "#ffffff",
+        "navigationBarTextStyle": "black"
+      }
+    },
+    {
       "path": "pages/merchant/notification/list",
       "style": {
         "navigationBarTitleText": "消息通知",
@@ -129,12 +145,6 @@
       }
     },
     {
-      "path": "pages/client/my-shops",
-      "style": {
-        "navigationBarTitleText": "我的商家"
-      }
-    },
-    {
       "path": "pages/client/order/detail",
       "style": {
         "navigationBarTitleText": "订单详情"
@@ -150,6 +160,12 @@
       "path": "pages/client/credit/apply",
       "style": {
         "navigationBarTitleText": "申请赊账"
+      }
+    },
+    {
+      "path": "pages/client/my-shops",
+      "style": {
+        "navigationBarTitleText": "我的商家"
       }
     },
     {

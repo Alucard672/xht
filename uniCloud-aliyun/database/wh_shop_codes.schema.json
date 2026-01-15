@@ -1,0 +1,64 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "code"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
+    "delete": "auth.uid != null"
+  },
+  "properties": {
+    "_id": {
+      "description": "记录唯一ID"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "所属商家",
+      "foreignKey": "wh_tenants._id"
+    },
+    "code": {
+      "bsonType": "string",
+      "title": "店铺码",
+      "description": "Base64编码的JSON: {tenant_id, timestamp}"
+    },
+    "qr_url": {
+      "bsonType": "string",
+      "title": "二维码图片地址"
+    },
+    "is_active": {
+      "bsonType": "boolean",
+      "title": "是否有效",
+      "defaultValue": true
+    },
+    "scan_count": {
+      "bsonType": "int",
+      "title": "扫码次数",
+      "defaultValue": 0
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  },
+  "index": [
+    {
+      "IndexName": "idx_tenant_id",
+      "IndexFields": [
+        {
+          "FieldName": "tenant_id"
+        }
+      ]
+    },
+    {
+      "IndexName": "idx_code",
+      "IndexFields": [
+        {
+          "FieldName": "code"
+        }
+      ],
+      "Unique": true
+    }
+  ]
+}
