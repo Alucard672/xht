@@ -129,6 +129,12 @@
       }
     },
     {
+      "path": "pages/client/my-shops",
+      "style": {
+        "navigationBarTitleText": "我的商家"
+      }
+    },
+    {
       "path": "pages/client/order/detail",
       "style": {
         "navigationBarTitleText": "订单详情"

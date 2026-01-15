@@ -1,0 +1,87 @@
+{
+  "bsonType": "object",
+  "required": ["user_uid", "tenant_id"],
+  "permission": {
+    "read": "auth.uid != null",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
+    "delete": "auth.uid != null"
+  },
+  "properties": {
+    "_id": {
+      "description": "记录唯一ID"
+    },
+    "user_uid": {
+      "bsonType": "string",
+      "title": "客户UID",
+      "description": "uni-id-users 表的用户ID",
+      "foreignKey": "uni-id-users._id"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "title": "商家ID",
+      "description": "wh_tenants 表的租户ID",
+      "foreignKey": "wh_tenants._id"
+    },
+    "first_scan_at": {
+      "bsonType": "timestamp",
+      "title": "首次扫码时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "last_visit_at": {
+      "bsonType": "timestamp",
+      "title": "最近访问时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "total_orders": {
+      "bsonType": "int",
+      "title": "累计订单数",
+      "defaultValue": 0
+    },
+    "total_spent": {
+      "bsonType": "int",
+      "title": "累计消费(分)",
+      "defaultValue": 0
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  },
+  "index": [
+    {
+      "IndexName": "idx_user_tenant",
+      "IndexFields": [
+        {
+          "FieldName": "user_uid"
+        },
+        {
+          "FieldName": "tenant_id"
+        }
+      ],
+      "Unique": true
+    },
+    {
+      "IndexName": "idx_user_uid",
+      "IndexFields": [
+        {
+          "FieldName": "user_uid"
+        }
+      ]
+    },
+    {
+      "IndexName": "idx_tenant_id",
+      "IndexFields": [
+        {
+          "FieldName": "tenant_id"
+        }
+      ]
+    }
+  ]
+}

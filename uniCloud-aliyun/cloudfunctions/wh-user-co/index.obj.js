@@ -1,5 +1,3 @@
-// 云对象教程: https://uniapp.dcloud.net.cn/uniCloud/cloud-obj
-// jsdoc语法提示教程：https://ask.dcloud.net.cn/article/129
 const uniIdCommon = require('uni-id-common')
 const crypto = require('crypto')
 
@@ -8,12 +6,6 @@ const crypto = require('crypto')
  * @param {String} password
  */
 function encryptPassword(password) {
-  // 简单使用 md5 + salt 或者是 HMAC-SHA256
-  // 为了兼容性，这里使用 uni-id 默认的加密方式 (如果可能)，但因为我们没有 uni-id 库，我们使用自定义的 robust 方式
-  // 生产环境建议使用 bcrypt，但在云函数中需注意环境
-  // 这里使用 HMAC-SHA256，密钥可以是 config 中的 tokenSecret，或者固定一个 internal secret
-  // 注意：这将与标准 uni-id 不兼容（除非 uni-id 配置了相同算法）
-  // 为了演示和快速修复，我们使用简单的 HASH
   const hmac = crypto.createHmac('sha256', 'xht-super-secret-key')
   hmac.update(password)
   return hmac.digest('hex')
@@ -24,13 +16,36 @@ module.exports = {
     this.uniIdCommon = uniIdCommon.createInstance({
       clientInfo: this.getClientInfo()
     })
+
+    // 获取当前用户信息
+    let token = this.getUniIdToken()
+    let uid
+
+    if (!token) {
+      // 可选：允许未登录用户调用某些方法
+      this.current_uid = null
+      return
+    }
+
+    if (typeof token === 'string') {
+      const checkRes = await this.uniIdCommon.checkToken(token)
+      if (checkRes.code !== 0) {
+        this.current_uid = null
+        return
+      }
+      uid = checkRes.uid
+    } else if (token.uid) {
+      uid = token.uid
+    } else {
+      this.current_uid = null
+      return
+    }
+
+    this.current_uid = uid
   },
 
   /**
    * 商家登录
-   * @param {Object} params
-   * @param {String} params.username 手机号
-   * @param {String} params.password 密码
    */
   async loginMerchant(params) {
     const { username, password } = params
@@ -41,34 +56,23 @@ module.exports = {
 
     const db = uniCloud.database()
 
-    // 1. 查找用户
-    const userRes = await db
-      .collection('uni-id-users')
-      .where({
-        mobile: username
-      })
-      .get()
+    const userRes = await db.collection('uni-id-users').where({ mobile: username }).get()
 
     if (userRes.data.length === 0) {
       throw new Error('用户不存在')
     }
 
     const user = userRes.data[0]
-
-    // 2. 校验密码
-    // 注意：如果是老数据（uni-id 生成的），可能是不兼容的 hash。这里假设都是新系统生成。
     const safePassword = encryptPassword(password)
     if (user.password !== safePassword) {
       throw new Error('密码错误')
     }
 
-    // 3. 生成 Token (使用 uni-id-common)
     const { token, tokenExpired } = await this.uniIdCommon.createToken({
       uid: user._id,
       role: user.role || []
     })
 
-    // 获取租户信息
     let tenantInfo = null
     if (user.tenant_id) {
       const tenantRes = await db.collection('wh_tenants').doc(user.tenant_id).get()
@@ -94,10 +98,6 @@ module.exports = {
 
   /**
    * 注册商家并创建租户
-   * @param {Object} params
-   * @param {String} params.username 用户名/手机号 (实际存入 mobile)
-   * @param {String} params.password 密码
-   * @param {String} params.shopName 店铺名称
    */
   async registerMerchant(params) {
     const { username, password, shopName } = params
@@ -106,32 +106,22 @@ module.exports = {
       throw new Error('参数不完整')
     }
 
-    // 校验手机号格式 (简单)
     if (!/^1\d{10}$/.test(username)) {
       throw new Error('手机号格式不正确')
     }
 
     const db = uniCloud.database()
-    const dbCmd = db.command
+    const now = Date.now()
 
-    // 1. 检查手机号是否已被注册
-    const existUser = await db
-      .collection('uni-id-users')
-      .where({
-        mobile: username
-      })
-      .get()
+    const existUser = await db.collection('uni-id-users').where({ mobile: username }).get()
 
     if (existUser.data.length > 0) {
       throw new Error('该手机号已注册')
     }
 
-    // 2. 注册用户
     const safePassword = encryptPassword(password)
-    const now = Date.now()
-
     const userRes = await db.collection('uni-id-users').add({
-      username: username, // 冗余存一份
+      username: username,
       mobile: username,
       password: safePassword,
       role: ['merchant'],
@@ -145,12 +135,11 @@ module.exports = {
 
     const uid = userRes.id
 
-    // 3. 创建租户
     const tenantRes = await db.collection('wh_tenants').add({
       name: shopName,
       owner_uid: uid,
       created_at: now,
-      expired_at: now + 365 * 24 * 60 * 60 * 1000, // 默认一年
+      expired_at: now + 365 * 24 * 60 * 60 * 1000,
       settings: {
         allow_debt: true,
         min_delivery_price: 0
@@ -158,17 +147,14 @@ module.exports = {
     })
 
     if (!tenantRes.id) {
-      // 简单回滚
       await db.collection('uni-id-users').doc(uid).remove()
       throw new Error('店铺创建失败')
     }
 
-    // 4. 回写租户ID到用户表
     await db.collection('uni-id-users').doc(uid).update({
       tenant_id: tenantRes.id
     })
 
-    // 5. 生成 Token
     const { token, tokenExpired } = await this.uniIdCommon.createToken({
       uid: uid,
       role: ['merchant']
@@ -190,5 +176,222 @@ module.exports = {
         name: shopName
       }
     }
+  },
+
+  /**
+   * 客户关联商家（扫码进店时调用）
+   * @param {Object} params
+   * @param {String} params.tenant_id - 商家ID
+   */
+  async bindTenant(params) {
+    const { tenant_id } = params
+
+    if (!tenant_id) {
+      return { code: 400, message: '商家ID不能为空' }
+    }
+
+    // 检查是否已登录
+    if (!this.current_uid) {
+      return { code: 401, message: '请先登录' }
+    }
+
+    const db = uniCloud.database()
+    const now = Date.now()
+
+    // 检查商家是否存在
+    const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
+    if (!tenantRes.data || tenantRes.data.length === 0) {
+      return { code: 404, message: '商家不存在' }
+    }
+    const tenant = tenantRes.data[0]
+
+    // 检查是否已有关联
+    const existRes = await db
+      .collection('wh_customer_tenants')
+      .where({
+        user_uid: this.current_uid,
+        tenant_id: tenant_id
+      })
+      .get()
+
+    if (existRes.data.length > 0) {
+      // 已有关联，更新访问时间
+      await db.collection('wh_customer_tenants').doc(existRes.data[0]._id).update({
+        last_visit_at: now
+      })
+
+      return {
+        code: 0,
+        message: '已关联商家',
+        data: {
+          tenant_id: tenant._id,
+          tenant_name: tenant.name
+        }
+      }
+    }
+
+    // 创建新关联
+    const res = await db.collection('wh_customer_tenants').add({
+      user_uid: this.current_uid,
+      tenant_id: tenant_id,
+      first_scan_at: now,
+      last_visit_at: now,
+      total_orders: 0,
+      total_spent: 0,
+      created_at: now
+    })
+
+    // 同时在商家侧创建客户记录
+    const customerRes = await db
+      .collection('wh_customers')
+      .where({
+        tenant_id: tenant_id,
+        user_uid: this.current_uid
+      })
+      .get()
+
+    if (customerRes.data.length === 0) {
+      await db.collection('wh_customers').add({
+        tenant_id: tenant_id,
+        user_uid: this.current_uid,
+        alias: '客户' + String(this.current_uid).slice(-4),
+        total_debt: 0,
+        created_at: now
+      })
+    }
+
+    return {
+      code: 0,
+      message: '关联成功',
+      data: {
+        tenant_id: tenant._id,
+        tenant_name: tenant.name
+      }
+    }
+  },
+
+  /**
+   * 获取客户的商家列表
+   * @returns {Object}
+   */
+  async getMyTenants() {
+    if (!this.current_uid) {
+      return { code: 401, message: '请先登录' }
+    }
+
+    const db = uniCloud.database()
+
+    // 获取客户关联的所有商家
+    const relationsRes = await db
+      .collection('wh_customer_tenants')
+      .where({ user_uid: this.current_uid })
+      .orderBy('last_visit_at', 'desc')
+      .get()
+
+    if (relationsRes.data.length === 0) {
+      return { code: 0, data: { list: [] } }
+    }
+
+    // 获取商家详细信息
+    const tenantIds = relationsRes.data.map(r => r.tenant_id)
+    const tenantsRes = await db
+      .collection('wh_tenants')
+      .where({
+        _id: db.command.in(tenantIds)
+      })
+      .get()
+
+    // 合并数据
+    const tenantMap = {}
+    tenantsRes.data.forEach(t => {
+      tenantMap[t._id] = t
+    })
+
+    const list = relationsRes.data.map(r => ({
+      _id: r._id,
+      tenant_id: r.tenant_id,
+      tenant_name: tenantMap[r.tenant_id]?.name || '未知店铺',
+      tenant_logo: tenantMap[r.tenant_id]?.logo_url || '',
+      first_scan_at: r.first_scan_at,
+      last_visit_at: r.last_visit_at,
+      total_orders: r.total_orders,
+      total_spent: r.total_spent
+    }))
+
+    return {
+      code: 0,
+      data: { list }
+    }
+  },
+
+  /**
+   * 客户解绑商家
+   * @param {Object} params
+   * @param {String} params.tenant_id - 商家ID
+   */
+  async unbindTenant(params) {
+    const { tenant_id } = params
+
+    if (!tenant_id) {
+      return { code: 400, message: '商家ID不能为空' }
+    }
+
+    if (!this.current_uid) {
+      return { code: 401, message: '请先登录' }
+    }
+
+    const db = uniCloud.database()
+
+    // 删除关联记录
+    const res = await db
+      .collection('wh_customer_tenants')
+      .where({
+        user_uid: this.current_uid,
+        tenant_id: tenant_id
+      })
+      .remove()
+
+    if (res.deleted === 0) {
+      return { code: 404, message: '关联记录不存在' }
+    }
+
+    return {
+      code: 0,
+      message: '解绑成功'
+    }
+  },
+
+  /**
+   * 更新客户消费统计
+   * @param {Object} params
+   * @param {String} params.tenant_id - 商家ID
+   * @param {Number} params.order_amount - 订单金额(分)
+   */
+  async updateSpendStats(params) {
+    const { tenant_id, order_amount } = params
+
+    if (!tenant_id || !order_amount) {
+      return { code: 400, message: '参数不完整' }
+    }
+
+    if (!this.current_uid) {
+      return { code: 401, message: '请先登录' }
+    }
+
+    const db = uniCloud.database()
+
+    await db
+      .collection('wh_customer_tenants')
+      .where({
+        user_uid: this.current_uid,
+        tenant_id: tenant_id
+      })
+      .update({
+        total_orders: db.command.inc(1),
+        total_spent: db.command.inc(order_amount),
+        last_visit_at: Date.now()
+      })
+
+    return { code: 0, message: '更新成功' }
   }
 }

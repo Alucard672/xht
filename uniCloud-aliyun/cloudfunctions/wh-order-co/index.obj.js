@@ -297,6 +297,9 @@ module.exports = {
   /**
    * 商家确认送达并完成订单
    */
+  /**
+   * 商家确认送达并完成订单
+   */
   completeOrder: async function (orderId) {
     const db = uniCloud.database()
     const dbCmd = db.command
@@ -315,12 +318,10 @@ module.exports = {
     let targetCustomer = null
     if (order.payment_method === 'credit') {
       const customerId = order.customer_id
-      // 首先尝试通过 _id 查找
       let customerRes = await db.collection('wh_customers').doc(customerId).get()
       if (customerRes.data && customerRes.data.length > 0) {
         targetCustomer = customerRes.data[0]
       } else {
-        // 尝试通过 user_uid 查找
         customerRes = await db
           .collection('wh_customers')
           .where({ user_uid: customerId, tenant_id: this.tenant_id })
@@ -356,6 +357,19 @@ module.exports = {
           remark: `订单欠款: ${order.order_no}`,
           create_time: Date.now()
         })
+      }
+
+      // 更新客户的消费统计
+      if (targetCustomer && targetCustomer.user_uid) {
+        try {
+          const userCo = require('uni-cloud-router').importObject('wh-user-co')
+          await userCo.updateSpendStats({
+            tenant_id: this.tenant_id,
+            order_amount: order.total_amount
+          })
+        } catch (e) {
+          console.error('Update spend stats failed:', e)
+        }
       }
 
       await transaction.commit()

@@ -47,10 +47,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { importObject } from '@/utils/cloud'
 
 const manualTenantId = ref('')
 const loading = ref(false)
 const toastRef = ref<any>(null)
+const userCo = importObject('wh-user-co')
 
 const handleScan = () => {
   uni.scanCode({
@@ -133,7 +135,7 @@ const navigateToShop = (tenantId: string) => {
     .collection('wh_tenants')
     .doc(tenantId)
     .get()
-    .then((res: any) => {
+    .then(async (res: any) => {
       if (res.result.data && res.result.data.length > 0) {
         const tenant = res.result.data[0]
         if (tenant.status === 0) {
@@ -144,19 +146,37 @@ const navigateToShop = (tenantId: string) => {
           return
         }
 
+        // 保存店铺信息
         uni.setStorageSync('tenant_id', tenantId)
         uni.setStorageSync('tenant_info', tenant)
 
-        uni.redirectTo({
-          url: `/pages/client/shop?tenant_id=${tenantId}`,
-          fail: err => {
-            console.error('Navigate failed:', err)
+        // 调用客户关联接口
+        try {
+          const bindRes: any = await userCo.bindTenant({ tenant_id: tenantId })
+          if (bindRes.code === 0) {
             toastRef.value?.show({
-              type: 'error',
-              message: '跳转失败'
+              type: 'success',
+              message: '已进入 ' + tenant.name
             })
           }
-        })
+        } catch (e) {
+          // 关联失败不阻断流程
+          console.error('Bind tenant failed:', e)
+        }
+
+        // 延迟跳转，让用户看到成功提示
+        setTimeout(() => {
+          uni.redirectTo({
+            url: `/pages/client/shop?tenant_id=${tenantId}`,
+            fail: err => {
+              console.error('Navigate failed:', err)
+              toastRef.value?.show({
+                type: 'error',
+                message: '跳转失败'
+              })
+            }
+          })
+        }, 1000)
       } else {
         toastRef.value?.show({
           type: 'error',
