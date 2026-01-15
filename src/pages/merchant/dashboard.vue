@@ -39,7 +39,7 @@
 
     <!-- 快速操作 -->
     <view class="quick-actions card-box">
-      <view class="action-item" @click="navTo('/pages/client/shop?mode=agent')">
+      <view class="action-item" @click="navTo('/pages/merchant/order/create')">
         <view class="icon-box blue"><u-icon name="plus" color="#07c160" size="24"></u-icon></view>
         <text>快速开单</text>
       </view>

@@ -38,9 +38,26 @@ module.exports = {
 
   /**
    * 创建订单
+   * @param {Object} data
+   * @param {String} data.tenant_id - 租户ID (可选，从上下文获取)
+   * @param {String} data.customer_id - 客户ID (可选)
+   * @param {Array} data.items - 商品列表
+   * @param {String} data.payment_method - 支付方式 credit/wechat
+   * @param {String} data.remark - 备注
+   * @param {Object} data.address - 地址信息
+   * @param {String} data.created_by - 下单人UID (可选，默认当前用户)
+   * @returns {Object}
    */
   createOrder: async function (data) {
-    const { items, payment_method = 'cash', remark = '', address = {} } = data || {}
+    const {
+      tenant_id,
+      customer_id,
+      items,
+      payment_method = 'credit',
+      remark = '',
+      address = {},
+      created_by
+    } = data || {}
 
     if (!items || items.length === 0) {
       return { status: 400, message: '购物车不能为空' }
@@ -53,7 +70,6 @@ module.exports = {
     const orderItems = []
 
     for (const item of items) {
-      // 这里的 price 是后端校验的重点，目前简化处理
       const itemTotal = (item.price || 0) * (item.count || 0)
       total_amount += itemTotal
 
@@ -61,7 +77,86 @@ module.exports = {
         goods_id: item.goods_id,
         name: item.name,
         count: item.count,
-        unit_name: item.unit_name,
+        unit_name: item.unit_name || item.unit,
+        price: item.price
+      })
+    }
+
+    const orderNo = `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`
+
+    // 确定下单人：优先使用传入的 created_by，否则使用当前用户
+    const orderCreator = created_by || this.current_uid
+
+    try {
+      const res = await db.collection('wh_orders').add({
+        tenant_id: tenant_id || this.tenant_id,
+        customer_id: customer_id || this.current_uid,
+        order_no: orderNo,
+        items: orderItems,
+        total_amount: total_amount,
+        status: 0,
+        payment_method,
+        remark,
+        address,
+        created_by: orderCreator,
+        create_time: Date.now()
+      })
+
+      return {
+        status: 0,
+        message: '下单成功',
+        data: {
+          _id: res.id,
+          order_no: orderNo
+        }
+      }
+    } catch (e) {
+      return { status: 500, message: e.message }
+    }
+  },
+
+  /**
+   * 商家直接开单
+   * @param {Object} data
+   * @param {String} data.customer_id - 客户ID
+   * @param {Array} data.items - 商品列表
+   * @param {String} data.payment_method - 支付方式
+   * @param {String} data.remark - 备注
+   * @param {Object} data.address - 地址信息
+   * @returns {Object}
+   */
+  createByMerchant: async function (data) {
+    const { customer_id, items, payment_method = 'credit', remark = '', address = {} } = data || {}
+
+    if (!items || items.length === 0) {
+      return { status: 400, message: '商品列表不能为空' }
+    }
+
+    if (!customer_id) {
+      return { status: 400, message: '请选择客户' }
+    }
+
+    const db = uniCloud.database()
+
+    // 验证客户是否存在
+    const customerRes = await db.collection('wh_customers').doc(customer_id).get()
+    if (!customerRes.data || customerRes.data.length === 0) {
+      return { status: 404, message: '客户不存在' }
+    }
+
+    // 计算金额
+    let total_amount = 0
+    const orderItems = []
+
+    for (const item of items) {
+      const itemTotal = (item.price || 0) * (item.count || 0)
+      total_amount += itemTotal
+
+      orderItems.push({
+        goods_id: item.goods_id,
+        name: item.name,
+        count: item.count,
+        unit_name: item.unit_name || item.unit,
         price: item.price
       })
     }
@@ -71,20 +166,21 @@ module.exports = {
     try {
       const res = await db.collection('wh_orders').add({
         tenant_id: this.tenant_id,
-        customer_id: data.customer_id || this.current_uid,
+        customer_id: customer_id,
         order_no: orderNo,
         items: orderItems,
         total_amount: total_amount,
-        status: 0,
+        status: 1, // 商家开单直接进入待发货状态
         payment_method,
         remark,
         address,
+        created_by: this.current_uid, // 记录商家UID
         create_time: Date.now()
       })
 
       return {
         status: 0,
-        message: '下单成功',
+        message: '开单成功',
         data: {
           _id: res.id,
           order_no: orderNo
@@ -129,6 +225,29 @@ module.exports = {
   },
 
   /**
+   * 获取订单详情
+   */
+  getOrderDetail: async function (orderId) {
+    const db = uniCloud.database()
+
+    try {
+      const orderRes = await db.collection('wh_orders').doc(orderId).get()
+      if (!orderRes.data || orderRes.data.length === 0) {
+        return { status: 404, message: '订单不存在' }
+      }
+
+      const order = orderRes.data[0]
+      if (order.tenant_id !== this.tenant_id) {
+        return { status: 403, message: '无权查看此订单' }
+      }
+
+      return { status: 0, data: order }
+    } catch (e) {
+      return { status: 500, message: e.message }
+    }
+  },
+
+  /**
    * 商家确认接单
    */
   confirmOrder: async function (orderId) {
@@ -147,6 +266,32 @@ module.exports = {
     })
 
     return { status: 0, message: '已接单' }
+  },
+
+  /**
+   * 商家发货
+   */
+  shipOrder: async function (orderId) {
+    const db = uniCloud.database()
+    const orderRes = await db.collection('wh_orders').doc(orderId).get()
+    if (
+      !orderRes.data ||
+      orderRes.data.length === 0 ||
+      orderRes.data[0].tenant_id !== this.tenant_id
+    ) {
+      return { status: 403, message: '无权操作' }
+    }
+
+    const order = orderRes.data[0]
+    if (order.status !== 1) {
+      return { status: 400, message: '只有待发货的订单可以发货' }
+    }
+
+    await db.collection('wh_orders').doc(orderId).update({
+      status: 2
+    })
+
+    return { status: 0, message: '已发货' }
   },
 
   /**

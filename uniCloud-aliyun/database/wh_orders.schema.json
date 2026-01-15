@@ -55,6 +55,11 @@
       "bsonType": "int",
       "title": "总金额(分)"
     },
+    "created_by": {
+      "bsonType": "string",
+      "title": "下单人UID",
+      "description": "记录谁创建的订单：商家UID或客户UID"
+    },
     "create_time": {
       "bsonType": "timestamp",
       "defaultValue": {
@@ -63,4 +68,3 @@
     }
   }
 }
-
