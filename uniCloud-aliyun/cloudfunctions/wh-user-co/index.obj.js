@@ -97,7 +97,7 @@ module.exports = {
   },
 
   /**
-   * 注册商家并创建租户
+   * 注册商家并创建租户（待审核状态）
    */
   async registerMerchant(params) {
     const { username, password, shopName } = params
@@ -120,6 +120,8 @@ module.exports = {
     }
 
     const safePassword = encryptPassword(password)
+
+    // 先创建用户
     const userRes = await db.collection('uni-id-users').add({
       username: username,
       mobile: username,
@@ -135,11 +137,13 @@ module.exports = {
 
     const uid = userRes.id
 
+    // 创建租户（待审核状态，暂不关联用户）
     const tenantRes = await db.collection('wh_tenants').add({
       name: shopName,
       owner_uid: uid,
+      status: 0, // 待审核
       created_at: now,
-      expired_at: now + 365 * 24 * 60 * 60 * 1000,
+      // 不设置 expired_at，等待审核时由管理员设置
       settings: {
         allow_debt: true,
         min_delivery_price: 0
@@ -151,29 +155,17 @@ module.exports = {
       throw new Error('店铺创建失败')
     }
 
+    // 更新用户的 tenant_id
     await db.collection('uni-id-users').doc(uid).update({
       tenant_id: tenantRes.id
     })
 
-    const { token, tokenExpired } = await this.uniIdCommon.createToken({
-      uid: uid,
-      role: ['merchant']
-    })
-
     return {
       code: 0,
-      msg: '注册成功',
-      token,
-      tokenExpired,
-      userInfo: {
-        _id: uid,
-        username,
-        role: ['merchant'],
-        tenant_id: tenantRes.id
-      },
-      tenantInfo: {
-        _id: tenantRes.id,
-        name: shopName
+      msg: '注册成功，请等待管理员审核',
+      data: {
+        tenant_id: tenantRes.id,
+        status: 0 // 待审核
       }
     }
   },

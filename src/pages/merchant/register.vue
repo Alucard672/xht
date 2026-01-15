@@ -77,18 +77,11 @@ const handleRegister = async () => {
     })
 
     if (res.code === 0) {
-      uni.showToast({ title: '注册成功' })
+      uni.showToast({ title: res.msg })
 
-      // 保存登录状态
-      userStore.login({
-        token: res.token,
-        userInfo: res.userInfo,
-        tenantInfo: res.tenantInfo,
-        tokenExpired: res.tokenExpired
-      })
-
+      // 注册成功后跳转到登录页
       setTimeout(() => {
-        uni.reLaunch({ url: '/pages/merchant/dashboard' })
+        uni.redirectTo({ url: '/pages/merchant/login?registered=true' })
       }, 1500)
     }
   } catch (e: any) {
