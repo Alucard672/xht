@@ -31,7 +31,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onShow } from 'vue'
+import { ref, reactive } from 'vue'
+import { onShow as uniOnShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/useUserStore'
 
 const userStore = useUserStore()
@@ -43,7 +44,7 @@ const form = reactive({
 
 const loading = ref(false)
 
-onShow(() => {
+uniOnShow(() => {
   // 如果是注册后跳转过来，显示提示
   const pages = getCurrentPages()
   const currentPage = pages[pages.length - 1]
