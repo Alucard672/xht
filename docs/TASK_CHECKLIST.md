@@ -122,7 +122,7 @@
 
 ---
 
-#### IMP-002: 商家有效期管理
+#### IMP-002: 商家有效期管理 ✅ 完成
 
 **问题**: 商家账号有效期管理流程不完整
 
@@ -132,12 +132,37 @@
 - 支持: 创建商家、设置有效期、审核状态、冻结/解冻
 - 商家登录时检查有效期，过期则提示并限制功能
 
+**实现详情**:
+
+1. **数据库 schema 更新**
+   - `wh_tenants.schema.json` 新增 `status` (0-待审核, 1-正常, 2-已冻结, 3-已过期, 4-已拒绝) 和 `expired_at` 字段
+
+2. **Admin 云对象方法**
+   - `getMerchantList()` - 获取商家列表及统计
+   - `getMerchantDetail()` - 获取商家详情
+   - `auditMerchant()` - 审核商家
+   - `setMerchantExpire()` - 设置有效期
+   - `toggleMerchantFreeze()` - 冻结/解冻
+   - `extendMerchantExpire()` - 延长有效期
+   - `createMerchant()` - 管理员创建商家
+
+3. **Merchant 云对象方法**
+   - `devLogin()` - 登录时有效期校验 (新增)
+   - `getDashboardStats()` - 返回过期状态 (新增)
+   - `getMembershipInfo()` - 获取会员信息 (新增)
+
+4. **前端页面更新**
+   - `dashboard.vue` - 增加过期提示横幅
+   - `setting/index.vue` - 增加会员信息卡片和续费入口
+
 **涉及文件**:
 
-- `src/pages/admin/merchant/list.vue` - 完善商家管理 (当前仅列表，需增加编辑)
+- `src/pages/admin/merchant/list.vue` - 商家管理列表
 - `src/pages/admin/merchant/edit.vue` - **新建** 编辑商家信息
-- `uniCloud-aliyun/cloudfunctions/wh-admin-co/` - 商家 CRUD + 有效期检查
+- `uniCloud-aliyun/cloudfunctions/wh-admin-co/` - 商家 CRUD + 有效期管理
 - `uniCloud-aliyun/cloudfunctions/wh-merchant-co/` - 登录时有效期校验
+- `src/pages/merchant/dashboard.vue` - 过期提示 UI
+- `src/pages/merchant/setting/index.vue` - 会员信息展示
 
 **依赖**: 无  
 **预计工时**: 3 天  

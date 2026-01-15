@@ -87,7 +87,49 @@ module.exports = {
       userInfo = userRes.data[0]
     }
 
-    // 2. 生成 Token
+    // 2. 商家角色检查有效期
+    const isMerchant = userInfo.role && userInfo.role.includes('merchant')
+    if (isMerchant && userInfo.tenant_id) {
+      const tenantRes = await db.collection('wh_tenants').doc(userInfo.tenant_id).get()
+      const tenant = tenantRes.data[0]
+
+      if (tenant) {
+        // 检查状态
+        if (tenant.status === 0) {
+          return {
+            code: 403,
+            msg: '您的店铺正在审核中，请联系管理员'
+          }
+        }
+        if (tenant.status === 2) {
+          return {
+            code: 403,
+            msg: '您的店铺已被冻结，请联系管理员'
+          }
+        }
+        if (tenant.status === 4) {
+          return {
+            code: 403,
+            msg: '您的店铺已被拒绝，请重新申请'
+          }
+        }
+        // 检查有效期
+        if (tenant.expired_at && new Date(tenant.expired_at) < new Date()) {
+          // 标记为过期状态
+          await db.collection('wh_tenants').doc(userInfo.tenant_id).update({
+            status: 3 // 已过期
+          })
+          return {
+            code: 403,
+            msg: '您的店铺已过期，请联系管理员续费',
+            expired: true,
+            expired_at: tenant.expired_at
+          }
+        }
+      }
+    }
+
+    // 3. 生成 Token
     const tokenRes = await this.uniID.createToken({
       uid,
       role: userInfo.role || (mobile === '13003629527' ? ['admin'] : ['merchant'])
@@ -207,13 +249,25 @@ module.exports = {
     const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
     const tenantInfo = tenantRes.data[0] || {}
 
+    // 检查是否过期
+    let expired = false
+    let expired_at = null
+    if (tenantInfo.expired_at && new Date(tenantInfo.expired_at) < new Date()) {
+      expired = true
+      expired_at = tenantInfo.expired_at
+    } else {
+      expired_at = tenantInfo.expired_at
+    }
+
     return {
       code: 0,
       data: {
         stats,
         pendingOrders: pendingOrders.data,
         stockAlerts: stockAlerts.data,
-        tenantName: tenantInfo.name || '我的店铺'
+        tenantName: tenantInfo.name || '我的店铺',
+        expired,
+        expired_at
       }
     }
   },
@@ -403,6 +457,55 @@ module.exports = {
     return {
       code: 0,
       message: '已停用'
+    }
+  },
+
+  /**
+   * 获取商家会员信息（包含过期状态）
+   */
+  async getMembershipInfo() {
+    let token = this.getUniIdToken()
+    if (typeof token === 'object' && token.token) token = token.token
+    const auth = await this.uniID.checkToken(token)
+    if (auth.code !== 0) return auth
+
+    const db = uniCloud.database()
+    const userRes = await db.collection('uni-id-users').doc(auth.uid).get()
+    const tenant_id = userRes.data[0].tenant_id
+
+    if (!tenant_id) return { code: 403, msg: '未入驻商户' }
+
+    const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
+    const tenant = tenantRes.data[0]
+
+    if (!tenant) return { code: 404, msg: '店铺不存在' }
+
+    const now = new Date()
+    const expiredDate = tenant.expired_at ? new Date(tenant.expired_at) : null
+    const isExpired = expiredDate && expiredDate < now
+    const daysLeft = expiredDate
+      ? Math.max(0, Math.ceil((expiredDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
+      : 0
+
+    // 状态文本
+    const statusMap = {
+      0: '待审核',
+      1: '正常',
+      2: '已冻结',
+      3: '已过期',
+      4: '已拒绝'
+    }
+
+    return {
+      code: 0,
+      data: {
+        status: tenant.status,
+        statusText: statusMap[tenant.status] || '未知',
+        expired_at: tenant.expired_at,
+        isExpired,
+        daysLeft,
+        canRenew: tenant.status !== 4 // 已拒绝的不能续费
+      }
     }
   }
 }

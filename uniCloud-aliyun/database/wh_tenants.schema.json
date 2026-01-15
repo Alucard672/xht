@@ -3,8 +3,8 @@
   "required": ["name", "owner_uid", "created_at"],
   "permission": {
     "read": "auth.uid != null",
-    "create": "false",
-    "update": "auth.uid == doc.owner_uid",
+    "create": "auth.uid != null",
+    "update": "auth.uid != null",
     "delete": "false"
   },
   "properties": {
@@ -28,6 +28,11 @@
     "phone": {
       "bsonType": "string",
       "description": "联系电话"
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "状态: 0-待审核, 1-正常, 2-已冻结, 3-已过期",
+      "defaultValue": 0
     },
     "expired_at": {
       "bsonType": "timestamp",

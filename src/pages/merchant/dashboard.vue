@@ -1,7 +1,31 @@
 <template>
   <view class="dashboard-container">
+    <!-- 过期提示横幅 -->
+    <view v-if="isExpired" class="expired-banner">
+      <view class="banner-content">
+        <u-icon name="info-circle" color="#fff" size="20"></u-icon>
+        <text class="banner-text">您的店铺已过期，请尽快续费以避免影响正常经营</text>
+      </view>
+      <view class="banner-btn" @click="goToRenew">
+        <text>立即续费</text>
+        <u-icon name="arrow-right" color="#fff" size="14"></u-icon>
+      </view>
+    </view>
+
+    <!-- 即将过期提示 (7天内) -->
+    <view v-else-if="willExpireSoon" class="expire-soon-banner">
+      <view class="banner-content">
+        <u-icon name="clock" color="#fff" size="20"></u-icon>
+        <text class="banner-text">您的店铺将于 {{ expireDays }} 天后过期</text>
+      </view>
+      <view class="banner-btn" @click="goToRenew">
+        <text>续费</text>
+        <u-icon name="arrow-right" color="#fff" size="14"></u-icon>
+      </view>
+    </view>
+
     <!-- 顶部蓝色统计区 -->
-    <view class="header-stats">
+    <view class="header-stats" :class="{ 'header-expanded': isExpired || willExpireSoon }">
       <view class="header-top">
         <view class="shop-name">{{ shopName }} - 工作台</view>
         <view class="setting-btn" @click="navTo('/pages/merchant/setting/index')">
@@ -165,6 +189,10 @@ const merchantCo = uniCloud.importObject('wh-merchant-co')
 
 const shopName = ref('加载中...')
 const todayStr = ref(new Date().toISOString().split('T')[0])
+const isExpired = ref(false)
+const willExpireSoon = ref(false)
+const expireDays = ref(0)
+const expiredAt = ref<number | null>(null)
 const stats = ref({
   todayOrderCount: 0,
   todayRevenue: 0,
@@ -190,10 +218,28 @@ const loadData = async (force = false) => {
       pendingOrders.value = res.data.pendingOrders
       stockAlerts.value = res.data.stockAlerts
       shopName.value = res.data.tenantName || '我的店铺'
+
+      // 检查过期状态
+      if (res.data.expired) {
+        isExpired.value = true
+        expiredAt.value = res.data.expired_at
+      } else if (res.data.expired_at) {
+        const expiredDate = new Date(res.data.expired_at).getTime()
+        const daysLeft = Math.floor((expiredDate - now) / (24 * 60 * 60 * 1000))
+        if (daysLeft <= 7 && daysLeft > 0) {
+          willExpireSoon.value = true
+          expireDays.value = daysLeft
+        }
+        expiredAt.value = res.data.expired_at
+      }
     }
   } catch (e) {
     // ignore
   }
+}
+
+const goToRenew = () => {
+  uni.navigateTo({ url: '/pages/merchant/setting/index?tab=renew' })
 }
 
 // 监听设置页面的更新通知
@@ -259,10 +305,56 @@ onShow(() => {
   padding-bottom: 180rpx; // 预留 tabbar 与安全区，避免底部内容被挡
 }
 
+// 过期提示横幅
+.expired-banner,
+.expire-soon-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx;
+  background: linear-gradient(135deg, #ff4d4f 0%, #d9363e 100%);
+  color: #fff;
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    margin-right: 20rpx;
+
+    .banner-text {
+      margin-left: 16rpx;
+      font-size: 28rpx;
+      line-height: 1.4;
+    }
+  }
+
+  .banner-btn {
+    display: flex;
+    align-items: center;
+    padding: 12rpx 24rpx;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 32rpx;
+    font-size: 26rpx;
+    flex-shrink: 0;
+
+    text {
+      margin-right: 8rpx;
+    }
+  }
+}
+
+.expire-soon-banner {
+  background: linear-gradient(135deg, #faad14 0%, #d48806 100%);
+}
+
 .header-stats {
   background-color: $wh-color-primary;
   color: #ffffff;
   padding: 40rpx 30rpx 60rpx;
+
+  &.header-expanded {
+    padding-top: 20rpx;
+  }
 
   .header-top {
     display: flex;
