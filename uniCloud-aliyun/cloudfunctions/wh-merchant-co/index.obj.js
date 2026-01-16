@@ -301,9 +301,7 @@ module.exports = {
       data: {
         _id: data._id,
         name: data.name,
-        logo_url: data.logo_url,
-        phone: data.phone,
-        settings: data.settings || {}
+        phone: data.phone
       }
     }
   },
@@ -326,9 +324,7 @@ module.exports = {
 
     const allowedData = {}
     if (data.name) allowedData.name = data.name
-    if (data.logo_url) allowedData.logo_url = data.logo_url
     if (data.phone) allowedData.phone = data.phone
-    if (data.settings) allowedData.settings = data.settings
 
     await db.collection('wh_tenants').doc(tenant_id).update(allowedData)
 
@@ -461,7 +457,7 @@ module.exports = {
   },
 
   /**
-   * 获取商家会员信息（包含过期状态）
+   * 获取店铺会员信息（包含过期状态）
    */
   async getMembershipInfo() {
     let token = this.getUniIdToken()
@@ -485,26 +481,16 @@ module.exports = {
     const isExpired = expiredDate && expiredDate < now
     const daysLeft = expiredDate
       ? Math.max(0, Math.ceil((expiredDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)))
-      : 0
-
-    // 状态文本
-    const statusMap = {
-      0: '待审核',
-      1: '正常',
-      2: '已冻结',
-      3: '已过期',
-      4: '已拒绝'
-    }
+      : null
 
     return {
       code: 0,
       data: {
         status: tenant.status,
-        statusText: statusMap[tenant.status] || '未知',
+        statusText: tenant.status === 1 ? '正常' : tenant.status === 0 ? '待审核' : '异常',
         expired_at: tenant.expired_at,
         isExpired,
-        daysLeft,
-        canRenew: tenant.status !== 4 // 已拒绝的不能续费
+        daysLeft
       }
     }
   }

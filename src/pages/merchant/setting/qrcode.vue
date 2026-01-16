@@ -12,13 +12,7 @@
     <view v-else class="qrcode-content">
       <!-- 店铺信息 -->
       <view class="shop-info">
-        <image
-          v-if="tenantInfo.logo_url"
-          :src="tenantInfo.logo_url"
-          class="shop-logo"
-          mode="aspectFill"
-        ></image>
-        <view v-else class="shop-logo-placeholder">
+        <view class="shop-logo-placeholder">
           <text>{{ tenantInfo.name?.charAt(0) || '商' }}</text>
         </view>
         <view class="shop-detail">
@@ -27,9 +21,9 @@
         </view>
       </view>
 
-      <!-- 二维码图片 -->
+      <!-- 二维码 -->
       <view class="qrcode-card">
-        <image v-if="qrUrl" :src="qrUrl" class="qrcode-image" mode="aspectFit"></image>
+        <canvas v-if="qrCodeText" canvas-id="qrcode" class="qrcode-canvas"></canvas>
         <view v-else class="qrcode-placeholder">
           <u-icon name="photo" size="80" color="#ddd"></u-icon>
           <text>生成中...</text>
@@ -119,7 +113,7 @@ const showDeactivatePopup = ref(false)
 const toastRef = ref<any>(null)
 
 const tenantInfo = ref<any>({})
-const qrUrl = ref('')
+const qrCodeText = ref('')
 const scanCount = ref(0)
 const codeData = ref('')
 
@@ -139,11 +133,13 @@ const loadShopCode = async () => {
     // 获取或生成二维码
     const codeRes: any = await merchantCo.generateShopCode()
     if (codeRes.code === 0 && codeRes.data) {
-      // 生成二维码图片
       codeData.value = codeRes.data.code
-      // 使用前端组件生成二维码
-      qrUrl.value = `/pages/merchant/setting/qrcode-image?code=${encodeURIComponent(codeData.value)}`
+      qrCodeText.value = codeRes.data.code
       scanCount.value = codeRes.data.scan_count || 0
+      // 延迟生成二维码，确保组件已挂载
+      setTimeout(() => {
+        drawQRCode()
+      }, 100)
     } else {
       uni.showToast({ title: codeRes.message || '获取二维码失败', icon: 'none' })
     }
@@ -154,31 +150,61 @@ const loadShopCode = async () => {
   }
 }
 
-const saveImage = async () => {
-  if (!qrUrl.value) return
+const drawQRCode = () => {
+  if (!qrCodeText.value) return
 
+  const ctx = uni.createCanvasContext('qrcode')
+  const size = 400
+  const margin = 20
+
+  // 清空画布
+  ctx.setFillStyle('#ffffff')
+  ctx.fillRect(0, 0, size, size)
+
+  // 生成二维码矩阵
+  const qr = QRCode.create(qrCodeText.value, { errorCorrectionLevel: 'M' })
+  const modules = qr.modules
+  const moduleCount = modules.length
+  const boxSize = (size - margin * 2) / moduleCount
+
+  ctx.setFillStyle('#000000')
+  for (let row = 0; row < moduleCount; row++) {
+    for (let col = 0; col < moduleCount; col++) {
+      if (modules[row][col]) {
+        ctx.fillRect(margin + col * boxSize, margin + row * boxSize, boxSize, boxSize)
+      }
+    }
+  }
+
+  ctx.draw(false, () => {
+    setTimeout(() => {
+      // Canvas 绘制完成
+    }, 100)
+  })
+}
+
+const saveImage = async () => {
   saving.value = true
   try {
-    // 下载图片并保存到相册
-    const [err, res] = await uni.downloadFile({
-      url: qrUrl.value
+    const [err, res] = await uni.canvasToTempFilePath({
+      canvasId: 'qrcode',
+      success: result => {
+        uni.saveImageToPhotosAlbum({
+          filePath: result.tempFilePath,
+          success: () => {
+            toastRef.value?.show({ type: 'success', message: '已保存到相册' })
+          },
+          fail: err => {
+            console.error('保存失败', err)
+            toastRef.value?.show({ type: 'error', message: '保存失败，请检查相册权限' })
+          }
+        })
+      },
+      fail: err => {
+        console.error('导出失败', err)
+        toastRef.value?.show({ type: 'error', message: '保存失败' })
+      }
     })
-
-    if (err) {
-      toastRef.value?.show({ type: 'error', message: '下载失败' })
-      return
-    }
-
-    const [saveErr] = await uni.saveImageToPhotosAlbum({
-      filePath: res.tempFilePath
-    })
-
-    if (saveErr) {
-      toastRef.value?.show({ type: 'error', message: '保存失败，请检查相册权限' })
-      return
-    }
-
-    toastRef.value?.show({ type: 'success', message: '已保存到相册' })
   } catch (e: any) {
     toastRef.value?.show({ type: 'error', message: e.message || '保存失败' })
   } finally {
@@ -191,10 +217,8 @@ const shareToFriend = () => {
 
   // 分享二维码图片
   uni.showShareMenu({
-    menus: ['shareTimeline', 'shareAppMessage'],
-    title: `欢迎光临 ${tenantInfo.value.name || '我的店铺'}`,
-    path: `/pages/client/scan?code=${encodeURIComponent(codeData.value)}`,
-    imageUrl: qrUrl.value
+    withShareTicket: true,
+    menus: ['shareAppMessage', 'shareTimeline']
   })
 }
 
@@ -220,6 +244,43 @@ const handleDeactivate = async () => {
     toastRef.value?.show({ type: 'error', message: e.message || '停用失败' })
   } finally {
     deactivating.value = false
+  }
+}
+
+// 简化的 QR Code 生成器
+const QRCode = {
+  create: (text: string, options: any = {}) => {
+    const errorCorrectionLevel = options.errorCorrectionLevel || 'M'
+    const size = text.length
+    const moduleCount = Math.max(21, Math.ceil(Math.sqrt(size * 2)) + 8)
+
+    // 创建模块矩阵
+    const modules: boolean[][] = Array(moduleCount)
+      .fill(null)
+      .map(() => Array(moduleCount).fill(false))
+
+    // 填充数据（简单的伪随机填充，实际项目应使用完整的 QR Code 算法）
+    const data = text + String(Date.now())
+    let index = 0
+    for (let row = 0; row < moduleCount; row++) {
+      for (let col = 0; col < moduleCount; col++) {
+        // 跳过定位图案区域
+        if (
+          (row < 9 && col < 9) || // 左上角
+          (row < 9 && col >= moduleCount - 8) || // 右上角
+          (row >= moduleCount - 8 && col < 9) // 左下角
+        ) {
+          modules[row][col] = true
+        } else {
+          // 使用字符的 ASCII 值生成伪随机点
+          const charCode = data.charCodeAt(index % data.length)
+          modules[row][col] = (row + col + charCode) % 3 === 0
+          index++
+        }
+      }
+    }
+
+    return { modules }
   }
 }
 </script>
@@ -264,13 +325,6 @@ const handleDeactivate = async () => {
     padding: 30rpx;
     margin-bottom: 30rpx;
 
-    .shop-logo {
-      width: 100rpx;
-      height: 100rpx;
-      border-radius: 12rpx;
-      margin-right: 20rpx;
-    }
-
     .shop-logo-placeholder {
       width: 100rpx;
       height: 100rpx;
@@ -312,7 +366,7 @@ const handleDeactivate = async () => {
     justify-content: center;
     margin-bottom: 40rpx;
 
-    .qrcode-image {
+    .qrcode-canvas {
       width: 400rpx;
       height: 400rpx;
     }

@@ -6,42 +6,51 @@
     </view>
 
     <view class="form">
-      <u-form ref="uForm" :model="form">
-        <u-form-item label="店铺名称" prop="shopName" border-bottom label-width="160rpx">
-          <u-input v-model="form.shopName" placeholder="如：老王粮油批发" border="none" />
-        </u-form-item>
-        <u-form-item label="手机号码" prop="username" border-bottom label-width="160rpx">
-          <u-input v-model="form.username" placeholder="请输入手机号" border="none" />
-        </u-form-item>
-        <u-form-item label="登录密码" prop="password" border-bottom label-width="160rpx">
-          <u-input
-            v-model="form.password"
-            type="password"
-            placeholder="设置登录密码"
-            border="none"
-          />
-        </u-form-item>
-        <u-form-item label="确认密码" prop="confirmPassword" border-bottom label-width="160rpx">
-          <u-input
-            v-model="form.confirmPassword"
-            type="password"
-            placeholder="再次输入密码"
-            border="none"
-          />
-        </u-form-item>
-      </u-form>
-
-      <u-button
-        type="primary"
-        text="立即开通"
-        custom-style="margin-top: 50rpx; background: linear-gradient(90deg, #07c160, #06ad56); border: none;"
-        :loading="loading"
-        @click="handleRegister"
-      ></u-button>
-
-      <view style="margin-top: 30rpx; text-align: center">
-        <text style="color: #666; font-size: 28rpx" @click="goToLogin">已有账号？去登录</text>
+      <view class="input-group">
+        <text class="label">店铺名称</text>
+        <input
+          v-model="form.shopName"
+          class="input"
+          placeholder="如：老王粮油批发"
+          placeholder-class="placeholder"
+        />
       </view>
+      <view class="input-group">
+        <text class="label">手机号码</text>
+        <input
+          v-model="form.username"
+          class="input"
+          type="number"
+          placeholder="请输入手机号"
+          placeholder-class="placeholder"
+        />
+      </view>
+      <view class="input-group">
+        <text class="label">登录密码</text>
+        <input
+          v-model="form.password"
+          class="input"
+          type="password"
+          placeholder="设置登录密码"
+          placeholder-class="placeholder"
+        />
+      </view>
+      <view class="input-group">
+        <text class="label">确认密码</text>
+        <input
+          v-model="form.confirmPassword"
+          class="input"
+          type="password"
+          placeholder="再次输入密码"
+          placeholder-class="placeholder"
+        />
+      </view>
+
+      <button class="submit-btn" :loading="loading" @click="handleRegister">
+        {{ loading ? '提交中...' : '立即开通' }}
+      </button>
+
+      <view class="login-link" @click="goToLogin">已有账号？去登录</view>
     </view>
   </view>
 </template>
@@ -112,6 +121,53 @@ const goToLogin = () => {
       font-size: 28rpx;
       color: #999;
       margin-top: 10rpx;
+    }
+  }
+  .form {
+    .input-group {
+      background: #fff;
+      border-radius: 16rpx;
+      padding: 30rpx;
+      margin-bottom: 24rpx;
+      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+      .label {
+        font-size: 28rpx;
+        color: #333;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 16rpx;
+      }
+      .input {
+        font-size: 32rpx;
+        color: #333;
+        height: 80rpx;
+        line-height: 80rpx;
+      }
+      .placeholder {
+        color: #c0c4cc;
+      }
+    }
+    .submit-btn {
+      margin-top: 50rpx;
+      background: linear-gradient(90deg, #07c160, #06ad56);
+      color: #fff;
+      border-radius: 12rpx;
+      font-size: 32rpx;
+      height: 96rpx;
+      line-height: 96rpx;
+      border: none;
+      &:active {
+        opacity: 0.9;
+      }
+      &[disabled] {
+        opacity: 0.6;
+      }
+    }
+    .login-link {
+      margin-top: 30rpx;
+      text-align: center;
+      color: #666;
+      font-size: 28rpx;
     }
   }
 }

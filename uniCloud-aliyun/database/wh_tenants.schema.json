@@ -21,10 +21,6 @@
       "description": "店主UID",
       "foreignKey": "uni-id-users._id"
     },
-    "logo_url": {
-      "bsonType": "string",
-      "description": "店铺Logo"
-    },
     "phone": {
       "bsonType": "string",
       "description": "联系电话"
@@ -43,22 +39,6 @@
       "description": "创建时间",
       "defaultValue": {
         "$env": "now"
-      }
-    },
-    "settings": {
-      "bsonType": "object",
-      "description": "店铺设置",
-      "properties": {
-        "allow_debt": {
-          "bsonType": "bool",
-          "description": "是否允许赊账",
-          "defaultValue": true
-        },
-        "min_delivery_price": {
-          "bsonType": "int",
-          "description": "起送价(分)",
-          "defaultValue": 0
-        }
       }
     }
   }

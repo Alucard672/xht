@@ -6,22 +6,30 @@
     </view>
 
     <view class="form">
-      <u-form ref="uForm" :model="form">
-        <u-form-item label="手机号" prop="mobile" border-bottom>
-          <u-input v-model="form.mobile" type="number" placeholder="请输入手机号" border="none" />
-        </u-form-item>
-        <u-form-item label="密码" prop="password" border-bottom>
-          <u-input v-model="form.password" type="password" placeholder="请输入密码" border="none" />
-        </u-form-item>
-      </u-form>
+      <view class="input-group">
+        <text class="label">手机号</text>
+        <input
+          v-model="form.mobile"
+          class="input"
+          type="number"
+          placeholder="请输入手机号"
+          placeholder-class="placeholder"
+        />
+      </view>
+      <view class="input-group">
+        <text class="label">密码</text>
+        <input
+          v-model="form.password"
+          class="input"
+          type="password"
+          placeholder="请输入密码"
+          placeholder-class="placeholder"
+        />
+      </view>
 
-      <u-button
-        type="primary"
-        text="登录"
-        :loading="loading"
-        custom-style="margin-top: 50rpx"
-        @click="handleLogin"
-      ></u-button>
+      <button class="submit-btn" :loading="loading" @click="handleLogin">
+        {{ loading ? '登录中...' : '登录' }}
+      </button>
 
       <view class="actions">
         <text class="link" @click="goRegister">没有账号？去注册</text>
@@ -32,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { onShow as uniOnShow } from '@dcloudio/uni-app'
+import { onShow as uniOnShow, getCurrentPages } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/useUserStore'
 
 const userStore = useUserStore()
@@ -116,6 +124,29 @@ const goRegister = () => {
   }
   .form {
     margin-bottom: 40rpx;
+    .input-group {
+      background: #fff;
+      border-radius: 16rpx;
+      padding: 30rpx;
+      margin-bottom: 24rpx;
+      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+      .label {
+        font-size: 28rpx;
+        color: #333;
+        font-weight: 500;
+        display: block;
+        margin-bottom: 16rpx;
+      }
+      .input {
+        font-size: 32rpx;
+        color: #333;
+        height: 80rpx;
+        line-height: 80rpx;
+      }
+      .placeholder {
+        color: #c0c4cc;
+      }
+    }
     .actions {
       margin-top: 30rpx;
       display: flex;
@@ -123,6 +154,22 @@ const goRegister = () => {
       .link {
         font-size: 28rpx;
         color: #2979ff;
+      }
+    }
+    .submit-btn {
+      margin-top: 50rpx;
+      background: #07c160;
+      color: #fff;
+      border-radius: 12rpx;
+      font-size: 32rpx;
+      height: 96rpx;
+      line-height: 96rpx;
+      border: none;
+      &:active {
+        opacity: 0.9;
+      }
+      &[disabled] {
+        opacity: 0.6;
       }
     }
   }

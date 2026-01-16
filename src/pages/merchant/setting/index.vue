@@ -1,31 +1,27 @@
 <template>
   <view class="setting-container">
-    <!-- 会员信息卡片 -->
-    <view class="membership-card" :class="{ 'is-expired': membership.isExpired }">
+    <!-- 店铺信息卡片 -->
+    <view class="info-card">
       <view class="card-header">
-        <view class="card-title">会员信息</view>
-        <view class="status-tag" :class="getStatusClass(membership.status)">
-          {{ membership.statusText }}
-        </view>
+        <view class="card-title">店铺信息</view>
       </view>
       <view class="card-body">
         <view class="info-row">
           <text class="label">到期时间</text>
-          <text class="value">{{ formatDate(membership.expired_at) }}</text>
+          <text class="value">{{ formatDate(expired_at) }}</text>
         </view>
-        <view class="info-row" v-if="membership.daysLeft !== undefined">
+        <view v-if="daysLeft !== undefined && daysLeft !== null" class="info-row">
           <text class="label">剩余天数</text>
-          <text class="value" :class="{ 'text-danger': membership.daysLeft <= 7 }">
-            {{ membership.daysLeft }} 天
-          </text>
+          <text class="value" :class="{ 'text-danger': daysLeft <= 7 }"> {{ daysLeft }} 天 </text>
         </view>
       </view>
-      <view class="card-footer" v-if="membership.isExpired || membership.daysLeft <= 7">
+      <view
+        v-if="isExpired || (daysLeft !== undefined && daysLeft !== null && daysLeft <= 7)"
+        class="card-footer"
+      >
         <view class="renew-hint">
           <u-icon name="info-circle" color="#ff4d4f" size="16"></u-icon>
-          <text>{{
-            membership.isExpired ? '您的会员已过期，请尽快续费' : '会员即将到期，请及时续费'
-          }}</text>
+          <text>{{ isExpired ? '您的店铺已过期，请尽快续费' : '店铺即将到期，请及时续费' }}</text>
         </view>
         <view class="renew-btn" @click="showRenewModal">
           <text>联系管理员续费</text>
@@ -82,40 +78,6 @@
         <u-form-item label="联系电话" border-bottom>
           <u-input v-model="form.phone" placeholder="请输入联系电话" border="none" />
         </u-form-item>
-
-        <u-form-item label="店铺 Logo" border-bottom>
-          <view class="upload-area">
-            <u-upload
-              :file-list="fileList"
-              name="logo"
-              :max-count="1"
-              width="160rpx"
-              height="160rpx"
-              @after-read="afterRead"
-              @delete="deletePic"
-            ></u-upload>
-          </view>
-        </u-form-item>
-
-        <u-form-item label="起送价" border-bottom>
-          <u-input
-            v-model="form.min_delivery_price_display"
-            type="digit"
-            placeholder="0"
-            border="none"
-          />
-          <template #right>
-            <view class="unit">元</view>
-          </template>
-        </u-form-item>
-
-        <u-form-item label="允许赊账" border-bottom>
-          <template #right>
-            <view>
-              <u-switch v-model="form.settings.allow_debt" active-color="#07c160"></u-switch>
-            </view>
-          </template>
-        </u-form-item>
       </u-form>
     </view>
 
@@ -127,32 +89,19 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
 
 const merchantCo = importObject('wh-merchant-co')
 const loading = ref(false)
-const fileList = ref<any[]>([])
 const showRenewPopup = ref(false)
 
-const membership = reactive({
-  status: 1,
-  statusText: '正常',
-  expired_at: null as string | null,
-  isExpired: false,
-  daysLeft: 0,
-  canRenew: true
-})
+const expired_at = ref<string | null>(null)
+const isExpired = ref(false)
+const daysLeft = ref<number | null>(null)
 
 const form = reactive({
   name: '',
-  phone: '',
-  logo_url: '',
-  min_delivery_price_display: '0',
-  settings: {
-    allow_debt: true,
-    min_delivery_price: 0
-  }
+  phone: ''
 })
 
 onMounted(() => {
@@ -168,13 +117,6 @@ const loadData = async () => {
       const data = res.data
       form.name = data.name || ''
       form.phone = data.phone || ''
-      form.logo_url = data.logo_url || ''
-      form.settings = data.settings || { allow_debt: true, min_delivery_price: 0 }
-      form.min_delivery_price_display = priceHelper.format(form.settings.min_delivery_price || 0)
-
-      if (form.logo_url) {
-        fileList.value = [{ url: form.logo_url, status: 'success', message: '' }]
-      }
     }
   } catch (e: any) {
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })
@@ -188,15 +130,12 @@ const loadMembership = async () => {
     const res = await merchantCo.getMembershipInfo()
     if (res.code === 0) {
       const data = res.data
-      membership.status = data.status
-      membership.statusText = data.statusText
-      membership.expired_at = data.expired_at
-      membership.isExpired = data.isExpired
-      membership.daysLeft = data.daysLeft
-      membership.canRenew = data.canRenew
+      expired_at.value = data.expired_at
+      isExpired.value = data.isExpired
+      daysLeft.value = data.daysLeft
     }
   } catch (e) {
-    console.error('加载会员信息失败', e)
+    console.error('加载店铺信息失败', e)
   }
 }
 
@@ -207,17 +146,6 @@ const formatDate = (dateStr: string | null) => {
     month: '2-digit',
     day: '2-digit'
   })
-}
-
-const getStatusClass = (status: number) => {
-  const map: Record<number, string> = {
-    0: 'status-pending',
-    1: 'status-normal',
-    2: 'status-frozen',
-    3: 'status-expired',
-    4: 'status-rejected'
-  }
-  return map[status] || 'status-normal'
 }
 
 const showRenewModal = () => {
@@ -233,46 +161,14 @@ const copyPhone = () => {
   })
 }
 
-const afterRead = async (event: any) => {
-  const file = event.file[0]
-  const tenant_id = uni.getStorageSync('tenant_id')
-
-  fileList.value.push({ ...file, status: 'uploading', message: '上传中' })
-
-  try {
-    const result = await uniCloud.uploadFile({
-      filePath: file.url,
-      cloudPath: `logo/${tenant_id}/${Date.now()}.png`
-    })
-    form.logo_url = result.fileID
-    fileList.value[0].status = 'success'
-    fileList.value[0].message = ''
-    fileList.value[0].url = result.fileID
-  } catch (e) {
-    fileList.value[0].status = 'failed'
-    fileList.value[0].message = '上传失败'
-  }
-}
-
-const deletePic = () => {
-  fileList.value = []
-  form.logo_url = ''
-}
-
 const saveSettings = async () => {
   if (!form.name) return uni.showToast({ title: '请输入店铺名称', icon: 'none' })
 
   loading.value = true
   try {
-    const min_price_fen = priceHelper.toFen(form.min_delivery_price_display)
     const updateData = {
       name: form.name,
-      phone: form.phone,
-      logo_url: form.logo_url,
-      settings: {
-        allow_debt: form.settings.allow_debt,
-        min_delivery_price: min_price_fen
-      }
+      phone: form.phone
     }
 
     const res = await merchantCo.updateTenantInfo(updateData)
@@ -297,8 +193,8 @@ const saveSettings = async () => {
   background-color: #f5f5f5;
   padding: 20rpx;
 
-  // 会员信息卡片
-  .membership-card {
+  // 店铺信息卡片
+  .info-card {
     background: linear-gradient(135deg, #07c160 0%, #06ae56 100%);
     border-radius: 20rpx;
     padding: 32rpx;
@@ -318,13 +214,6 @@ const saveSettings = async () => {
       .card-title {
         font-size: 32rpx;
         font-weight: bold;
-      }
-
-      .status-tag {
-        padding: 6rpx 20rpx;
-        border-radius: 20rpx;
-        font-size: 24rpx;
-        background: rgba(255, 255, 255, 0.2);
       }
     }
 
@@ -388,24 +277,6 @@ const saveSettings = async () => {
         }
       }
     }
-  }
-
-  // 状态标签样式
-  .status-pending {
-    background: rgba(255, 193, 7, 0.8) !important;
-    color: #333 !important;
-  }
-  .status-normal {
-    background: rgba(255, 255, 255, 0.2) !important;
-  }
-  .status-frozen {
-    background: rgba(255, 82, 82, 0.8) !important;
-  }
-  .status-expired {
-    background: rgba(156, 39, 176, 0.8) !important;
-  }
-  .status-rejected {
-    background: rgba(158, 158, 158, 0.8) !important;
   }
 
   // 续费弹窗
@@ -485,16 +356,6 @@ const saveSettings = async () => {
     background-color: #fff;
     border-radius: 16rpx;
     padding: 0 30rpx;
-  }
-
-  .upload-area {
-    padding: 20rpx 0;
-  }
-
-  .unit {
-    font-size: 28rpx;
-    color: #333;
-    margin-left: 10rpx;
   }
 
   .footer-btn {

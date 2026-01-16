@@ -133,7 +133,7 @@
       <view v-for="item in stockAlerts" :key="item._id" class="alert-item">
         <view class="item-left">
           <image
-            :src="item.image || '/static/logo.png'"
+            :src="item.image || '/static/empty/list.png'"
             class="goods-img"
             mode="aspectFill"
           ></image>
@@ -239,7 +239,7 @@ const loadData = async (force = false) => {
 }
 
 const goToRenew = () => {
-  uni.navigateTo({ url: '/pages/merchant/setting/index?tab=renew' })
+  uni.navigateTo({ url: '/pages/merchant/setting/index' })
 }
 
 // 监听设置页面的更新通知
@@ -276,7 +276,7 @@ const navTo = (url: string) => {
 }
 
 const showShopCode = () => {
-  uni.showToast({ title: '演示功能', icon: 'none' })
+  uni.navigateTo({ url: '/pages/merchant/setting/qrcode' })
 }
 
 const handleModuleChange = (index: number) => {
