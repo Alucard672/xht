@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { onShow as uniOnShow, getCurrentPages } from '@dcloudio/uni-app'
+import { onShow as uniOnShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/useUserStore'
 
 const userStore = useUserStore()
@@ -51,19 +51,6 @@ const form = reactive({
 })
 
 const loading = ref(false)
-
-uniOnShow(() => {
-  // 如果是注册后跳转过来，显示提示
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
-  if (currentPage.options.registered === 'true') {
-    uni.showToast({
-      title: '注册成功，请等待审核',
-      icon: 'none',
-      duration: 3000
-    })
-  }
-})
 
 const handleLogin = async () => {
   if (!/^1[3-9]\d{9}$/.test(form.mobile)) {
