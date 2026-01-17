@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd())
   return {
     plugins: [uni()],
+    transpileDependencies: ['uview-plus'],
     define: {
       'process.env.VITE_APP_MODE': JSON.stringify(
         env.VITE_APP_MODE || process.env.VITE_APP_MODE || ''
