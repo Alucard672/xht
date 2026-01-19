@@ -1,11 +1,19 @@
 const uniID = require('uni-id-common')
 
+// 微信小程序码配置
+const WECHAT_CONFIG = {
+  appid: 'wxde883e8400916323', // TODO: 替换为实际 AppID
+  secret: 'd31858c1a0039ef58beaac90f449a557' // TODO: 替换为实际 AppSecret
+}
+
 module.exports = {
   _before: function () {
+    const clientInfo = this.getClientInfo() || {}
     this.uniID = uniID.createInstance({
-      clientInfo: this.getClientInfo()
+      clientInfo
     })
   },
+
   /**
    * 商家入驻
    * @param {String} shopName 店铺名称
@@ -335,7 +343,7 @@ module.exports = {
   },
 
   /**
-   * 生成店铺二维码
+   * 生成店铺小程序码
    * @returns {Object}
    */
   async generateShopCode() {
@@ -354,50 +362,138 @@ module.exports = {
     const tenant = tenantRes.data[0]
     if (!tenant) return { code: 404, msg: '店铺不存在' }
 
-    // 检查是否已有有效的二维码
+    // 获取 access_token 的辅助函数
+    const getWechatAccessToken = async () => {
+      const cacheRes = await db.collection('wh_wechat_token').where({ type: 'access_token' }).get()
+      const now = Date.now()
+
+      if (cacheRes.data.length > 0) {
+        const cache = cacheRes.data[0]
+        if (cache.expires_at && now < cache.expires_at - 300) {
+          return cache.token
+        }
+      }
+
+      const res = await uniCloud.httpclient.request(
+        `https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=${WECHAT_CONFIG.appid}&secret=${WECHAT_CONFIG.secret}`,
+        { dataType: 'json' }
+      )
+
+      if (res.data.access_token) {
+        if (cacheRes.data.length > 0) {
+          await db
+            .collection('wh_wechat_token')
+            .doc(cacheRes.data[0]._id)
+            .update({
+              token: res.data.access_token,
+              expires_at: now + res.data.expires_in * 1000,
+              updated_at: now
+            })
+        } else {
+          await db.collection('wh_wechat_token').add({
+            type: 'access_token',
+            token: res.data.access_token,
+            expires_at: now + res.data.expires_in * 1000,
+            created_at: now
+          })
+        }
+        return res.data.access_token
+      }
+    }
+
+    // 检查是否已有有效的小程序码
     const existRes = await db
       .collection('wh_shop_codes')
       .where({ tenant_id, is_active: true })
       .get()
 
     if (existRes.data.length > 0) {
-      // 返回已有的二维码
-      return {
-        code: 0,
-        data: {
-          code: existRes.data[0].code,
-          qr_url: existRes.data[0].qr_url
+      const existingCode = existRes.data[0]
+      if (existingCode.created_at && Date.now() - existingCode.created_at < 7 * 24 * 3600 * 1000) {
+        let qr_url = existingCode.qr_url
+
+        if (qr_url && qr_url.startsWith('cloud://')) {
+          const tempUrlRes = await uniCloud.getTempFileURL({
+            fileList: [qr_url]
+          })
+          if (tempUrlRes.fileList && tempUrlRes.fileList[0] && tempUrlRes.fileList[0].tempFileURL) {
+            qr_url = tempUrlRes.fileList[0].tempFileURL
+            await db.collection('wh_shop_codes').doc(existingCode._id).update({ qr_url })
+          }
+        }
+
+        if (qr_url && qr_url.startsWith('https://')) {
+          return {
+            code: 0,
+            data: {
+              code: existingCode.code,
+              qr_url,
+              scan_count: existingCode.scan_count || 0
+            }
+          }
+        }
+
+        if (qr_url && qr_url.startsWith('/api/')) {
+          await db.collection('wh_shop_codes').doc(existingCode._id).remove()
         }
       }
     }
 
-    // 生成新的店铺码
-    const codeData = {
-      tenant_id: tenant_id,
-      timestamp: Date.now()
-    }
-    const code = Buffer.from(JSON.stringify(codeData)).toString('base64')
+    try {
+      const accessToken = await getWechatAccessToken()
 
-    // 生成二维码图片 URL (使用 uni-app 的二维码生成 API)
-    // 这里使用前端组件生成二维码图片
-    const qr_url = `/api/qrcode?content=${encodeURIComponent(code)}`
+      const wechatRes = await uniCloud.httpclient.request(
+        `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${accessToken}`,
+        {
+          method: 'POST',
+          data: {
+            scene: tenant_id,
+            page: 'pages/client/shop',
+            width: 430,
+            check_path: false,
+            env_version: 'release'
+          },
+          dataType: 'buffer'
+        }
+      )
 
-    // 保存到数据库
-    await db.collection('wh_shop_codes').add({
-      tenant_id,
-      code,
-      qr_url,
-      is_active: true,
-      scan_count: 0,
-      created_at: Date.now()
-    })
+      if (wechatRes.status === 200 && wechatRes.data.length > 0) {
+        const cloudRes = await uniCloud.uploadFile({
+          cloudPath: `shop-codes/${tenant_id}-${Date.now()}.png`,
+          fileContent: wechatRes.data
+        })
 
-    return {
-      code: 0,
-      data: {
-        code,
-        qr_url
+        const fileID = cloudRes.fileID
+
+        const tempUrlRes = await uniCloud.getTempFileURL({
+          fileList: [fileID]
+        })
+        const qr_url = tempUrlRes.fileList[0].tempFileURL || fileID
+
+        await db.collection('wh_shop_codes').add({
+          tenant_id,
+          code: tenant_id,
+          qr_url: fileID, // 保存原始 fileID
+          is_active: true,
+          scan_count: 0,
+          created_at: Date.now()
+        })
+
+        // 直接返回临时 URL
+        return {
+          code: 0,
+          data: {
+            code: tenant_id,
+            qr_url, // 临时 URL
+            scan_count: 0
+          }
+        }
       }
+
+      throw new Error('生成小程序码失败')
+    } catch (e) {
+      console.error('生成小程序码错误:', e)
+      return { code: 500, msg: e.message || '生成二维码失败' }
     }
   },
 

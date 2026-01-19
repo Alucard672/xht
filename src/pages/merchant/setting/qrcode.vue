@@ -23,9 +23,15 @@
 
       <!-- 二维码 -->
       <view class="qrcode-card">
-        <canvas v-if="qrCodeText" canvas-id="qrcode" class="qrcode-canvas"></canvas>
+        <image
+          v-if="qrUrl"
+          :src="qrUrl"
+          mode="aspectFit"
+          class="qrcode-image"
+          @click="previewImage"
+        />
         <view v-else class="qrcode-placeholder">
-          <u-icon name="photo" size="80" color="#ddd"></u-icon>
+          <u-loading-icon></u-loading-icon>
           <text>生成中...</text>
         </view>
       </view>
@@ -113,6 +119,7 @@ const showDeactivatePopup = ref(false)
 const toastRef = ref<any>(null)
 
 const tenantInfo = ref<any>({})
+const qrUrl = ref('')
 const qrCodeText = ref('')
 const scanCount = ref(0)
 const codeData = ref('')
@@ -130,16 +137,27 @@ const loadShopCode = async () => {
       tenantInfo.value = tenantRes.data || {}
     }
 
-    // 获取或生成二维码
+    // 获取或生成小程序码
     const codeRes: any = await merchantCo.generateShopCode()
     if (codeRes.code === 0 && codeRes.data) {
       codeData.value = codeRes.data.code
       qrCodeText.value = codeRes.data.code
+      qrUrl.value = codeRes.data.qr_url
       scanCount.value = codeRes.data.scan_count || 0
-      // 延迟生成二维码，确保组件已挂载
-      setTimeout(() => {
-        drawQRCode()
-      }, 100)
+
+      // 如果是 cloud:// 格式，转换为临时 URL
+      if (qrUrl.value && qrUrl.value.startsWith('cloud://')) {
+        try {
+          const tempRes: any = await uniCloud.getTempFileURL({
+            fileList: [qrUrl.value]
+          })
+          if (tempRes.fileList && tempRes.fileList[0] && tempRes.fileList[0].tempFileURL) {
+            qrUrl.value = tempRes.fileList[0].tempFileURL
+          }
+        } catch (e) {
+          console.error('转换图片 URL 失败:', e)
+        }
+      }
     } else {
       uni.showToast({ title: codeRes.message || '获取二维码失败', icon: 'none' })
     }
@@ -150,63 +168,35 @@ const loadShopCode = async () => {
   }
 }
 
-const drawQRCode = () => {
-  if (!qrCodeText.value) return
-
-  const ctx = uni.createCanvasContext('qrcode')
-  const size = 400
-  const margin = 20
-
-  // 清空画布
-  ctx.setFillStyle('#ffffff')
-  ctx.fillRect(0, 0, size, size)
-
-  // 生成二维码矩阵
-  const qr = QRCode.create(qrCodeText.value, { errorCorrectionLevel: 'M' })
-  const modules = qr.modules
-  const moduleCount = modules.length
-  const boxSize = (size - margin * 2) / moduleCount
-
-  ctx.setFillStyle('#000000')
-  for (let row = 0; row < moduleCount; row++) {
-    for (let col = 0; col < moduleCount; col++) {
-      if (modules[row][col]) {
-        ctx.fillRect(margin + col * boxSize, margin + row * boxSize, boxSize, boxSize)
-      }
-    }
-  }
-
-  ctx.draw(false, () => {
-    setTimeout(() => {
-      // Canvas 绘制完成
-    }, 100)
+// 预览图片
+const previewImage = () => {
+  if (!qrUrl.value) return
+  uni.previewImage({
+    urls: [qrUrl.value],
+    current: 0
   })
 }
 
+// 保存图片到相册
 const saveImage = async () => {
+  if (!qrUrl.value) return
   saving.value = true
   try {
-    const [err, res] = await uni.canvasToTempFilePath({
-      canvasId: 'qrcode',
-      success: result => {
-        uni.saveImageToPhotosAlbum({
-          filePath: result.tempFilePath,
-          success: () => {
-            toastRef.value?.show({ type: 'success', message: '已保存到相册' })
-          },
-          fail: err => {
-            console.error('保存失败', err)
-            toastRef.value?.show({ type: 'error', message: '保存失败，请检查相册权限' })
-          }
-        })
-      },
-      fail: err => {
-        console.error('导出失败', err)
-        toastRef.value?.show({ type: 'error', message: '保存失败' })
-      }
+    // 下载图片
+    const [err, res] = await uni.downloadFile({ url: qrUrl.value })
+    if (err || res.statusCode !== 200) {
+      throw new Error('下载失败')
+    }
+
+    // 保存到相册
+    await uni.saveImageToPhotosAlbum({
+      filePath: res.tempFilePath
     })
+
+    toastRef.value?.show({ type: 'success', message: '已保存到相册' })
   } catch (e: any) {
-    toastRef.value?.show({ type: 'error', message: e.message || '保存失败' })
+    console.error('保存失败', e)
+    toastRef.value?.show({ type: 'error', message: '保存失败，请检查相册权限' })
   } finally {
     saving.value = false
   }
@@ -244,43 +234,6 @@ const handleDeactivate = async () => {
     toastRef.value?.show({ type: 'error', message: e.message || '停用失败' })
   } finally {
     deactivating.value = false
-  }
-}
-
-// 简化的 QR Code 生成器
-const QRCode = {
-  create: (text: string, options: any = {}) => {
-    const errorCorrectionLevel = options.errorCorrectionLevel || 'M'
-    const size = text.length
-    const moduleCount = Math.max(21, Math.ceil(Math.sqrt(size * 2)) + 8)
-
-    // 创建模块矩阵
-    const modules: boolean[][] = Array(moduleCount)
-      .fill(null)
-      .map(() => Array(moduleCount).fill(false))
-
-    // 填充数据（简单的伪随机填充，实际项目应使用完整的 QR Code 算法）
-    const data = text + String(Date.now())
-    let index = 0
-    for (let row = 0; row < moduleCount; row++) {
-      for (let col = 0; col < moduleCount; col++) {
-        // 跳过定位图案区域
-        if (
-          (row < 9 && col < 9) || // 左上角
-          (row < 9 && col >= moduleCount - 8) || // 右上角
-          (row >= moduleCount - 8 && col < 9) // 左下角
-        ) {
-          modules[row][col] = true
-        } else {
-          // 使用字符的 ASCII 值生成伪随机点
-          const charCode = data.charCodeAt(index % data.length)
-          modules[row][col] = (row + col + charCode) % 3 === 0
-          index++
-        }
-      }
-    }
-
-    return { modules }
   }
 }
 </script>
@@ -366,7 +319,7 @@ const QRCode = {
     justify-content: center;
     margin-bottom: 40rpx;
 
-    .qrcode-canvas {
+    .qrcode-image {
       width: 400rpx;
       height: 400rpx;
     }

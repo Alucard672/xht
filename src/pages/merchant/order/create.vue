@@ -1,13 +1,7 @@
 <template>
   <view class="create-order-container">
-    <!-- 页面标题 -->
-    <view class="page-header">
-      <text class="title">直接开单</text>
-    </view>
-
     <!-- 选择客户 -->
     <view class="section customer-section" @click="selectCustomer">
-      <view class="section-label">下单客户</view>
       <view v-if="selectedCustomer" class="customer-info">
         <view class="customer-name">{{ selectedCustomer.alias }}</view>
         <view v-if="selectedCustomer.phone" class="customer-phone">{{
@@ -22,8 +16,6 @@
 
     <!-- 商品列表 -->
     <view class="section goods-section">
-      <view class="section-label">选择商品</view>
-
       <view v-if="selectedGoods.length === 0" class="empty-goods" @click="addGoods">
         <u-icon name="plus" size="24" color="#2979ff"></u-icon>
         <text class="txt">添加商品</text>

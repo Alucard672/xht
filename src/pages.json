@@ -35,7 +35,7 @@
     {
       "path": "pages/merchant/order/create",
       "style": {
-        "navigationBarTitleText": "直接开单",
+        "navigationBarTitleText": "开单",
         "navigationBarBackgroundColor": "#07c160",
         "navigationBarTextStyle": "white"
       }

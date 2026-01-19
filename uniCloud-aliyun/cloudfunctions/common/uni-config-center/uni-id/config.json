@@ -4,5 +4,14 @@
   "tokenExpiresIn": 7200,
   "tokenExpiresThreshold": 600,
   "passwordErrorLimit": 6,
-  "passwordErrorLockTime": 3600
+  "passwordErrorLockTime": 3600,
+  "passwordLogin": {
+    "enabled": true,
+    "otp": {
+      "enabled": false
+    },
+    "captcha": {
+      "enabled": false
+    }
+  }
 }
