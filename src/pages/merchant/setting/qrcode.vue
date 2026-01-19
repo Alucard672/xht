@@ -139,11 +139,14 @@ const loadShopCode = async () => {
 
     // 获取或生成小程序码
     const codeRes: any = await merchantCo.generateShopCode()
+    console.log('生成小程序码结果:', codeRes) // 添加调试日志
     if (codeRes.code === 0 && codeRes.data) {
       codeData.value = codeRes.data.code
       qrCodeText.value = codeRes.data.code
       qrUrl.value = codeRes.data.qr_url
       scanCount.value = codeRes.data.scan_count || 0
+
+      console.log('二维码URL:', qrUrl.value) // 添加调试日志
 
       // 如果是 cloud:// 格式，转换为临时 URL
       if (qrUrl.value && qrUrl.value.startsWith('cloud://')) {
@@ -151,6 +154,7 @@ const loadShopCode = async () => {
           const tempRes: any = await uniCloud.getTempFileURL({
             fileList: [qrUrl.value]
           })
+          console.log('临时URL转换结果:', tempRes) // 添加调试日志
           if (tempRes.fileList && tempRes.fileList[0] && tempRes.fileList[0].tempFileURL) {
             qrUrl.value = tempRes.fileList[0].tempFileURL
           }
@@ -159,7 +163,9 @@ const loadShopCode = async () => {
         }
       }
     } else {
-      uni.showToast({ title: codeRes.message || '获取二维码失败', icon: 'none' })
+      const errorMsg = codeRes.msg || codeRes.message || '获取二维码失败'
+      console.error('生成小程序码失败:', errorMsg) // 添加错误日志
+      uni.showToast({ title: errorMsg, icon: 'none' })
     }
   } catch (e: any) {
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })

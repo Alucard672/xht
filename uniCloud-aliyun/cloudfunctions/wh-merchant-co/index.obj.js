@@ -446,54 +446,82 @@ module.exports = {
         `https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=${accessToken}`,
         {
           method: 'POST',
-          data: {
-            scene: tenant_id,
+          data: JSON.stringify({
+            scene: `t=${tenant_id}`,
             page: 'pages/client/shop',
             width: 430,
-            check_path: false,
-            env_version: 'release'
-          },
+            check_path: true,
+            env_version: 'trial'
+          }),
           dataType: 'buffer'
         }
       )
 
-      if (wechatRes.status === 200 && wechatRes.data.length > 0) {
-        const cloudRes = await uniCloud.uploadFile({
-          cloudPath: `shop-codes/${tenant_id}-${Date.now()}.png`,
-          fileContent: wechatRes.data
-        })
-
-        const fileID = cloudRes.fileID
-
-        const tempUrlRes = await uniCloud.getTempFileURL({
-          fileList: [fileID]
-        })
-        const qr_url = tempUrlRes.fileList[0].tempFileURL || fileID
-
-        await db.collection('wh_shop_codes').add({
-          tenant_id,
-          code: tenant_id,
-          qr_url: fileID, // 保存原始 fileID
-          is_active: true,
-          scan_count: 0,
-          created_at: Date.now()
-        })
-
-        // 直接返回临时 URL
-        return {
-          code: 0,
-          data: {
-            code: tenant_id,
-            qr_url, // 临时 URL
-            scan_count: 0
-          }
-        }
+      // 检查微信API响应
+      if (!wechatRes.data || wechatRes.data.length === 0) {
+        throw new Error('微信API返回空数据')
       }
 
-      throw new Error('生成小程序码失败')
+      // 检查是否为JSON错误响应（微信失败时返回JSON）
+      try {
+        const textContent = wechatRes.data.toString('utf8')
+        const jsonData = JSON.parse(textContent)
+
+        // 如果能解析为JSON，说明是错误信息
+        if (jsonData.errcode && jsonData.errcode !== 0) {
+          console.error('微信API错误:', jsonData)
+          throw new Error(
+            `微信API错误: ${jsonData.errmsg || '未知错误'} (code: ${jsonData.errcode})`
+          )
+        }
+      } catch (parseErr) {
+        // 解析失败，说明是图片数据，继续处理
+      }
+
+      // 检查是否为有效的图片数据（PNG文件头是 89 50 4E 47）
+      const dataBuffer = wechatRes.data
+      if (dataBuffer.length < 8 || dataBuffer[0] !== 0x89 || dataBuffer[1] !== 0x50) {
+        console.error('无效的图片数据:', dataBuffer.slice(0, 20).toString('hex'))
+        throw new Error('生成二维码失败：返回数据不是有效的图片格式')
+      }
+
+      // 保存图片到云存储
+      const cloudRes = await uniCloud.uploadFile({
+        cloudPath: `shop-codes/${tenant_id}-${Date.now()}.png`,
+        fileContent: dataBuffer
+      })
+
+      const fileID = cloudRes.fileID
+
+      const tempUrlRes = await uniCloud.getTempFileURL({
+        fileList: [fileID]
+      })
+      const qr_url = tempUrlRes.fileList[0].tempFileURL || fileID
+
+      await db.collection('wh_shop_codes').add({
+        tenant_id,
+        code: tenant_id,
+        qr_url: fileID,
+        is_active: true,
+        scan_count: 0,
+        created_at: Date.now()
+      })
+
+      return {
+        code: 0,
+        data: {
+          code: tenant_id,
+          qr_url,
+          scan_count: 0
+        }
+      }
     } catch (e) {
       console.error('生成小程序码错误:', e)
-      return { code: 500, msg: e.message || '生成二维码失败' }
+      let errorMsg = '生成二维码失败'
+      if (e.message) {
+        errorMsg = e.message
+      }
+      return { code: 500, msg: errorMsg }
     }
   },
 
