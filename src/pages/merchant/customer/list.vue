@@ -134,7 +134,6 @@ const navTo = (url: string) => {
 }
 
 onShow(() => {
-  uni.hideTabBar()
   loadData(true)
 })
 

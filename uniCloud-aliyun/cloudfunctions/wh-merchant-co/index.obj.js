@@ -304,12 +304,20 @@ module.exports = {
     if (!tenantRes.data[0]) return { code: 404, msg: '店铺不存在' }
 
     const data = tenantRes.data[0]
+    
+    // 计算有效到期时间（OA设置的优先）
+    const expiredAt = data.oa_expired_at || data.expired_at
+    
     return {
       code: 0,
       data: {
         _id: data._id,
         name: data.name,
-        phone: data.phone
+        phone: data.phone,
+        status: data.status,
+        expired_at: expiredAt,
+        oa_expired_at: data.oa_expired_at,
+        settings: data.settings
       }
     }
   },

@@ -40,12 +40,30 @@ export const useUserStore = defineStore('user', () => {
     uni.reLaunch({ url: '/pages/merchant/login' })
   }
 
+  // 刷新商家信息（获取最新有效期等）
+  const refreshTenantInfo = async () => {
+    if (!tenantInfo.value?._id) return
+    
+    try {
+      const merchantCo = uniCloud.importObject('wh-merchant-co')
+      const res: any = await merchantCo.getTenantInfo()
+      
+      if (res.code === 0 && res.data) {
+        tenantInfo.value = res.data
+        uni.setStorageSync('tenant_info', res.data)
+      }
+    } catch (e) {
+      console.error('刷新商家信息失败:', e)
+    }
+  }
+
   return {
     token,
     userInfo,
     tenantInfo,
     hasLogin,
     login,
-    logout
+    logout,
+    refreshTenantInfo
   }
 })

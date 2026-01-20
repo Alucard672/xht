@@ -118,7 +118,6 @@ const loading = ref(false)
 
 let lastLoadTime = 0
 onShow(() => {
-  uni.hideTabBar()
   fetchOrders()
 })
 

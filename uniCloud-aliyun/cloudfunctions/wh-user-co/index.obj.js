@@ -11,6 +11,13 @@ function encryptPassword(password) {
   return hmac.digest('hex')
 }
 
+/**
+ * 获取有效的到期时间（OA设置的优先）
+ */
+function getEffectiveExpiredAt(tenant) {
+  return tenant.oa_expired_at || tenant.expired_at
+}
+
 module.exports = {
   _before: async function () {
     this.uniIdCommon = uniIdCommon.createInstance({
@@ -74,10 +81,38 @@ module.exports = {
     })
 
     let tenantInfo = null
+    let expiredAt = null
+    
     if (user.tenant_id) {
       const tenantRes = await db.collection('wh_tenants').doc(user.tenant_id).get()
       if (tenantRes.data.length > 0) {
         tenantInfo = tenantRes.data[0]
+        expiredAt = getEffectiveExpiredAt(tenantInfo)
+        
+        // 检查商家状态
+        if (tenantInfo.status === 0) {
+          throw new Error('您的账号正在审核中，请耐心等待')
+        }
+        
+        if (tenantInfo.status === 2) {
+          throw new Error('您的账号已被冻结，请联系管理员')
+        }
+        
+        // 检查有效期
+        if (expiredAt && expiredAt < Date.now()) {
+          // 同步更新状态为过期
+          await db.collection('wh_tenants').doc(user.tenant_id).update({
+            status: 3
+          })
+          throw new Error('您的账号已过期，请联系管理员续期')
+        }
+        
+        // 如果设置了新的有效期且大于当前时间，确保状态为正常
+        if (expiredAt && expiredAt > Date.now() && tenantInfo.status === 3) {
+          await db.collection('wh_tenants').doc(user.tenant_id).update({
+            status: 1
+          })
+        }
       }
     }
 
@@ -92,12 +127,15 @@ module.exports = {
         role: user.role || [],
         tenant_id: user.tenant_id
       },
-      tenantInfo
+      tenantInfo: tenantInfo ? {
+        ...tenantInfo,
+        expired_at: expiredAt
+      } : null
     }
   },
 
   /**
-   * 注册商家并创建租户（待审核状态）
+   * 注册商家（自动通过审核，7天免费试用期）
    */
   async registerMerchant(params) {
     const { username, password, shopName } = params
@@ -112,6 +150,8 @@ module.exports = {
 
     const db = uniCloud.database()
     const now = Date.now()
+    const FREE_TRIAL_DAYS = 7  // 免费试用期（天）
+    const expiredAt = now + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000
 
     const existUser = await db.collection('uni-id-users').where({ mobile: username }).get()
 
@@ -137,13 +177,15 @@ module.exports = {
 
     const uid = userRes.id
 
-    // 创建租户（待审核状态，暂不关联用户）
+    // 创建租户（自动通过审核，7天免费试用期）
     const tenantRes = await db.collection('wh_tenants').add({
       name: shopName,
       owner_uid: uid,
-      status: 0, // 待审核
+      status: 1, // 直接通过审核，设为正常状态
+      expired_at: expiredAt, // 7天免费试用期
+      register_from: 'self_register',
+      free_trial_days: FREE_TRIAL_DAYS,
       created_at: now,
-      // 不设置 expired_at，等待审核时由管理员设置
       settings: {
         allow_debt: true,
         min_delivery_price: 0
@@ -162,10 +204,12 @@ module.exports = {
 
     return {
       code: 0,
-      msg: '注册成功，请等待管理员审核',
+      msg: '注册成功，您已获得7天免费试用期',
       data: {
         tenant_id: tenantRes.id,
-        status: 0 // 待审核
+        status: 1, // 正常状态
+        expired_at: expiredAt, // 7天后过期
+        free_trial_days: FREE_TRIAL_DAYS
       }
     }
   },
@@ -196,6 +240,17 @@ module.exports = {
       return { code: 404, message: '商家不存在' }
     }
     const tenant = tenantRes.data[0]
+
+    // 检查商家是否过期
+    const expiredAt = getEffectiveExpiredAt(tenant)
+    if (expiredAt && expiredAt < Date.now()) {
+      return { code: 403, message: '商家已过期，无法访问' }
+    }
+
+    // 检查商家状态
+    if (tenant.status !== 1) {
+      return { code: 403, message: '商家当前状态不可访问' }
+    }
 
     // 检查是否已有关联
     const existRes = await db

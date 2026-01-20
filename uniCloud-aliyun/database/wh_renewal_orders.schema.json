@@ -1,0 +1,79 @@
+{
+  "bsonType": "object",
+  "required": ["tenant_id", "order_no", "duration_months", "amount"],
+  "permission": {
+    "read": "doc.tenant_id == auth.tenant_id || auth.role == 'super_admin' || auth.role == 'admin'",
+    "create": "auth.uid != null",
+    "update": "auth.role == 'super_admin' || auth.role == 'admin'",
+    "delete": "auth.role == 'super_admin'"
+  },
+  "properties": {
+    "_id": {
+      "description": "ID，系统自动生成"
+    },
+    "tenant_id": {
+      "bsonType": "string",
+      "description": "商家ID",
+      "foreignKey": "wh_tenants._id"
+    },
+    "package_id": {
+      "bsonType": "string",
+      "description": "套餐ID",
+      "foreignKey": "wh_renewal_packages._id"
+    },
+    "order_no": {
+      "bsonType": "string",
+      "description": "订单号",
+      "trim": "both"
+    },
+    "duration_months": {
+      "bsonType": "int",
+      "description": "续费月数"
+    },
+    "amount": {
+      "bsonType": "int",
+      "description": "金额（分）"
+    },
+    "status": {
+      "bsonType": "int",
+      "description": "订单状态: 0-待支付, 1-已支付, 2-已取消",
+      "defaultValue": 0
+    },
+    "source": {
+      "bsonType": "string",
+      "description": "来源: oa_admin(后台赠送), online(在线支付)",
+      "defaultValue": "online"
+    },
+    "is_gift": {
+      "bsonType": "bool",
+      "description": "是否赠送",
+      "defaultValue": false
+    },
+    "remark": {
+      "bsonType": "string",
+      "description": "备注"
+    },
+    "payment_info": {
+      "bsonType": "object",
+      "description": "支付信息"
+    },
+    "paid_at": {
+      "bsonType": "timestamp",
+      "description": "支付时间"
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

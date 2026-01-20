@@ -53,6 +53,7 @@ const appMode = computed(() => {
 
 const goMerchant = () => {
   if (!checkLogin()) {
+    // 跳转到商家登录页
     return uni.navigateTo({ url: '/pages/merchant/login' })
   }
 
@@ -67,10 +68,13 @@ const goMerchant = () => {
 }
 
 const goAdmin = () => {
-  if (!checkLogin()) {
-    // 统一跳商家登录页（或专门的管理员登录页）
-    return uni.navigateTo({ url: '/pages/merchant/login' })
+  // OA系统使用独立的 oa_token 检查
+  const oaToken = uni.getStorageSync('oa_token')
+  if (!oaToken) {
+    // 未登录OA，跳转到OA登录页
+    return uni.navigateTo({ url: '/pages/admin/login/index' })
   }
+  // 已登录OA，直接进入管理列表
   uni.reLaunch({ url: '/pages/admin/merchant/list' })
 }
 
@@ -188,8 +192,8 @@ onLoad((options: any) => {
       box-shadow: 0 10rpx 20rpx rgba(255, 153, 0, 0.2);
     }
     .admin {
-      background: linear-gradient(135deg, #722ed1, #531dab);
-      box-shadow: 0 10rpx 20rpx rgba(114, 46, 209, 0.2);
+      background: linear-gradient(135deg, #1890ff, #096dd9);
+      box-shadow: 0 10rpx 20rpx rgba(24, 144, 255, 0.2);
     }
   }
 

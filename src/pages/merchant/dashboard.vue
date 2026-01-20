@@ -13,7 +13,7 @@
     </view>
 
     <!-- 即将过期提示 (7天内) -->
-    <view v-else-if="willExpireSoon" class="expire-soon-banner">
+    <view v-else-if="willExpireSoon && expireDays <= 7" class="expire-soon-banner">
       <view class="banner-content">
         <u-icon name="clock" color="#fff" size="20"></u-icon>
         <text class="banner-text">您的店铺将于 {{ expireDays }} 天后过期</text>
@@ -21,6 +21,18 @@
       <view class="banner-btn" @click="goToRenew">
         <text>续费</text>
         <u-icon name="arrow-right" color="#fff" size="14"></u-icon>
+      </view>
+    </view>
+    
+    <!-- 即将过期提示 (8-30天) -->
+    <view v-else-if="willExpireSoon" class="expire-soon-banner-light">
+      <view class="banner-content">
+        <u-icon name="info-circle" color="#1890ff" size="20"></u-icon>
+        <text class="banner-text">您的店铺将于 {{ expireDays }} 天后过期</text>
+      </view>
+      <view class="banner-btn" @click="goToRenew">
+        <text>续费</text>
+        <u-icon name="arrow-right" color="#1890ff" size="14"></u-icon>
       </view>
     </view>
 
@@ -184,8 +196,10 @@
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
+import { useUserStore } from '@/stores/useUserStore'
 
 const merchantCo = uniCloud.importObject('wh-merchant-co')
+const userStore = useUserStore()
 
 const shopName = ref('加载中...')
 const todayStr = ref(new Date().toISOString().split('T')[0])
@@ -239,7 +253,7 @@ const loadData = async (force = false) => {
 }
 
 const goToRenew = () => {
-  uni.navigateTo({ url: '/pages/merchant/setting/index' })
+  uni.navigateTo({ url: '/pages/merchant/renewal/index' })
 }
 
 // 监听设置页面的更新通知
@@ -290,7 +304,6 @@ const handleModuleChange = (index: number) => {
 }
 
 onShow(() => {
-  uni.hideTabBar()
   loadData()
 })
 </script>
@@ -345,6 +358,44 @@ onShow(() => {
 
 .expire-soon-banner {
   background: linear-gradient(135deg, #faad14 0%, #d48806 100%);
+}
+
+.expire-soon-banner-light {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx;
+  background-color: #e6f7ff;
+  border: 1rpx solid #91d5ff;
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    margin-right: 20rpx;
+
+    .banner-text {
+      margin-left: 16rpx;
+      font-size: 28rpx;
+      color: #1890ff;
+      line-height: 1.4;
+    }
+  }
+
+  .banner-btn {
+    display: flex;
+    align-items: center;
+    padding: 12rpx 24rpx;
+    background: rgba(24, 144, 255, 0.1);
+    border-radius: 32rpx;
+    font-size: 26rpx;
+    flex-shrink: 0;
+
+    text {
+      margin-right: 8rpx;
+      color: #1890ff;
+    }
+  }
 }
 
 .header-stats {

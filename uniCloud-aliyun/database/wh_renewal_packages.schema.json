@@ -1,0 +1,56 @@
+{
+  "bsonType": "object",
+  "required": ["name", "duration_months", "price"],
+  "permission": {
+    "read": "auth.role == 'super_admin' || auth.role == 'admin'",
+    "create": "auth.role == 'super_admin' || auth.role == 'admin'",
+    "update": "auth.role == 'super_admin' || auth.role == 'admin'",
+    "delete": "auth.role == 'super_admin'"
+  },
+  "properties": {
+    "_id": {
+      "description": "ID，系统自动生成"
+    },
+    "name": {
+      "bsonType": "string",
+      "description": "套餐名称",
+      "trim": "both"
+    },
+    "duration_months": {
+      "bsonType": "int",
+      "description": "续费月数"
+    },
+    "price": {
+      "bsonType": "int",
+      "description": "价格（分）"
+    },
+    "description": {
+      "bsonType": "string",
+      "description": "套餐描述"
+    },
+    "is_active": {
+      "bsonType": "bool",
+      "description": "是否上架",
+      "defaultValue": true
+    },
+    "sort_order": {
+      "bsonType": "int",
+      "description": "排序（数字越大越靠前）",
+      "defaultValue": 0
+    },
+    "created_at": {
+      "bsonType": "timestamp",
+      "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    }
+  }
+}

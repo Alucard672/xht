@@ -1,8 +1,0 @@
-{
-  "name": "wh-admin-co",
-  "dependencies": {
-    "uni-id-common": "file:../common/uni-id-common",
-    "uni-config-center": "file:../common/uni-config-center"
-  },
-  "extensions": {}
-}

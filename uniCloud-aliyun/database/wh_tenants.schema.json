@@ -32,11 +32,30 @@
     },
     "expired_at": {
       "bsonType": "timestamp",
-      "description": "服务到期时间"
+      "description": "服务到期时间（原始注册时设置）"
+    },
+    "oa_expired_at": {
+      "bsonType": "timestamp",
+      "description": "OA系统设置的到期时间（优先使用此字段）"
+    },
+    "oa_password": {
+      "bsonType": "string",
+      "description": "OA系统设置的商家登录密码（md5加密）"
+    },
+    "oa_updated_by": {
+      "bsonType": "string",
+      "description": "最后由哪个OA用户修改"
     },
     "created_at": {
       "bsonType": "timestamp",
       "description": "创建时间",
+      "defaultValue": {
+        "$env": "now"
+      }
+    },
+    "updated_at": {
+      "bsonType": "timestamp",
+      "description": "更新时间",
       "defaultValue": {
         "$env": "now"
       }

@@ -194,7 +194,6 @@ const showLowStockList = () => {
 }
 
 onShow(() => {
-  uni.hideTabBar()
   loadGoodsList()
 })
 </script>

@@ -169,10 +169,27 @@
       }
     },
     {
+      "path": "pages/admin/login/index",
+      "style": {
+        "navigationBarTitleText": "OA系统登录",
+        "navigationBarBackgroundColor": "#1890ff",
+        "navigationBarTextStyle": "white",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/admin/merchant/list",
       "style": {
-        "navigationBarTitleText": "商户管理",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarTitleText": "商家管理",
+        "navigationBarBackgroundColor": "#1890ff",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/admin/merchant/detail",
+      "style": {
+        "navigationBarTitleText": "商家详情",
+        "navigationBarBackgroundColor": "#1890ff",
         "navigationBarTextStyle": "white"
       }
     },
@@ -180,14 +197,38 @@
       "path": "pages/admin/employee/list",
       "style": {
         "navigationBarTitleText": "员工管理",
+        "navigationBarBackgroundColor": "#1890ff",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/admin/employee/edit",
+      "style": {
+        "navigationBarTitleText": "编辑员工",
+        "navigationBarBackgroundColor": "#1890ff",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/admin/packages/index",
+      "style": {
+        "navigationBarTitleText": "套餐管理",
+        "navigationBarBackgroundColor": "#1890ff",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/merchant/renewal/index",
+      "style": {
+        "navigationBarTitleText": "续费",
         "navigationBarBackgroundColor": "#07c160",
         "navigationBarTextStyle": "white"
       }
     },
     {
-      "path": "pages/admin/statistics/index",
+      "path": "pages/merchant/renewal/result",
       "style": {
-        "navigationBarTitleText": "数据统计",
+        "navigationBarTitleText": "支付结果",
         "navigationBarBackgroundColor": "#07c160",
         "navigationBarTextStyle": "white"
       }
@@ -233,31 +274,25 @@
   },
   "tabBar": {
     "color": "#999999",
-    "selectedColor": "#07c160",
+    "selectedColor": "#1890ff",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
       {
-        "pagePath": "pages/merchant/dashboard",
-        "text": "工作台",
+        "pagePath": "pages/admin/merchant/list",
+        "text": "商家管理",
         "iconPath": "static/tabbar/home.png",
         "selectedIconPath": "static/tabbar/home_active.png"
       },
       {
-        "pagePath": "pages/merchant/goods/list",
-        "text": "商品",
-        "iconPath": "static/tabbar/goods.png",
-        "selectedIconPath": "static/tabbar/goods_active.png"
+        "pagePath": "pages/admin/packages/index",
+        "text": "套餐管理",
+        "iconPath": "static/tabbar/cart.png",
+        "selectedIconPath": "static/tabbar/cart_active.png"
       },
       {
-        "pagePath": "pages/merchant/order/list",
-        "text": "订单",
-        "iconPath": "static/tabbar/order.png",
-        "selectedIconPath": "static/tabbar/order_active.png"
-      },
-      {
-        "pagePath": "pages/merchant/customer/list",
-        "text": "客户",
+        "pagePath": "pages/admin/employee/list",
+        "text": "员工管理",
         "iconPath": "static/tabbar/user.png",
         "selectedIconPath": "static/tabbar/user_active.png"
       }
