@@ -43,11 +43,12 @@ export const useUserStore = defineStore('user', () => {
   // 刷新商家信息（获取最新有效期等）
   const refreshTenantInfo = async () => {
     if (!tenantInfo.value?._id) return
-    
+
     try {
-      const merchantCo = uniCloud.importObject('wh-merchant-co')
+      const { importObject } = await import('@/utils/cloud')
+      const merchantCo = importObject('wh-merchant-co')
       const res: any = await merchantCo.getTenantInfo()
-      
+
       if (res.code === 0 && res.data) {
         tenantInfo.value = res.data
         uni.setStorageSync('tenant_info', res.data)

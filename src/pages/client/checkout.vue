@@ -50,8 +50,8 @@
     <view class="section payment-section">
       <view class="section-title">支付方式</view>
       <u-radio-group v-model="paymentMethod" placement="column">
-        <u-radio label="现金/在线支付" name="cash" active-color="#07c160"></u-radio>
-        <view class="radio-desc">货到付款或在线支付</view>
+        <u-radio label="微信支付" name="wechat" active-color="#07c160"></u-radio>
+        <view class="radio-desc">在线支付</view>
         <u-radio label="赊账结算" name="credit" active-color="#07c160"></u-radio>
         <view class="radio-desc">稍后通过账本结算 (适合老客户)</view>
       </u-radio-group>
@@ -99,7 +99,7 @@ const address = ref<any>({
   mobile: '',
   fullAddress: ''
 })
-const paymentMethod = ref('cash')
+const paymentMethod = ref('wechat')
 const remark = ref('')
 const submitting = ref(false)
 

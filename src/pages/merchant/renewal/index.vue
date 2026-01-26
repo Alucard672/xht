@@ -6,12 +6,12 @@
         <text class="title">当前有效期</text>
         <u-tag :text="statusText" :type="statusType" size="mini"></u-tag>
       </view>
-      
+
       <view class="expired-date">
         <text class="date">{{ formatDate(userStore.tenantInfo?.expired_at) || '未设置' }}</text>
         <text class="unit">到期</text>
       </view>
-      
+
       <view v-if="daysRemaining > 0" class="days-info">
         <text class="days">{{ daysRemaining }}</text>
         <text class="text">天后到期</text>
@@ -24,49 +24,62 @@
     <!-- 续费提示 -->
     <view v-if="daysRemaining <= 30" class="renewal-tip">
       <u-icon name="info-circle" color="#ff4d4f" size="32"></u-icon>
-      <text class="tip-text">{{ daysRemaining <= 0 ? '您的账号已过期，请立即续费以恢复使用' : `距到期还有${daysRemaining}天，建议及时续费` }}</text>
+      <text class="tip-text">{{
+        daysRemaining <= 0
+          ? '您的账号已过期，请立即续费以恢复使用'
+          : `距到期还有${daysRemaining}天，建议及时续费`
+      }}</text>
     </view>
 
     <!-- 套餐列表 -->
     <view class="section-title">选择续费套餐</view>
-    
+
     <view class="package-list">
-      <view 
-        v-for="(item, index) in packageList" 
-        :key="item._id" 
+      <view
+        v-for="(item, index) in packageList"
+        :key="item._id"
         class="package-item"
         :class="{ selected: selectedPackageIndex === index, disabled: item.price === 0 }"
         @click="selectPackage(index)"
       >
         <view class="package-header">
           <text class="package-name">{{ item.name }}</text>
-          <text class="package-price" v-if="item.price > 0">¥{{ (item.price / 100).toFixed(2) }}</text>
-          <text class="package-price free" v-else>免费</text>
+          <text v-if="item.price > 0" class="package-price"
+            >¥{{ (item.price / 100).toFixed(2) }}</text
+          >
+          <text v-else class="package-price free">免费</text>
         </view>
-        
+
         <view class="package-body">
           <text class="duration">续费 {{ item.duration_months }} 个月</text>
           <text v-if="item.description" class="description">{{ item.description }}</text>
         </view>
-        
+
         <view class="package-footer">
           <view class="select-icon">
-            <u-icon v-if="selectedPackageIndex === index" name="checkmark-circle-fill" color="#07c160" size="40"></u-icon>
+            <u-icon
+              v-if="selectedPackageIndex === index"
+              name="checkmark-circle-fill"
+              color="#07c160"
+              size="40"
+            ></u-icon>
             <view v-else class="circle"></view>
           </view>
         </view>
       </view>
-      
+
       <u-empty v-if="packageList.length === 0" mode="data" text="暂无可用套餐"></u-empty>
     </view>
 
     <!-- 续费按钮 -->
     <view class="bottom-action">
-      <view class="total-info" v-if="selectedPackage">
+      <view v-if="selectedPackage" class="total-info">
         <text class="label">应付金额：</text>
-        <text class="amount">{{ selectedPackage.price > 0 ? `¥${(selectedPackage.price / 100).toFixed(2)}` : '¥0.00' }}</text>
+        <text class="amount">{{
+          selectedPackage.price > 0 ? `¥${(selectedPackage.price / 100).toFixed(2)}` : '¥0.00'
+        }}</text>
       </view>
-      
+
       <u-button
         type="primary"
         :text="selectedPackage?.price > 0 ? '微信支付续费' : '免费续费'"
@@ -82,10 +95,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/useUserStore'
-import oaAPI from '@/utils/oa'
 
 const userStore = useUserStore()
 const toastRef = ref<any>(null)
@@ -119,6 +131,8 @@ const statusType = computed(() => {
   return 'error'
 })
 
+const showContactAdmin = ref(false)
+
 onShow(() => {
   // 检查是否登录
   if (!userStore.token) {
@@ -127,30 +141,10 @@ onShow(() => {
   }
   // 刷新商家信息（获取最新有效期）
   userStore.refreshTenantInfo()
-  loadPackages()
-})
 
-onMounted(() => {
-  // 刷新商家信息
-  userStore.refreshTenantInfo()
+  // 续费功能暂时禁用
+  showContactAdmin.value = true
 })
-
-const loadPackages = async () => {
-  try {
-    const res: any = await oaAPI.getPackageList()
-    if (res.code === 0) {
-      // 只显示上架的套餐
-      packageList.value = (res.data || []).filter((p: any) => p.is_active)
-      
-      // 默认选择第一个套餐
-      if (packageList.value.length > 0) {
-        selectedPackageIndex.value = 0
-      }
-    }
-  } catch (e: any) {
-    toastRef.value?.show({ type: 'error', message: e.message || '加载套餐失败' })
-  }
-}
 
 const selectPackage = (index: number) => {
   selectedPackageIndex.value = index
@@ -162,128 +156,14 @@ const formatDate = (ts: number | string | undefined) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-const handleRenewal = async () => {
-  if (!selectedPackage.value) return
-  
-  const tenantId = userStore.tenantInfo?._id
-  if (!tenantId) {
-    toastRef.value?.show({ type: 'error', message: '商家信息获取失败' })
-    return
-  }
-  
-  submitting.value = true
-  
-  try {
-    // 创建续费订单
-    const res: any = await oaAPI.createRenewalOrder({
-      tenantId: tenantId,
-      packageId: selectedPackage.value._id
-    })
-    
-    if (res.code !== 0) {
-      toastRef.value?.show({ type: 'error', message: res.msg })
-      submitting.value = false
-      return
-    }
-    
-    const { order_id, order_no, amount } = res.data
-    
-    // 如果是免费套餐，直接处理
-    if (amount === 0) {
-      // 免费套餐，直接调用支付回调
-      await oaAPI.handlePaymentCallback({
-        orderId: order_id,
-        paymentInfo: { method: 'free', time: Date.now() }
-      })
-      
-      // 刷新商家信息
-      await userStore.refreshTenantInfo()
-      
-      uni.showModal({
-        title: '续费成功',
-        content: `${selectedPackage.value.name}续费成功！`,
-        showCancel: false,
-        confirmText: '知道了',
-        success: () => {
-          uni.navigateBack()
-        }
-      })
-      submitting.value = false
-      return
-    }
-    
-    // 微信支付（示例代码，需要根据实际支付配置调整）
-    // #ifdef MP-WEIXIN
-    try {
-      const paymentRes = await uniCloud.callFunction({
-        name: 'wh-payment-co',
-        data: {
-          action: 'createPayment',
-          params: {
-            orderId: order_id,
-            orderNo: order_no,
-            amount: amount,
-            subject: selectedPackage.value.name,
-            tenantId: tenantId
-          }
-        }
-      })
-      
-      if (paymentRes.result.code === 0) {
-        // 发起微信支付
-        uni.requestPayment({
-          provider: 'wxpay',
-          ...paymentRes.result.data,
-          success: async () => {
-            // 支付成功，刷新商家信息
-            await userStore.refreshTenantInfo()
-            
-            uni.redirectTo({
-              url: `/pages/merchant/renewal/result?status=success&order_no=${order_no}`
-            })
-          },
-          fail: async (err) => {
-            console.error('支付失败:', err)
-            uni.redirectTo({
-              url: `/pages/merchant/renewal/result?status=fail&order_no=${order_no}`
-            })
-          }
-        })
-      } else {
-        throw new Error(paymentRes.result.msg)
-      }
-    } catch (payError: any) {
-      console.error('支付调用失败:', payError)
-      // 模拟支付成功（测试环境）
-      uni.showModal({
-        title: '支付提示',
-        content: `测试环境：订单${order_no}已创建，实际支付需对接微信支付`,
-        confirmText: '模拟支付成功',
-        success: async (res) => {
-          if (res.confirm) {
-            await userStore.refreshTenantInfo()
-            uni.redirectTo({
-              url: `/pages/merchant/renewal/result?status=success&order_no=${order_no}`
-            })
-          }
-        }
-      })
-    }
-    // #endif
-    
-    // #ifndef MP-WEIXIN
-    uni.showModal({
-      title: '提示',
-      content: '请在微信小程序中完成支付',
-      showCancel: false
-    })
-    // #endif
-    
-  } catch (e: any) {
-    toastRef.value?.show({ type: 'error', message: e.message || '续费失败' })
-  } finally {
-    submitting.value = false
-  }
+const handleRenewal = () => {
+  // 续费功能暂时禁用，请联系管理员
+  uni.showModal({
+    title: '续费提示',
+    content: '续费功能暂时无法使用，请联系管理员处理续费事宜。',
+    showCancel: false,
+    confirmText: '我知道了'
+  })
 }
 </script>
 

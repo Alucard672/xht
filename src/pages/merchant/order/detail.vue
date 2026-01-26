@@ -71,7 +71,7 @@
               order.payment_method === 'credit' ? '赊账' : '在线支付'
             }}</text>
           </view>
-          <view class="info-item" v-if="order.remark">
+          <view v-if="order.remark" class="info-item">
             <text class="info-label">备注</text>
             <text class="info-value">{{ order.remark }}</text>
           </view>
@@ -82,12 +82,9 @@
       <view class="action-bar">
         <template v-if="order.status === 0">
           <u-button type="error" text="取消订单" @click="cancelOrder"></u-button>
-          <u-button type="primary" text="接单" @click="acceptOrder"></u-button>
+          <u-button type="primary" text="完成订单" @click="acceptOrder"></u-button>
         </template>
         <template v-else-if="order.status === 1">
-          <u-button type="warning" text="发货" @click="shipOrder"></u-button>
-        </template>
-        <template v-else-if="order.status === 2">
           <u-button text="分享单据" @click="shareReceipt"></u-button>
         </template>
       </view>
@@ -136,8 +133,7 @@ const fetchOrderDetail = async () => {
 const getStatusText = (status: number) => {
   const statusMap: Record<number, string> = {
     0: '待接单',
-    1: '待发货',
-    2: '已完成',
+    1: '已完成',
     [-1]: '已取消'
   }
   return statusMap[status] || '未知'
@@ -146,8 +142,7 @@ const getStatusText = (status: number) => {
 const getStatusClass = (status: number) => {
   const classMap: Record<number, string> = {
     0: 'status-pending',
-    1: 'status-processing',
-    2: 'status-completed',
+    1: 'status-completed',
     [-1]: 'status-cancelled'
   }
   return classMap[status] || ''
@@ -156,8 +151,7 @@ const getStatusClass = (status: number) => {
 const getStatusIcon = (status: number) => {
   const iconMap: Record<number, string> = {
     0: 'clock',
-    1: 'car',
-    2: 'checkmark-circle',
+    1: 'checkmark-circle',
     [-1]: 'close-circle'
   }
   return iconMap[status] || 'info-circle'
@@ -166,8 +160,7 @@ const getStatusIcon = (status: number) => {
 const getStatusDesc = (status: number) => {
   const descMap: Record<number, string> = {
     0: '请尽快处理订单',
-    1: '请尽快发货',
-    2: '订单已完成',
+    1: '订单已完成',
     [-1]: '订单已取消'
   }
   return descMap[status] || ''
@@ -188,27 +181,7 @@ const acceptOrder = async () => {
     })
     if (res.code === 0) {
       order.value.status = 1
-      uni.showToast({ title: '已接单', icon: 'success' })
-    } else {
-      uni.showToast({ title: res.msg || '操作失败', icon: 'none' })
-    }
-  } catch (e: any) {
-    uni.showToast({ title: e.message || '操作失败', icon: 'none' })
-  } finally {
-    uni.hideLoading()
-  }
-}
-
-const shipOrder = async () => {
-  uni.showLoading({ title: '处理中...' })
-  try {
-    const res: any = await orderCo.updateOrderStatus({
-      order_id: orderId.value,
-      status: 2
-    })
-    if (res.code === 0) {
-      order.value.status = 2
-      uni.showToast({ title: '已发货', icon: 'success' })
+      uni.showToast({ title: '订单已完成', icon: 'success' })
     } else {
       uni.showToast({ title: res.msg || '操作失败', icon: 'none' })
     }

@@ -62,7 +62,8 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const userCo = uniCloud.importObject('wh-user-co')
+    const { importObject } = await import('@/utils/cloud')
+    const userCo = importObject('wh-user-co')
     const res = await userCo.loginMerchant({
       username: form.mobile,
       password: form.password
