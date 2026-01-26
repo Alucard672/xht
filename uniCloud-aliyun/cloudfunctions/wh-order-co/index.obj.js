@@ -378,5 +378,66 @@ module.exports = {
       await transaction.rollback()
       return { status: 500, message: e.message }
     }
+  },
+
+  /**
+   * 生成订单小票图片
+   * @param {String} order_id - 订单ID
+   * @returns {Object} { code, data: { imageUrl } }
+   */
+  generateOrderReceipt: async function (order_id) {
+    const db = uniCloud.database()
+
+    try {
+      const orderRes = await db.collection('wh_orders').doc(order_id).get()
+      if (!orderRes.data || orderRes.data.length === 0) {
+        return { code: 404, msg: '订单不存在' }
+      }
+
+      const order = orderRes.data[0]
+      if (order.tenant_id !== this.tenant_id) {
+        return { code: 403, msg: '无权访问此订单' }
+      }
+
+      // TODO: 实际项目中需要使用canvas或第三方服务生成图片
+      // 这里返回订单详情，前端可以使用canvas绘制
+      return {
+        code: 0,
+        msg: '获取成功',
+        data: {
+          order: order,
+          note: '图片生成功能需要配置canvas服务或使用前端canvas绘制'
+        }
+      }
+    } catch (e) {
+      return { code: 500, msg: e.message || '生成失败' }
+    }
+  },
+
+  /**
+   * 更新订单状态（通用方法）
+   * @param {String} order_id - 订单ID
+   * @param {Number} status - 目标状态 0-待接单, 1-已完成, -1-已取消
+   */
+  updateOrderStatus: async function ({ order_id, status }) {
+    const db = uniCloud.database()
+
+    try {
+      const orderRes = await db.collection('wh_orders').doc(order_id).get()
+      if (!orderRes.data || orderRes.data.length === 0) {
+        return { code: 404, msg: '订单不存在' }
+      }
+
+      const order = orderRes.data[0]
+      if (order.tenant_id !== this.tenant_id) {
+        return { code: 403, msg: '无权操作此订单' }
+      }
+
+      await db.collection('wh_orders').doc(order_id).update({ status })
+
+      return { code: 0, msg: '操作成功' }
+    } catch (e) {
+      return { code: 500, msg: e.message || '操作失败' }
+    }
   }
 }

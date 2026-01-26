@@ -220,8 +220,65 @@ const cancelOrder = async () => {
   })
 }
 
-const shareReceipt = () => {
-  uni.showToast({ title: '功能开发中', icon: 'none' })
+const shareReceipt = async () => {
+  if (!order.value) return
+
+  uni.showLoading({ title: '生成中...' })
+
+  try {
+    // 使用云函数生成小票图片
+    const res: any = await orderCo.generateOrderReceipt({
+      order_id: orderId.value
+    })
+
+    if (res.code === 0 && res.data?.imageUrl) {
+      uni.hideLoading()
+
+      // 预览图片
+      uni.previewImage({
+        urls: [res.data.imageUrl],
+        current: 0,
+        longPressActions: {
+          itemList: ['保存图片'],
+          success: data => {
+            if (data.tapIndex === 0) {
+              saveReceiptImage(res.data.imageUrl)
+            }
+          }
+        }
+      })
+    } else {
+      throw new Error(res.msg || '生成失败')
+    }
+  } catch (e: any) {
+    uni.hideLoading()
+    // 如果云函数不支持，显示提示
+    uni.showModal({
+      title: '功能提示',
+      content: '小票生成功能需要后端支持，请联系管理员添加该功能',
+      showCancel: false
+    })
+  }
+}
+
+const saveReceiptImage = async (url: string) => {
+  try {
+    uni.showLoading({ title: '保存中...' })
+    const [err, res] = await uni.downloadFile({ url })
+    if (err || res.statusCode !== 200) {
+      throw new Error('下载失败')
+    }
+
+    await uni.saveImageToPhotosAlbum({
+      filePath: res.tempFilePath
+    })
+
+    uni.showToast({ title: '已保存到相册', icon: 'success' })
+  } catch (e: any) {
+    uni.showToast({ title: '保存失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
 }
 </script>
 
