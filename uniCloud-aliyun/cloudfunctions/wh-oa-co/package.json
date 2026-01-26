@@ -1,9 +1,0 @@
-{
-  "name": "wh-oa-co",
-  "version": "1.0.0",
-  "description": "OA系统云对象",
-  "main": "index.obj.js",
-  "dependencies": {
-    "uni-id-common": "file:../../../uni_modules/uni-id-common"
-  }
-}

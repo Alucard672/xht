@@ -81,14 +81,6 @@
       }
     },
     {
-      "path": "pages/merchant/customer/debt-add",
-      "style": {
-        "navigationBarTitleText": "记一笔",
-        "navigationBarBackgroundColor": "#07c160",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
       "path": "pages/merchant/setting/index",
       "style": {
         "navigationBarTitleText": "店铺设置",
@@ -169,55 +161,6 @@
       }
     },
     {
-      "path": "pages/admin/login/index",
-      "style": {
-        "navigationBarTitleText": "OA系统登录",
-        "navigationBarBackgroundColor": "#1890ff",
-        "navigationBarTextStyle": "white",
-        "navigationStyle": "custom"
-      }
-    },
-    {
-      "path": "pages/admin/merchant/list",
-      "style": {
-        "navigationBarTitleText": "商家管理",
-        "navigationBarBackgroundColor": "#1890ff",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/admin/merchant/detail",
-      "style": {
-        "navigationBarTitleText": "商家详情",
-        "navigationBarBackgroundColor": "#1890ff",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/admin/employee/list",
-      "style": {
-        "navigationBarTitleText": "员工管理",
-        "navigationBarBackgroundColor": "#1890ff",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/admin/employee/edit",
-      "style": {
-        "navigationBarTitleText": "编辑员工",
-        "navigationBarBackgroundColor": "#1890ff",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/admin/packages/index",
-      "style": {
-        "navigationBarTitleText": "套餐管理",
-        "navigationBarBackgroundColor": "#1890ff",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
       "path": "pages/merchant/renewal/index",
       "style": {
         "navigationBarTitleText": "续费",
@@ -271,32 +214,6 @@
     "navigationBarTitleText": "乡货通",
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
-  },
-  "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#1890ff",
-    "backgroundColor": "#ffffff",
-    "borderStyle": "black",
-    "list": [
-      {
-        "pagePath": "pages/admin/merchant/list",
-        "text": "商家管理",
-        "iconPath": "static/tabbar/home.png",
-        "selectedIconPath": "static/tabbar/home_active.png"
-      },
-      {
-        "pagePath": "pages/admin/packages/index",
-        "text": "套餐管理",
-        "iconPath": "static/tabbar/cart.png",
-        "selectedIconPath": "static/tabbar/cart_active.png"
-      },
-      {
-        "pagePath": "pages/admin/employee/list",
-        "text": "员工管理",
-        "iconPath": "static/tabbar/user.png",
-        "selectedIconPath": "static/tabbar/user_active.png"
-      }
-    ]
   },
   "easycom": {
     "autoscan": true,

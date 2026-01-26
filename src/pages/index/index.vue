@@ -22,20 +22,10 @@
         <text class="menu-text">客户端</text>
         <text class="menu-sub">扫码下单、对账</text>
       </view>
-
-      <view v-if="!appMode || appMode === 'admin'" class="menu-item admin" @click="goAdmin">
-        <u-icon name="setting-fill" color="#fff" size="30"></u-icon>
-        <text class="menu-text">系统管理端</text>
-        <text class="menu-sub">平台商户与概览</text>
-      </view>
     </view>
 
     <view class="footer-tips">
-      <text v-if="appMode"
-        >生产模式：{{
-          appMode === 'merchant' ? '商家端' : appMode === 'client' ? '客户端' : '管理端'
-        }}</text
-      >
+      <text v-if="appMode">生产模式：{{ appMode === 'merchant' ? '商家端' : '客户端' }}</text>
       <text v-else>开发调试模式：点击各入口时检查登录</text>
     </view>
   </view>
@@ -65,17 +55,6 @@ const goMerchant = () => {
 
   // 直接进入工作台 (使用 reLaunch 确保无法返回当前页)
   uni.reLaunch({ url: '/pages/merchant/dashboard' })
-}
-
-const goAdmin = () => {
-  // OA系统使用独立的 oa_token 检查
-  const oaToken = uni.getStorageSync('oa_token')
-  if (!oaToken) {
-    // 未登录OA，跳转到OA登录页
-    return uni.navigateTo({ url: '/pages/admin/login/index' })
-  }
-  // 已登录OA，直接进入管理列表
-  uni.reLaunch({ url: '/pages/admin/merchant/list' })
 }
 
 const goClient = () => {
@@ -117,8 +96,6 @@ onLoad((options: any) => {
     goMerchant()
   } else if (appMode.value === 'client') {
     goClient()
-  } else if (appMode.value === 'admin') {
-    goAdmin()
   }
 })
 </script>
@@ -190,10 +167,6 @@ onLoad((options: any) => {
     .client {
       background: linear-gradient(135deg, #ff9900, #e68a00);
       box-shadow: 0 10rpx 20rpx rgba(255, 153, 0, 0.2);
-    }
-    .admin {
-      background: linear-gradient(135deg, #1890ff, #096dd9);
-      box-shadow: 0 10rpx 20rpx rgba(24, 144, 255, 0.2);
     }
   }
 

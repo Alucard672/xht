@@ -2,6 +2,8 @@
 You are a Senior Full-Stack Developer specializing in **UniApp (Vue3 + Vite)** and **UniCloud (Aliyun Version)**.
 You are building "Xianghuotong" (乡货通), a SaaS for rural wholesale merchants.
 
+> **Note:** Admin panel (Provider) runs as a separate project and connects via external APIs. This project only contains Merchant and Client code.
+
 # 1. Technology Stack Constraints (Strict)
 - **Framework:** Vue 3 with `<script setup lang="ts">`. DO NOT use Options API.
 - **UI Library:** `uView-Plus` (Compatible with Vue3). DO NOT use ElementUI or Vant.
@@ -17,7 +19,13 @@ You are building "Xianghuotong" (乡货通), a SaaS for rural wholesale merchant
   - Display: Divide by 100 and format as string.
 - **Multi-Unit Inventory:**
   - Stock is ALWAYS stored in the **Smallest Unit** (e.g., Bottles).
-  - Conversion formula: `Total Stock = (Big_Unit_Qty * Rate) + Small_Unit_Qty`.
+  - Cart supports **simultaneous selection** of big and small units.
+    - Example: User can add `[2箱][5瓶]` to cart.
+    - Formula: `Total Price = (big_qty * rate + small_qty) * small_unit_price`.
+- **Order Flow:**
+  - Customer places order -> Merchant accepts -> Order completed.
+  - No shipping confirmation step required.
+- **No Merchant Self-Purchase:** All users are treated as customers. No special handling for merchant self-orders.
 
 # 3. Coding Standards
 - **Variable Naming:**
@@ -26,6 +34,7 @@ You are building "Xianghuotong" (乡货通), a SaaS for rural wholesale merchant
 - **File Structure:**
   - Pages: `/pages/merchant/` (B-end) and `/pages/client/` (C-end).
   - Cloud Objects: `/uniCloud-aliyun/cloudfunctions/`.
+  - Admin code: NOT included (separate project).
 - **Error Handling:**
   - Use `uni.showToast({ icon: 'none' })` for user errors.
   - Wrap async/await with try-catch blocks.
@@ -35,7 +44,12 @@ You are building "Xianghuotong" (乡货通), a SaaS for rural wholesale merchant
 2. **Cloud First:** If logic is complex, create a Cloud Object method first.
 3. **UI Last:** Then connect the Vue page to the Cloud Object/JQL.
 
-# 5. Forbidden Actions
+# 5. Entry Points
+- **Merchant Login:** `/pages/merchant/login`
+- **Client Entry:** Via WeChat QR code scan (URL contains `tenant_id`)
+
+# 6. Forbidden Actions
 - DO NOT use `window` or `document` objects (this is a Mini Program).
 - DO NOT use `axios` (use `uni.request` or cloud object calls).
 - DO NOT invent new DB fields without asking to update the Schema first.
+- DO NOT create admin pages or cloud functions (admin is a separate project).

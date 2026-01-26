@@ -12,10 +12,23 @@ node_modules
 dist
 *.local
 
+# Environment files
+.env
+.env.[a-z]*
+.env.*.local
+# Keep example files
+!.env*.example
+
 # Editor directories and files
 .idea
+.vscode
+.claude
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+
+# UniCloud
+uniCloud-aliyun/cloudfunctions/*/node_modules/
+uniCloud-aliyun/cloudfunctions/*/.temp/
