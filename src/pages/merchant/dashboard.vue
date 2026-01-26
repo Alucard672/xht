@@ -23,7 +23,7 @@
         <u-icon name="arrow-right" color="#fff" size="14"></u-icon>
       </view>
     </view>
-    
+
     <!-- 即将过期提示 (8-30天) -->
     <view v-else-if="willExpireSoon" class="expire-soon-banner-light">
       <view class="banner-content">
@@ -247,8 +247,10 @@ const loadData = async (force = false) => {
         expiredAt.value = res.data.expired_at
       }
     }
-  } catch (e) {
-    // ignore
+  } catch (e: any) {
+    console.error('加载工作台数据失败:', e)
+    // 静默失败，避免频繁打扰用户
+    // 严重错误会在操作时提示
   }
 }
 
