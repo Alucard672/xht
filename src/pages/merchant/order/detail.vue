@@ -93,6 +93,14 @@
     <view v-else class="empty-state">
       <u-empty text="订单不存在"></u-empty>
     </view>
+
+    <!-- 隐藏的Canvas用于绘制小票 -->
+    <canvas
+      id="orderReceiptCanvas"
+      canvas-id="orderReceiptCanvas"
+      class="hidden-canvas"
+      style="width: 750px; height: 1200px; position: fixed; left: -9999px; top: -9999px"
+    ></canvas>
   </view>
 </template>
 
@@ -101,11 +109,13 @@ import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
+import { generateOrderReceipt } from '@/utils/order-receipt'
 
 const orderCo = importObject('wh-order-co')
 
 const orderId = ref('')
 const order = ref<any>(null)
+const tenantInfo = ref<any>(null)
 const loading = ref(true)
 
 onLoad(options => {
@@ -122,6 +132,13 @@ const fetchOrderDetail = async () => {
     const res: any = await db.collection('wh_orders').doc(orderId.value).get()
     if (res.result.data && res.result.data.length > 0) {
       order.value = res.result.data[0]
+
+      // 获取店铺信息用于小票
+      const merchantCo = importObject('wh-merchant-co')
+      const tenantRes: any = await merchantCo.getTenantInfo()
+      if (tenantRes.code === 0) {
+        tenantInfo.value = tenantRes.data
+      }
     }
   } catch (e: any) {
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })
@@ -221,41 +238,64 @@ const cancelOrder = async () => {
 }
 
 const shareReceipt = async () => {
-  if (!order.value) return
+  if (!order.value || !tenantInfo.value) {
+    uni.showToast({ title: '数据加载中，请稍后', icon: 'none' })
+    return
+  }
 
-  uni.showLoading({ title: '生成中...' })
+  uni.showLoading({ title: '生成小票中...', mask: true })
 
   try {
-    // 使用云函数生成小票图片
-    const res: any = await orderCo.generateOrderReceipt({
-      order_id: orderId.value
+    // 使用Canvas生成订单小票
+    const receiptData = {
+      order: {
+        order_no: order.value.order_no,
+        created_at: order.value.created_at,
+        total_fee: order.value.total_fee || order.value.total_amount,
+        total_amount: order.value.total_amount,
+        payment_method: order.value.payment_method,
+        remark: order.value.remark,
+        items: order.value.items || [],
+        customer_name: order.value.customer_name
+      },
+      tenant: {
+        name: tenantInfo.value.name,
+        phone: tenantInfo.value.phone,
+        address: tenantInfo.value.address
+      }
+    }
+
+    const imagePath = await generateOrderReceipt(receiptData, {
+      canvasId: 'orderReceiptCanvas',
+      canvasWidth: 750,
+      canvasHeight: 1200
     })
 
-    if (res.code === 0 && res.data?.imageUrl) {
-      uni.hideLoading()
+    uni.hideLoading()
 
-      // 预览图片
-      uni.previewImage({
-        urls: [res.data.imageUrl],
-        current: 0,
-        longPressActions: {
-          itemList: ['保存图片'],
-          success: data => {
-            if (data.tapIndex === 0) {
-              saveReceiptImage(res.data.imageUrl)
-            }
+    // 预览并保存图片
+    uni.previewImage({
+      urls: [imagePath],
+      current: 0,
+      longPressActions: {
+        itemList: ['保存图片', '发送给朋友'],
+        success: data => {
+          if (data.tapIndex === 0) {
+            saveReceiptImage(imagePath)
           }
         }
-      })
-    } else {
-      throw new Error(res.msg || '生成失败')
-    }
+      },
+      fail: () => {
+        // 如果预览失败，尝试直接保存
+        saveReceiptImage(imagePath)
+      }
+    })
   } catch (e: any) {
     uni.hideLoading()
-    // 如果云函数不支持，显示提示
+    console.error('生成小票失败:', e)
     uni.showModal({
-      title: '功能提示',
-      content: '小票生成功能需要后端支持，请联系管理员添加该功能',
+      title: '生成失败',
+      content: `生成小票失败: ${e.message || '未知错误'}\n请检查网络或联系技术支持`,
       showCancel: false
     })
   }
