@@ -77,7 +77,7 @@
     "@dcloudio/uni-mp-xhs": "3.0.0-4080720251210001",
     "@dcloudio/uni-quickapp-webview": "3.0.0-4080720251210001",
     "dayjs": "^1.11.10",
-    "pinia": "^3.0.4",
+    "pinia": "^2.2.4",
     "uview-plus": "^3.3.41",
     "vue": "^3.4.21",
     "vue-i18n": "^9.1.9"
