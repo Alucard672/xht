@@ -23,24 +23,25 @@
 
       <view v-else class="goods-list">
         <view v-for="(item, index) in selectedGoods" :key="index" class="goods-item">
-          <view class="goods-info">
-            <view class="goods-name">{{ item.name }}</view>
-            <view class="goods-price"
-              >¥{{ priceHelper.format(item.priceSmall) }}/{{ item.unitSmallName }}</view
-            >
-          </view>
-          <view class="goods-actions">
-            <u-number-box
-              v-model="item.count"
-              :min="0"
-              :max="999"
-              size="22"
-              @change="onQuantityChange(item)"
-            ></u-number-box>
-            <view class="goods-total">
-              ¥{{ priceHelper.format(item.priceSmall * item.count) }}
+          <view class="goods-main">
+            <view class="goods-info">
+              <view class="goods-name">{{ item.name }}</view>
+              <view v-if="item.is_multi_unit" class="goods-spec">
+                <text v-if="item.countBig">{{ item.countBig }}{{ item.unitBigName }}</text>
+                <text v-if="item.countSmall">{{ item.countSmall }}{{ item.unitSmallName }}</text>
+              </view>
+              <view v-else class="goods-spec">
+                <text>{{ item.countSmall }}{{ item.unitSmallName }}</text>
+              </view>
             </view>
-            <u-icon name="close" size="16" color="#999" @click="removeGoods(index)"></u-icon>
+            <view class="goods-actions">
+              <view class="edit-btn" @click="editGoods(index)">
+                <u-icon name="edit-pen" size="18" color="#2979ff"></u-icon>
+                <text class="txt">修改</text>
+              </view>
+              <view class="goods-total"> ¥{{ priceHelper.format(getItemTotal(item)) }} </view>
+              <u-icon name="close" size="16" color="#999" @click="removeGoods(index)"></u-icon>
+            </view>
           </view>
         </view>
 
@@ -83,6 +84,88 @@
         @click="submitOrder"
       ></u-button>
     </view>
+
+    <!-- 多单位选择弹窗 -->
+    <u-popup :show="showUnitPopup" mode="bottom" :round="10" @close="showUnitPopup = false">
+      <view class="unit-popup">
+        <view class="popup-header">
+          <text class="popup-title">选择数量</text>
+          <u-icon name="close" size="20" @click="showUnitPopup = false"></u-icon>
+        </view>
+
+        <view v-if="activeItem" class="popup-content">
+          <view class="goods-preview">
+            <image v-if="activeItem.img_url" :src="activeItem.img_url" class="goods-img" />
+            <view class="goods-detail">
+              <text class="name">{{ activeItem.name }}</text>
+              <text v-if="activeItem.is_multi_unit" class="price">
+                大单位: ¥{{ priceHelper.format(activeItem.unit_big?.price || 0) }}/{{
+                  activeItem.unit_big?.name
+                }}
+                \n小单位: ¥{{ priceHelper.format(activeItem.unit_small?.price || 0) }}/{{
+                  activeItem.unit_small?.name
+                }}
+              </text>
+              <text v-else class="price">
+                ¥{{ priceHelper.format(activeItem.unit_small?.price || 0) }}/{{
+                  activeItem.unit_small?.name
+                }}
+              </text>
+            </view>
+          </view>
+
+          <!-- 多单位选择 -->
+          <view v-if="activeItem.is_multi_unit" class="unit-selector">
+            <view class="unit-row">
+              <text class="unit-label">{{ activeItem.unit_big?.name }}:</text>
+              <u-number-box
+                v-model="tempCartItem.countBig"
+                :min="0"
+                :max="999"
+                size="22"
+              ></u-number-box>
+            </view>
+            <view class="unit-row">
+              <text class="unit-label">{{ activeItem.unit_small?.name }}:</text>
+              <u-number-box
+                v-model="tempCartItem.countSmall"
+                :min="0"
+                :max="999"
+                size="22"
+              ></u-number-box>
+            </view>
+          </view>
+
+          <!-- 单单位选择 -->
+          <view v-else class="unit-selector">
+            <view class="unit-row">
+              <text class="unit-label">{{ activeItem.unit_small?.name }}:</text>
+              <u-number-box
+                v-model="tempCartItem.countSmall"
+                :min="1"
+                :max="999"
+                size="22"
+              ></u-number-box>
+            </view>
+          </view>
+
+          <view class="total-preview">
+            <text class="label">小计：</text>
+            <text class="amount">¥{{ priceHelper.format(getTempTotal()) }}</text>
+          </view>
+        </view>
+
+        <view class="popup-footer">
+          <u-button
+            type="primary"
+            text="确定"
+            :disabled="getTempTotal() === 0"
+            custom-style="width: 100%; height: 88rpx; border-radius: 44rpx;"
+            @click="confirmEditGoods"
+          ></u-button>
+        </view>
+      </view>
+    </u-popup>
   </view>
 </template>
 
@@ -101,13 +184,37 @@ const paymentMethod = ref('credit')
 const remark = ref('')
 const submitting = ref(false)
 
-// 计算总价
+// 多单位选择弹窗
+const showUnitPopup = ref(false)
+const activeItem = ref<any>(null)
+const editIndex = ref<number>(-1)
+const tempCartItem = ref({
+  countBig: 0,
+  countSmall: 0
+})
+
+// 计算单个商品总价
+const getItemTotal = (item: any) => {
+  let total = (item.priceSmall || 0) * (item.countSmall || 0)
+  if (item.is_multi_unit && item.countBig && item.priceBig) {
+    total += item.priceBig * item.countBig
+  }
+  return total
+}
+
+// 计算临时总价
+const getTempTotal = () => {
+  if (!activeItem.value) return 0
+  let total = (activeItem.value.unit_small?.price || 0) * (tempCartItem.value.countSmall || 0)
+  if (activeItem.value.is_multi_unit) {
+    total += (activeItem.value.unit_big?.price || 0) * (tempCartItem.value.countBig || 0)
+  }
+  return total
+}
+
+// 计算订单总价
 const totalAmount = computed(() => {
-  return selectedGoods.value.reduce((total, item) => {
-    const price = item.priceSmall || 0
-    const count = item.count || 0
-    return total + price * count
-  }, 0)
+  return selectedGoods.value.reduce((total, item) => total + getItemTotal(item), 0)
 })
 
 // 是否可以提交
@@ -134,18 +241,68 @@ const addGoods = () => {
   })
 }
 
+// 编辑商品
+const editGoods = (index: number) => {
+  const item = selectedGoods.value[index]
+  activeItem.value = item
+  editIndex.value = index
+  tempCartItem.value = {
+    countBig: item.countBig || 0,
+    countSmall: item.countSmall || 0
+  }
+  showUnitPopup.value = true
+}
+
+// 确认编辑商品
+const confirmEditGoods = () => {
+  if (editIndex.value >= 0) {
+    // 更新现有商品
+    const item = selectedGoods.value[editIndex.value]
+    item.countBig = tempCartItem.value.countBig
+    item.countSmall = tempCartItem.value.countSmall
+
+    // 如果数量都为0，则删除
+    if (item.countBig === 0 && item.countSmall === 0) {
+      selectedGoods.value.splice(editIndex.value, 1)
+    }
+  } else {
+    // 添加新商品
+    const item = activeItem.value
+    selectedGoods.value.push({
+      ...item,
+      countBig: tempCartItem.value.countBig,
+      countSmall: tempCartItem.value.countSmall
+    })
+  }
+
+  showUnitPopup.value = false
+  activeItem.value = null
+  editIndex.value = -1
+}
+
 // 商品选择回调
 onShow(() => {
   const selectedGoodsData = uni.getStorageSync('selected_goods_for_order')
   if (selectedGoodsData) {
     const goods = JSON.parse(selectedGoodsData)
-    // 合并到已选列表
+    // 添加到已选列表
     goods.forEach((g: any) => {
-      const existing = selectedGoods.value.find((item: any) => item._id === g._id)
-      if (!existing) {
+      activeItem.value = g
+      editIndex.value = -1
+
+      if (g.is_multi_unit) {
+        // 多单位商品，弹出选择窗口
+        tempCartItem.value = {
+          countBig: 0,
+          countSmall: 1 // 默认选择1个小单位
+        }
+        showUnitPopup.value = true
+      } else {
+        // 单单位商品，直接添加
         selectedGoods.value.push({
           ...g,
-          count: 1
+          countBig: 0,
+          countSmall: 1
         })
       }
     })
@@ -153,20 +310,17 @@ onShow(() => {
   }
 })
 
-// 数量变化
-const onQuantityChange = (item: any) => {
-  if (item.count === 0) {
-    // 从列表中移除
-    const index = selectedGoods.value.findIndex((g: any) => g._id === item._id)
-    if (index > -1) {
-      selectedGoods.value.splice(index, 1)
-    }
-  }
-}
-
 // 移除商品
 const removeGoods = (index: number) => {
-  selectedGoods.value.splice(index, 1)
+  uni.showModal({
+    title: '提示',
+    content: '确定要移除该商品吗？',
+    success: res => {
+      if (res.confirm) {
+        selectedGoods.value.splice(index, 1)
+      }
+    }
+  })
 }
 
 // 提交订单
@@ -178,14 +332,30 @@ const submitOrder = async () => {
   try {
     // 构建商品列表
     const items = selectedGoods.value
-      .filter(item => item.count > 0)
-      .map(item => ({
-        goods_id: item._id,
-        name: item.name,
-        count: item.count,
-        unit_name: item.unitSmallName,
-        price: item.priceSmall
-      }))
+      .filter(item => (item.countBig || 0) > 0 || (item.countSmall || 0) > 0)
+      .map(item => {
+        // 计算总价
+        const priceSmall = item.priceSmall || 0
+        let count = item.countSmall || 0
+        let totalAmount = priceSmall * count
+
+        // 如果有多单位
+        if (item.is_multi_unit && item.countBig && item.priceBig) {
+          const bigUnitTotal = item.priceBig * item.countBig
+          totalAmount += bigUnitTotal
+
+          // 换算成小单位总数
+          count = item.countBig * (item.rate || 1) + item.countSmall
+        }
+
+        return {
+          goods_id: item._id,
+          name: item.name,
+          count: count,
+          unit_name: item.unitSmallName,
+          price: Math.floor(totalAmount / count) // 平均单价
+        }
+      })
 
     const res: any = await orderCo.createByMerchant({
       customer_id: selectedCustomer.value._id,
@@ -220,15 +390,6 @@ const submitOrder = async () => {
   min-height: 100vh;
   background-color: #f5f5f5;
   padding: 20rpx 24rpx 140rpx;
-}
-
-.page-header {
-  padding: 20rpx 0 30rpx;
-  .title {
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #333;
-  }
 }
 
 .section {
@@ -287,14 +448,17 @@ const submitOrder = async () => {
 
   .goods-list {
     .goods-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20rpx 0;
+      padding: 24rpx 0;
       border-bottom: 1rpx solid #f5f5f5;
 
       &:last-child {
         border-bottom: none;
+      }
+
+      .goods-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
 
       .goods-info {
@@ -302,11 +466,14 @@ const submitOrder = async () => {
         .goods-name {
           font-size: 28rpx;
           color: #333;
-          margin-bottom: 4rpx;
+          margin-bottom: 8rpx;
         }
-        .goods-price {
+        .goods-spec {
           font-size: 24rpx;
           color: #999;
+          text {
+            margin-right: 12rpx;
+          }
         }
       }
 
@@ -314,6 +481,19 @@ const submitOrder = async () => {
         display: flex;
         align-items: center;
         gap: 20rpx;
+
+        .edit-btn {
+          display: flex;
+          align-items: center;
+          padding: 8rpx 16rpx;
+          background-color: #f0f9eb;
+          border-radius: 8rpx;
+          .txt {
+            font-size: 24rpx;
+            color: #2979ff;
+            margin-left: 4rpx;
+          }
+        }
 
         .goods-total {
           font-size: 28rpx;
@@ -377,6 +557,94 @@ const submitOrder = async () => {
       color: #ff4d4f;
       font-weight: bold;
     }
+  }
+}
+
+// 多单位选择弹窗
+.unit-popup {
+  padding: 30rpx;
+  padding-bottom: calc(30rpx + env(safe-area-inset-bottom));
+
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30rpx;
+    .popup-title {
+      font-size: 32rpx;
+      font-weight: bold;
+      color: #333;
+    }
+  }
+
+  .popup-content {
+    .goods-preview {
+      display: flex;
+      padding: 20rpx;
+      background-color: #f5f5f5;
+      border-radius: 12rpx;
+      margin-bottom: 30rpx;
+      .goods-img {
+        width: 120rpx;
+        height: 120rpx;
+        border-radius: 12rpx;
+        margin-right: 20rpx;
+      }
+      .goods-detail {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        .name {
+          font-size: 28rpx;
+          font-weight: 500;
+          color: #333;
+          margin-bottom: 8rpx;
+        }
+        .price {
+          font-size: 24rpx;
+          color: #999;
+          line-height: 1.5;
+        }
+      }
+    }
+
+    .unit-selector {
+      .unit-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24rpx 0;
+        border-bottom: 1rpx solid #f5f5f5;
+        .unit-label {
+          font-size: 28rpx;
+          color: #333;
+        }
+      }
+    }
+
+    .total-preview {
+      display: flex;
+      justify-content: flex-end;
+      align-items: baseline;
+      padding: 30rpx 0;
+      border-top: 1rpx solid #f5f5f5;
+      margin-top: 20rpx;
+      .label {
+        font-size: 26rpx;
+        color: #666;
+        margin-right: 12rpx;
+      }
+      .amount {
+        font-size: 40rpx;
+        color: #ff4d4f;
+        font-weight: bold;
+      }
+    }
+  }
+
+  .popup-footer {
+    margin-top: 30rpx;
   }
 }
 </style>

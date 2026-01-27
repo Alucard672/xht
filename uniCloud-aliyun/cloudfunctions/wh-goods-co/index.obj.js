@@ -367,8 +367,25 @@ module.exports = {
       return { code: 4004, msg: '商品不存在或无权限', data: null }
     }
 
-    // TODO: 检查是否有关联订单，如有则不允许删除
+    // 检查是否有关联订单
+    // 查询所有包含该商品ID的订单（在items数组中的goods_id字段）
+    const orderRes = await db
+      .collection('wh_orders')
+      .where({
+        tenant_id: this.tenant_id,
+        'items.goods_id': goods_id
+      })
+      .count()
 
+    if (orderRes.total > 0) {
+      return {
+        code: 4003,
+        msg: `该商品存在 ${orderRes.total} 个历史订单记录，无法删除。建议使用"下架"功能处理。`,
+        data: null
+      }
+    }
+
+    // 没有关联订单，可以删除
     await db.collection('wh_goods').doc(goods_id).remove()
 
     return {
