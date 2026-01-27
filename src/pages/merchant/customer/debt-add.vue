@@ -48,9 +48,9 @@
       <view class="amount-input-wrapper">
         <text class="prefix">¥</text>
         <input
+          v-model="amount"
           class="amount-input"
           type="digit"
-          v-model="amount"
           placeholder="0.00"
           @input="handleAmountInput"
         />
@@ -71,8 +71,8 @@
     <view class="section-card">
       <view class="section-title">备注说明</view>
       <textarea
-        class="remark-input"
         v-model="remark"
+        class="remark-input"
         placeholder="请输入备注（如：货款、运费等）"
         maxlength="100"
       />

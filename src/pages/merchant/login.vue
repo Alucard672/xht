@@ -74,8 +74,8 @@ const handleLogin = async () => {
       uni.showToast({ title: '登录成功' })
 
       setTimeout(() => {
-        // 登录成功后跳转到首页
-        uni.reLaunch({ url: '/pages/index/index' })
+        // 登录成功后跳转到工作台
+        uni.reLaunch({ url: '/pages/merchant/dashboard' })
       }, 1000)
     } else {
       uni.showToast({ title: res.msg || '登录失败', icon: 'none' })

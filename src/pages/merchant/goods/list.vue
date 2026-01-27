@@ -77,6 +77,7 @@
 import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useGoods } from '@/composables/useGoods'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 import WhPageContainer from '@/components/wh/PageContainer.vue'
 import WhFilterBar from '@/components/wh/FilterBar.vue'
 import WhEmptyState from '@/components/wh/EmptyState.vue'
@@ -194,6 +195,7 @@ const showLowStockList = () => {
 }
 
 onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/goods/list')) return
   loadGoodsList()
 })
 </script>

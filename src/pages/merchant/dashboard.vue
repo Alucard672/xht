@@ -197,6 +197,7 @@
 import { ref, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/useUserStore'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 
 const merchantCo = uniCloud.importObject('wh-merchant-co')
 const userStore = useUserStore()
@@ -306,6 +307,9 @@ const handleModuleChange = (index: number) => {
 }
 
 onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/dashboard')) {
+    return
+  }
   loadData()
 })
 </script>

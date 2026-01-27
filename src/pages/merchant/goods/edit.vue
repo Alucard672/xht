@@ -122,10 +122,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import type { GoodsFormData } from '@/types/goods'
 import { importObject } from '@/utils/cloud'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 import WhPageContainer from '@/components/wh/PageContainer.vue'
 import WhFormSection from '@/components/wh/FormSection.vue'
 import WhPrimaryButtonBar from '@/components/wh/PrimaryButtonBar.vue'
@@ -174,6 +175,10 @@ onLoad(async options => {
 // onMounted 里的调用可以移除或保留作为双重保险（注意避免重复）
 onMounted(() => {
   // fetchCategories() // 已移至 onLoad 并等待
+})
+
+onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/goods/edit')) return
 })
 
 const categoryCo = importObject('wh-category-co')

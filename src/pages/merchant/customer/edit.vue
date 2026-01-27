@@ -42,8 +42,9 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { importObject } from '@/utils/cloud'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 
 const customerCo = importObject('wh-customer-co')
 const loading = ref(false)
@@ -63,6 +64,10 @@ onLoad(options => {
     isEdit.value = true
     loadDetail()
   }
+})
+
+onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/customer/edit')) return
 })
 
 const loadDetail = async () => {

@@ -89,7 +89,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { importObject } from '@/utils/cloud'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 
 const merchantCo = importObject('wh-merchant-co')
 const loading = ref(false)
@@ -107,6 +109,10 @@ const form = reactive({
 onMounted(() => {
   loadData()
   loadMembership()
+})
+
+onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/setting/index')) return
 })
 
 const loadData = async () => {

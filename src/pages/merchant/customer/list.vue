@@ -51,6 +51,7 @@
 import { ref } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import { importObject } from '@/utils/cloud'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 import WhPageContainer from '@/components/wh/PageContainer.vue'
 import WhFilterBar from '@/components/wh/FilterBar.vue'
 import WhEmptyState from '@/components/wh/EmptyState.vue'
@@ -134,6 +135,7 @@ const navTo = (url: string) => {
 }
 
 onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/customer/list')) return
   loadData(true)
 })
 

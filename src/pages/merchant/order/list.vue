@@ -101,6 +101,7 @@ import { ref, onMounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 
 const orderCo = importObject('wh-order-co')
 
@@ -118,6 +119,9 @@ const loading = ref(false)
 
 let lastLoadTime = 0
 onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/order/list')) {
+    return
+  }
   fetchOrders()
 })
 

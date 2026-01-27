@@ -174,6 +174,7 @@ import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 
 const orderCo = importObject('wh-order-co')
 
@@ -282,6 +283,8 @@ const confirmEditGoods = () => {
 
 // 商品选择回调
 onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/order/create')) return
+
   const selectedGoodsData = uni.getStorageSync('selected_goods_for_order')
   if (selectedGoodsData) {
     const goods = JSON.parse(selectedGoodsData)

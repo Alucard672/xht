@@ -627,7 +627,7 @@ const logout = () => {
     success: (res: any) => {
       if (res.confirm) {
         uni.clearStorageSync()
-        uni.reLaunch({ url: '/pages/index/index' })
+        uni.reLaunch({ url: '/pages/merchant/login' })
       }
     }
   })

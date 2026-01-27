@@ -106,10 +106,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
 import { generateOrderReceipt } from '@/utils/order-receipt'
+import { merchantRouteGuard } from '@/utils/routeGuard'
 
 const orderCo = importObject('wh-order-co')
 
@@ -123,6 +124,10 @@ onLoad(options => {
     orderId.value = options.id
     fetchOrderDetail()
   }
+})
+
+onShow(() => {
+  if (!merchantRouteGuard('/pages/merchant/order/detail')) return
 })
 
 const fetchOrderDetail = async () => {

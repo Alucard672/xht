@@ -1,9 +1,9 @@
 {
   "pages": [
     {
-      "path": "pages/index/index",
+      "path": "pages/merchant/dashboard",
       "style": {
-        "navigationBarTitleText": "乡货通",
+        "navigationBarTitleText": "工作台",
         "navigationBarBackgroundColor": "#07c160",
         "navigationBarTextStyle": "white"
       }
@@ -201,9 +201,9 @@
       }
     },
     {
-      "path": "pages/merchant/dashboard",
+      "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "工作台",
+        "navigationBarTitleText": "乡货通",
         "navigationBarBackgroundColor": "#07c160",
         "navigationBarTextStyle": "white"
       }
