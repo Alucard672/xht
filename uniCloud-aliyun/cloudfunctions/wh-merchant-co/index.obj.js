@@ -304,10 +304,10 @@ module.exports = {
     if (!tenantRes.data[0]) return { code: 404, msg: '店铺不存在' }
 
     const data = tenantRes.data[0]
-    
+
     // 计算有效到期时间（OA设置的优先）
     const expiredAt = data.oa_expired_at || data.expired_at
-    
+
     return {
       code: 0,
       data: {
@@ -623,6 +623,162 @@ module.exports = {
         expired_at: tenant.expired_at,
         isExpired,
         daysLeft
+      }
+    }
+  },
+
+  /**
+   * 获取续费套餐列表
+   * @returns {Object} { code: 0, data: [套餐列表] }
+   */
+  async getRenewalPackages() {
+    const db = uniCloud.database()
+
+    try {
+      const res = await db
+        .collection('wh_renewal_packages')
+        .where({ is_active: true })
+        .orderBy('sort_order', 'desc')
+        .orderBy('created_at', 'desc')
+        .get()
+
+      return {
+        code: 0,
+        msg: '获取成功',
+        data: res.result.data
+      }
+    } catch (e) {
+      return {
+        code: 500,
+        msg: e.message || '获取套餐失败',
+        data: []
+      }
+    }
+  },
+
+  /**
+   * 创建续费订单
+   * @param {Object} params
+   * @param {String} params.package_id - 套餐ID
+   * @returns {Object} { code: 0, data: { order_id, order_no, amount } }
+   */
+  async createRenewalOrder(params) {
+    const { package_id } = params || {}
+
+    if (!package_id) {
+      return { code: 400, msg: '请选择套餐' }
+    }
+
+    const db = uniCloud.database()
+    const tenant_id = this.tenant_id
+
+    // 获取套餐信息
+    try {
+      const pkgRes = await db.collection('wh_renewal_packages').doc(package_id).get()
+      if (!pkgRes.data || pkgRes.data.length === 0) {
+        return { code: 404, msg: '套餐不存在' }
+      }
+
+      const packageData = pkgRes.data[0]
+
+      // 创建续费订单
+      const orderNo = `REN${Date.now()}${Math.floor(Math.random() * 1000)}`
+      const orderRes = await db.collection('wh_renewal_orders').add({
+        tenant_id,
+        package_id,
+        order_no: orderNo,
+        duration_months: packageData.duration_months,
+        amount: packageData.price,
+        status: 0, // 0-待支付
+        source: 'online',
+        is_gift: false,
+        created_at: Date.now()
+      })
+
+      return {
+        code: 0,
+        msg: '订单创建成功',
+        data: {
+          order_id: orderRes.id,
+          order_no: orderNo,
+          amount: packageData.price,
+          duration_months: packageData.duration_months
+        }
+      }
+    } catch (e) {
+      return {
+        code: 500,
+        msg: e.message || '创建订单失败'
+      }
+    }
+  },
+
+  /**
+   * 处理续费支付回调
+   * @param {Object} params
+   * @param {String} params.orderId - 订单ID
+   * @param {Object} params.paymentInfo - 支付信息
+   * @returns {Object}
+   */
+  async processRenewalPayment(params) {
+    const { orderId, paymentInfo } = params || {}
+
+    if (!orderId) {
+      return { code: 400, msg: '订单ID不能为空' }
+    }
+
+    const db = uniCloud.database()
+    const tenant_id = this.tenant_id
+
+    try {
+      // 获取续费订单
+      const orderRes = await db.collection('wh_renewal_orders').doc(orderId).get()
+      if (!orderRes.data || orderRes.data.length === 0) {
+        return { code: 404, msg: '订单不存在' }
+      }
+
+      const order = orderRes.data[0]
+
+      // 验证订单归属
+      if (order.tenant_id !== tenant_id) {
+        return { code: 403, msg: '无权操作此订单' }
+      }
+
+      // 获取套餐信息
+      const pkgRes = await db.collection('wh_renewal_packages').doc(order.package_id).get()
+      if (!pkgRes.data || pkgRes.data.length === 0) {
+        return { code: 404, msg: '套餐不存在' }
+      }
+
+      const packageData = pkgRes.data[0]
+      const currentExpired = order.expired_at || Date.now()
+      const newExpired =
+        new Date(currentExpired).getTime() + packageData.duration_months * 30 * 24 * 60 * 60 * 1000
+
+      // 更新商家过期时间
+      await db.collection('wh_tenants').where({ _id: tenant_id }).update({
+        expired_at: newExpired
+      })
+
+      // 更新订单状态
+      await db.collection('wh_renewal_orders').doc(orderId).update({
+        status: 1, // 已支付
+        payment_info: paymentInfo,
+        paid_at: Date.now()
+      })
+
+      return {
+        code: 0,
+        msg: '续费成功',
+        data: {
+          newExpired,
+          duration_months: packageData.duration_months
+        }
+      }
+    } catch (e) {
+      return {
+        code: 500,
+        msg: e.message || '续费失败'
       }
     }
   }

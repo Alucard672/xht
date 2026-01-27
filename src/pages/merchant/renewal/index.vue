@@ -34,7 +34,7 @@
     <!-- 套餐列表 -->
     <view class="section-title">选择续费套餐</view>
 
-    <view class="package-list">
+    <view v-if="!loadingPackages" class="package-list">
       <view
         v-for="(item, index) in packageList"
         :key="item._id"
@@ -71,6 +71,8 @@
       <u-empty v-if="packageList.length === 0" mode="data" text="暂无可用套餐"></u-empty>
     </view>
 
+    <u-loading v-else mode="circle" class="loading-packages"></u-loading>
+
     <!-- 续费按钮 -->
     <view class="bottom-action">
       <view v-if="selectedPackage" class="total-info">
@@ -84,7 +86,7 @@
         type="primary"
         :text="selectedPackage?.price > 0 ? '微信支付续费' : '免费续费'"
         :loading="submitting"
-        :disabled="selectedPackageIndex === null"
+        :disabled="selectedPackageIndex === null || loadingPackages"
         custom-style="height: 96rpx; border-radius: 48rpx; background-color: #07c160; border: none;"
         @click="handleRenewal"
       ></u-button>
@@ -98,6 +100,7 @@
 import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/stores/useUserStore'
+import { importObject } from '@/utils/cloud'
 
 const userStore = useUserStore()
 const toastRef = ref<any>(null)
@@ -105,6 +108,7 @@ const toastRef = ref<any>(null)
 const packageList = ref<any[]>([])
 const selectedPackageIndex = ref<number | null>(null)
 const submitting = ref(false)
+const loadingPackages = ref(false)
 
 // 计算属性
 const selectedPackage = computed(() => {
@@ -131,8 +135,6 @@ const statusType = computed(() => {
   return 'error'
 })
 
-const showContactAdmin = ref(false)
-
 onShow(() => {
   // 检查是否登录
   if (!userStore.token) {
@@ -141,14 +143,8 @@ onShow(() => {
   }
   // 刷新商家信息（获取最新有效期）
   userStore.refreshTenantInfo()
-
-  // 续费功能暂时禁用
-  showContactAdmin.value = true
+  loadPackages()
 })
-
-const selectPackage = (index: number) => {
-  selectedPackageIndex.value = index
-}
 
 const formatDate = (ts: number | string | undefined) => {
   if (!ts) return '-'
@@ -156,14 +152,126 @@ const formatDate = (ts: number | string | undefined) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-const handleRenewal = () => {
-  // 续费功能暂时禁用，请联系管理员
-  uni.showModal({
-    title: '续费提示',
-    content: '续费功能暂时无法使用，请联系管理员处理续费事宜。',
-    showCancel: false,
-    confirmText: '我知道了'
-  })
+const loadPackages = async () => {
+  loadingPackages.value = true
+  try {
+    const merchantCo = importObject('wh-merchant-co')
+    const res: any = await merchantCo.getRenewalPackages()
+
+    if (res.code === 0) {
+      packageList.value = res.data || []
+
+      // 默认选择第一个套餐
+      if (packageList.value.length > 0) {
+        selectedPackageIndex.value = 0
+      }
+    } else {
+      toastRef.value?.show({ type: 'error', message: res.msg || '加载套餐失败' })
+    }
+  } catch (e: any) {
+    console.error('加载套餐失败:', e)
+    toastRef.value?.show({ type: 'error', message: '加载套餐失败，请检查网络' })
+  } finally {
+    loadingPackages.value = false
+  }
+}
+
+const selectPackage = (index: number) => {
+  selectedPackageIndex.value = index
+}
+
+const handleRenewal = async () => {
+  if (!selectedPackage.value) return
+
+  const tenantId = userStore.tenantInfo?._id
+  if (!tenantId) {
+    toastRef.value?.show({ type: 'error', message: '商家信息获取失败' })
+    return
+  }
+
+  submitting.value = true
+
+  try {
+    const merchantCo = importObject('wh-merchant-co')
+
+    // 如果是免费套餐，直接处理
+    if (selectedPackage.value.price === 0) {
+      // 创建续费订单
+      const orderRes: any = await merchantCo.createRenewalOrder({
+        package_id: selectedPackage.value._id
+      })
+
+      if (orderRes.code !== 0) {
+        throw new Error(orderRes.msg || '创建订单失败')
+      }
+
+      // 处理免费续费
+      const processRes: any = await merchantCo.processRenewalPayment({
+        orderId: orderRes.data.order_id,
+        paymentInfo: { method: 'free', time: Date.now() }
+      })
+
+      if (processRes.code === 0) {
+        await userStore.refreshTenantInfo()
+
+        uni.showModal({
+          title: '续费成功',
+          content: `续费成功！有效期已延长${processRes.data.duration_months}个月`,
+          showCancel: false,
+          confirmText: '知道了',
+          success: () => {
+            uni.navigateBack()
+          }
+        })
+      } else {
+        throw new Error(processRes.msg || '续费失败')
+      }
+    } else {
+      // 付费套餐 - 模拟支付流程
+      const orderRes: any = await merchantCo.createRenewalOrder({
+        package_id: selectedPackage.value._id
+      })
+
+      if (orderRes.code !== 0) {
+        throw new Error(orderRes.msg || '创建订单失败')
+      }
+
+      const { order_id, order_no, amount } = orderRes.data
+
+      // 显示支付提示（实际项目需对接微信支付）
+      uni.showModal({
+        title: '支付提示',
+        content: `订单创建成功！\n订单号：${order_no}\n金额：¥${(amount / 100).toFixed(2)}\n\n当前为演示环境，实际使用需对接微信支付`,
+        confirmText: '模拟支付成功',
+        cancelText: '稍后支付',
+        success: async res => {
+          if (res.confirm) {
+            // 模拟支付成功
+            const processRes: any = await merchantCo.processRenewalPayment({
+              orderId: order_id,
+              paymentInfo: { method: 'wechat', time: Date.now() }
+            })
+
+            if (processRes.code === 0) {
+              await userStore.refreshTenantInfo()
+
+              uni.showToast({ title: '续费成功！', icon: 'success' })
+              setTimeout(() => {
+                uni.navigateBack()
+              }, 1500)
+            } else {
+              throw new Error(processRes.msg || '续费失败')
+            }
+          }
+        }
+      })
+    }
+  } catch (e: any) {
+    console.error('续费失败:', e)
+    toastRef.value?.show({ type: 'error', message: e.message || '续费失败' })
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -326,6 +434,12 @@ const handleRenewal = () => {
       }
     }
   }
+}
+
+.loading-packages {
+  display: flex;
+  justify-content: center;
+  padding: 100rpx 0;
 }
 
 .bottom-action {
