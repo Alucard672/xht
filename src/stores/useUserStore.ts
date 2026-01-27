@@ -2,24 +2,38 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useUserStore = defineStore('user', () => {
-  const token = ref(uni.getStorageSync('uni_id_token') || '')
-  const userInfo = ref(uni.getStorageSync('uni-id-pages-userInfo') || {})
-  const tenantInfo = ref(uni.getStorageSync('tenant_info') || {})
+  // 安全地从存储中读取数据，确保类型正确
+  const storedToken = uni.getStorageSync('uni_id_token')
+  const storedUserInfo = uni.getStorageSync('uni-id-pages-userInfo')
+  const storedTenantInfo = uni.getStorageSync('tenant_info')
+
+  const token = ref(storedToken || '')
+  const userInfo = ref(storedUserInfo && typeof storedUserInfo === 'object' ? storedUserInfo : {})
+  const tenantInfo = ref(
+    storedTenantInfo && typeof storedTenantInfo === 'object' ? storedTenantInfo : {}
+  )
 
   const hasLogin = ref(!!token.value)
 
   const login = (data: any) => {
-    token.value = data.token
-    userInfo.value = data.userInfo
-    tenantInfo.value = data.tenantInfo || {}
+    token.value = data.token || ''
+    userInfo.value = data.userInfo && typeof data.userInfo === 'object' ? data.userInfo : {}
+    tenantInfo.value = data.tenantInfo && typeof data.tenantInfo === 'object' ? data.tenantInfo : {}
 
-    uni.setStorageSync('uni_id_token', data.token)
+    uni.setStorageSync('uni_id_token', data.token || '')
     uni.setStorageSync('uni_id_token_expired', data.tokenExpired)
-    uni.setStorageSync('uni-id-pages-userInfo', data.userInfo)
-    if (data.tenantInfo) {
-      uni.setStorageSync('tenant_info', data.tenantInfo)
+    uni.setStorageSync('uni-id-pages-userInfo', userInfo.value)
+    if (
+      tenantInfo.value &&
+      typeof tenantInfo.value === 'object' &&
+      Object.keys(tenantInfo.value).length > 0
+    ) {
+      uni.setStorageSync('tenant_info', tenantInfo.value)
       // 兼容旧逻辑
-      uni.setStorageSync('tenant_id', data.tenantInfo._id)
+      uni.setStorageSync('tenant_id', tenantInfo.value._id)
+    } else {
+      uni.removeStorageSync('tenant_info')
+      uni.removeStorageSync('tenant_id')
     }
 
     hasLogin.value = true
