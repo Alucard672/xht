@@ -170,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
@@ -236,11 +236,22 @@ const selectCustomer = () => {
 
 // 添加商品
 const addGoods = () => {
-  // 跳转到商品列表选择
+  // 跳转到商品选择器
   uni.navigateTo({
-    url: '/pages/merchant/goods/list?mode=select'
+    url: '/pages/merchant/goods/picker'
   })
 }
+
+// 监听商品选择事件
+uni.$on('goodsSelected', (goods: any) => {
+  activeItem.value = goods
+  editIndex.value = -1 // -1 表示添加新商品
+  tempCartItem.value = {
+    countBig: 0,
+    countSmall: 1 // 默认数量为1
+  }
+  showUnitPopup.value = true
+})
 
 // 编辑商品
 const editGoods = (index: number) => {
@@ -386,6 +397,11 @@ const submitOrder = async () => {
     submitting.value = false
   }
 }
+
+// 清理事件监听
+onUnmounted(() => {
+  uni.$off('goodsSelected')
+})
 </script>
 
 <style lang="scss" scoped>
