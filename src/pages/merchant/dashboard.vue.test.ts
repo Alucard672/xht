@@ -185,7 +185,7 @@ describe('dashboard.vue - 商家工作台', () => {
       const orderNo = 'ORD1234567890'
       const displayNo = orderNo.slice(-8)
 
-      expect(displayNo).toBe('234567890')
+      expect(displayNo).toBe('34567890')
     })
 
     it('应该显示订单状态', () => {
@@ -352,9 +352,7 @@ describe('dashboard.vue - 商家工作台', () => {
         expired_at: Date.now() + 5 * 24 * 60 * 60 * 1000 // 5天后
       }
 
-      const daysUntilExpire = Math.ceil(
-        (shopInfo.expired_at - Date.now()) / (24 * 60 * 60 * 1000)
-      )
+      const daysUntilExpire = Math.ceil((shopInfo.expired_at - Date.now()) / (24 * 60 * 60 * 1000))
 
       expect(daysUntilExpire).toBeLessThanOrEqual(7)
     })

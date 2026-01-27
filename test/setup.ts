@@ -1,6 +1,15 @@
 import { vi } from 'vitest'
 import '@testing-library/jest-dom/vitest'
 
+// Mock UniApp lifecycle hooks BEFORE importing Vue
+vi.mock('@dcloudio/uni-app', () => ({
+  onShow: vi.fn(),
+  onLoad: vi.fn(),
+  onReady: vi.fn(),
+  onMounted: vi.fn(),
+  onUnmounted: vi.fn()
+}))
+
 // Mock Uni API with proper function implementation
 const mockUni = {
   getStorageSync: vi.fn(() => null),
@@ -30,7 +39,14 @@ const mockUni = {
   connectSocket: vi.fn(),
   onSocketOpen: vi.fn(),
   onSocketError: vi.fn(),
-  closeSocket: vi.fn()
+  closeSocket: vi.fn(),
+  // Event bus methods for dashboard.vue
+  $on: vi.fn(),
+  $off: vi.fn(),
+  $once: vi.fn(),
+  $emit: vi.fn(),
+  // getCurrentPages for components that need page stack
+  getCurrentPages: vi.fn(() => [])
 }
 
 // Assign to global with type assertion
@@ -38,7 +54,19 @@ global.uni = mockUni as any
 
 // Mock UniCloud
 global.uniCloud = {
-  importObject: vi.fn()
+  importObject: vi.fn(() => ({
+    // Mock cloud object with common methods
+    get: vi.fn(),
+    add: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn(),
+    where: vi.fn(() => ({
+      get: vi.fn(),
+      limit: vi.fn(),
+      skip: vi.fn(),
+      orderBy: vi.fn()
+    }))
+  }))
 } as any
 
 beforeEach(() => {

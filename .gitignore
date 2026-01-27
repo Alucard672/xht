@@ -32,3 +32,14 @@ dist
 # UniCloud
 uniCloud-aliyun/cloudfunctions/*/node_modules/
 uniCloud-aliyun/cloudfunctions/*/.temp/
+
+# Testing
+coverage/
+.nyc_output/
+vitest-report/
+*.lcov
+
+# Build artifacts
+.unpackage/
+tmp/
+temp/
