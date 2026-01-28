@@ -310,12 +310,18 @@ const confirmEditGoods = () => {
       selectedGoods.value.splice(editIndex.value, 1)
     }
   } else {
-    // 添加新商品
+    // 添加新商品 - 映射价格和单位名称字段
     const item = activeItem.value
     selectedGoods.value.push({
       ...item,
       countBig: tempCartItem.value.countBig,
-      countSmall: tempCartItem.value.countSmall
+      countSmall: tempCartItem.value.countSmall,
+      // 映射价格字段
+      priceBig: item.unit_big?.price || 0,
+      priceSmall: item.unit_small?.price || 0,
+      // 映射单位名称字段
+      unitBigName: item.unit_big?.name || '',
+      unitSmallName: item.unit_small?.name || ''
     })
   }
 
@@ -344,11 +350,17 @@ onShow(() => {
         }
         showUnitPopup.value = true
       } else {
-        // 单单位商品，直接添加
+        // 单单位商品，直接添加 - 映射价格和单位名称字段
         selectedGoods.value.push({
           ...g,
           countBig: 0,
-          countSmall: 1
+          countSmall: 1,
+          // 映射价格字段
+          priceBig: g.unit_big?.price || 0,
+          priceSmall: g.unit_small?.price || 0,
+          // 映射单位名称字段
+          unitBigName: g.unit_big?.name || '',
+          unitSmallName: g.unit_small?.name || ''
         })
       }
     })
