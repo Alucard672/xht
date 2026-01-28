@@ -215,53 +215,58 @@ const submitOrder = async () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .checkout-container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 20rpx 24rpx 140rpx;
+  background: $wh-bg-color-gradient;
+  padding: $wh-spacing-md $wh-spacing-lg 180rpx;
 }
 
 .section {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
+  @include section-base;
+  margin-bottom: $wh-spacing-md;
+  padding: $wh-spacing-xl;
 
   .section-title {
-    font-size: 30rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 24rpx;
+    @include text-subheading;
+    margin-bottom: $wh-spacing-lg;
+    letter-spacing: 0.3rpx;
   }
 }
 
 .address-section {
+  @include customer-selector;
   display: flex;
   align-items: center;
   justify-content: space-between;
 
   .address-info {
     flex: 1;
-    margin-right: 20rpx;
+    margin-right: $wh-spacing-md;
     .top {
       display: flex;
       align-items: center;
-      gap: 16rpx;
-      margin-bottom: 8rpx;
+      gap: $wh-spacing-sm;
+      margin-bottom: $wh-spacing-xs;
       .name {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
+        font-size: $wh-font-size-xl;
+        font-weight: $wh-font-weight-semibold;
+        color: $wh-text-color-dark;
       }
       .mobile {
-        font-size: 28rpx;
-        color: #666;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-gray;
+        font-weight: $wh-font-weight-medium;
       }
     }
     .detail {
-      font-size: 26rpx;
-      color: #999;
-      line-height: 1.4;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-gray;
+      line-height: $wh-line-height-relaxed;
+      font-weight: $wh-font-weight-medium;
     }
   }
 
@@ -269,32 +274,35 @@ const submitOrder = async () => {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 12rpx;
+    gap: $wh-spacing-sm;
     .txt {
-      font-size: 30rpx;
-      color: #999;
+      font-size: $wh-font-size-lg;
+      color: $wh-text-color-light-gray;
+      font-weight: $wh-font-weight-semibold;
     }
   }
 }
 
 .customer-section {
+  @include customer-selector;
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   .customer-info {
     flex: 1;
     .top {
       display: flex;
       align-items: baseline;
-      gap: 16rpx;
+      gap: $wh-spacing-sm;
       .name {
-        font-size: 34rpx;
-        font-weight: bold;
-        color: #333;
+        font-size: $wh-font-size-xl;
+        font-weight: $wh-font-weight-semibold;
+        color: $wh-text-color-dark;
       }
       .mobile {
-        font-size: 28rpx;
-        color: #666;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-gray;
       }
     }
   }
@@ -302,12 +310,13 @@ const submitOrder = async () => {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 12rpx;
+    gap: $wh-spacing-sm;
     .txt {
-      font-size: 30rpx;
-      color: #999;
+      font-size: $wh-font-size-lg;
+      color: $wh-text-color-light-gray;
+      font-weight: $wh-font-weight-semibold;
       &.blue {
-        color: #2979ff;
+        color: $wh-color-blue;
       }
     }
   }
@@ -318,33 +327,31 @@ const submitOrder = async () => {
     .item {
       display: flex;
       align-items: center;
-      padding: 20rpx 0;
-      border-bottom: 1rpx solid #f5f5f5;
+      padding: $wh-spacing-md 0;
+      border-bottom: 1rpx solid $wh-border-color-light;
       &:last-child {
         border-bottom: none;
       }
       .item-img {
-        width: 100rpx;
-        height: 100rpx;
-        border-radius: 8rpx;
-        margin-right: 20rpx;
+        @include goods-image-style;
+        margin-right: $wh-spacing-md;
       }
       .item-info {
         flex: 1;
         .item-name {
-          font-size: 28rpx;
-          color: #333;
-          margin-bottom: 4rpx;
+          font-size: $wh-font-size-lg;
+          color: $wh-text-color-dark;
+          font-weight: $wh-font-weight-semibold;
+          margin-bottom: $wh-spacing-xs;
         }
         .item-spec {
-          font-size: 24rpx;
-          color: #999;
-          margin-bottom: 4rpx;
+          font-size: $wh-font-size-xs;
+          color: $wh-text-color-gray;
+          margin-bottom: $wh-spacing-xs;
+          font-weight: $wh-font-weight-medium;
         }
         .item-price {
-          font-size: 28rpx;
-          color: #333;
-          font-weight: 500;
+          @include price-text-small;
         }
       }
     }
@@ -353,50 +360,43 @@ const submitOrder = async () => {
 
 .payment-section {
   .radio-desc {
-    font-size: 24rpx;
-    color: #999;
-    margin: 8rpx 0 20rpx 60rpx;
+    font-size: $wh-font-size-xs;
+    color: $wh-text-color-light-gray;
+    margin: $wh-spacing-xs 0 $wh-spacing-lg 60rpx;
+    font-weight: $wh-font-weight-medium;
   }
 }
 
 .footer-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(120rpx + env(safe-area-inset-bottom));
-  background-color: #fff;
+  @include bottom-bar;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40rpx env(safe-area-inset-bottom);
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  box-sizing: border-box;
+  padding: $wh-spacing-lg $wh-spacing-xl;
+  padding-bottom: calc($wh-spacing-lg + env(safe-area-inset-bottom));
+  height: auto;
+  min-height: 140rpx;
 
   .total-price {
-    display: flex;
-    align-items: baseline;
-    .label {
-      font-size: 28rpx;
-      color: #333;
-      margin-right: 8rpx;
-    }
-    .symbol {
-      font-size: 24rpx;
-      color: #ff4d4f;
-      font-weight: bold;
-    }
-    .amount {
-      font-size: 44rpx;
-      color: #ff4d4f;
-      font-weight: bold;
-    }
+    @include total-bar-section;
   }
 
   .submit-action {
     display: flex;
     justify-content: flex-end;
+
+    ::v-deep .u-button {
+      background: $wh-color-blue !important;
+      border-radius: $wh-border-radius-full !important;
+      font-weight: $wh-font-weight-semibold !important;
+      box-shadow: $wh-shadow-colored !important;
+      transition: all $wh-transition-normal !important;
+
+      &:active {
+        transform: scale(0.98) !important;
+        box-shadow: $wh-shadow-md !important;
+      }
+    }
   }
 }
 </style>

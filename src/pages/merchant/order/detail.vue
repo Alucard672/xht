@@ -328,10 +328,14 @@ const saveReceiptImage = async (url: string) => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .order-detail-container {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 160rpx;
+  background: $wh-bg-color-gradient;
+  padding-bottom: 180rpx;
 }
 
 .loading-state,
@@ -342,56 +346,77 @@ const saveReceiptImage = async (url: string) => {
 }
 
 .status-section {
-  padding: 60rpx 32rpx;
+  padding: $wh-spacing-3xl $wh-spacing-xl;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.1;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  }
 
   &.status-pending {
-    background: linear-gradient(180deg, #ff9900 0%, #fa8c16 100%);
+    background: linear-gradient(135deg, $wh-color-warning-modern 0%, #fa8c16 100%);
   }
 
   &.status-processing {
-    background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+    background: $wh-gradient-blue;
   }
 
   &.status-completed {
-    background: linear-gradient(180deg, #07c160 0%, #06ad56 100%);
+    background: linear-gradient(135deg, $wh-color-success-modern 0%, #06ad56 100%);
   }
 
   &.status-cancelled {
-    background: linear-gradient(180deg, #999 0%, #777 100%);
+    background: linear-gradient(135deg, $wh-text-color-gray 0%, #777 100%);
   }
 
   .status-icon {
-    margin-bottom: 16rpx;
+    margin-bottom: $wh-spacing-md;
+    position: relative;
+    z-index: 1;
   }
 
   .status-text {
-    color: #fff;
-    font-size: 40rpx;
-    font-weight: bold;
-    margin-bottom: 8rpx;
+    color: $wh-text-color-inverse;
+    font-size: $wh-font-size-2xl;
+    font-weight: $wh-font-weight-extrabold;
+    margin-bottom: $wh-spacing-sm;
+    letter-spacing: 1rpx;
+    position: relative;
+    z-index: 1;
   }
 
   .status-desc {
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 26rpx;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: $wh-font-size-md;
+    font-weight: $wh-font-weight-medium;
+    letter-spacing: 0.5rpx;
+    position: relative;
+    z-index: 1;
   }
 }
 
 .section-card {
-  background-color: #fff;
-  margin: 24rpx 32rpx 0;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  @include section-base;
+  margin: $wh-spacing-md $wh-spacing-lg 0;
+  padding: $wh-spacing-xl;
 
   .section-title {
-    font-size: 30rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 20rpx;
-    padding-bottom: 16rpx;
-    border-bottom: 1rpx solid #f5f5f5;
+    @include text-subheading;
+    margin-bottom: $wh-spacing-lg;
+    padding-bottom: $wh-spacing-md;
+    border-bottom: 1rpx solid $wh-border-color-light;
+    letter-spacing: 0.3rpx;
   }
 }
 
@@ -400,14 +425,15 @@ const saveReceiptImage = async (url: string) => {
   align-items: center;
 
   .customer-avatar {
-    width: 80rpx;
-    height: 80rpx;
-    border-radius: 50%;
-    background-color: #f5f5f5;
+    width: 88rpx;
+    height: 88rpx;
+    border-radius: $wh-border-radius-circle;
+    background: $wh-gradient-customer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 20rpx;
+    margin-right: $wh-spacing-md;
+    border: 2rpx solid rgba(45, 127, 249, 0.1);
   }
 
   .customer-details {
@@ -415,15 +441,17 @@ const saveReceiptImage = async (url: string) => {
     flex-direction: column;
 
     .customer-name {
-      font-size: 30rpx;
-      color: #333;
-      font-weight: 500;
+      font-size: $wh-font-size-lg;
+      color: $wh-text-color-dark;
+      font-weight: $wh-font-weight-semibold;
+      letter-spacing: 0.3rpx;
     }
 
     .customer-phone {
-      font-size: 26rpx;
-      color: #999;
-      margin-top: 4rpx;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-gray;
+      margin-top: $wh-spacing-xs;
+      font-weight: $wh-font-weight-medium;
     }
   }
 }
@@ -432,105 +460,110 @@ const saveReceiptImage = async (url: string) => {
   .goods-item {
     display: flex;
     align-items: center;
-    padding: 16rpx 0;
-    border-bottom: 1rpx solid #f5f5f5;
+    padding: $wh-spacing-md 0;
+    border-bottom: 1rpx solid $wh-border-color-light;
 
     &:last-child {
       border-bottom: none;
     }
 
     .goods-img {
-      width: 100rpx;
-      height: 100rpx;
-      border-radius: 12rpx;
-      margin-right: 16rpx;
+      width: 120rpx;
+      height: 120rpx;
+      border-radius: $wh-border-radius-md;
+      margin-right: $wh-spacing-md;
+      border: 1rpx solid $wh-border-color-light;
     }
 
     .goods-info {
       flex: 1;
 
       .goods-name {
-        font-size: 28rpx;
-        color: #333;
+        font-size: $wh-font-size-lg;
+        color: $wh-text-color-dark;
+        font-weight: $wh-font-weight-semibold;
         display: block;
+        margin-bottom: $wh-spacing-xs;
       }
 
       .goods-spec {
-        font-size: 24rpx;
-        color: #999;
-        margin-top: 4rpx;
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-gray;
         display: block;
+        font-weight: $wh-font-weight-medium;
       }
     }
 
     .goods-right {
       .goods-price {
-        font-size: 28rpx;
-        font-weight: bold;
-        color: #333;
+        @include price-text-small;
       }
     }
   }
 }
 
 .total-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 20rpx;
-  padding-top: 20rpx;
-  border-top: 1rpx solid #f5f5f5;
+  @include flex-between;
+  margin-top: $wh-spacing-md;
+  padding-top: $wh-spacing-md;
+  border-top: 2rpx solid $wh-border-color-light;
+  gap: $wh-spacing-sm;
 
   .label {
-    font-size: 28rpx;
-    color: #333;
+    font-size: $wh-font-size-lg;
+    color: $wh-text-color-dark;
+    font-weight: $wh-font-weight-semibold;
   }
 
   .total-price {
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #ff4d4f;
+    @include price-text-medium;
   }
 }
 
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20rpx;
+  gap: $wh-spacing-md;
 
   .info-item {
     display: flex;
     flex-direction: column;
 
     .info-label {
-      font-size: 24rpx;
-      color: #999;
-      margin-bottom: 8rpx;
+      font-size: $wh-font-size-xs;
+      color: $wh-text-color-light-gray;
+      margin-bottom: $wh-spacing-xs;
+      font-weight: $wh-font-weight-medium;
+      text-transform: uppercase;
+      letter-spacing: 0.5rpx;
     }
 
     .info-value {
-      font-size: 26rpx;
-      color: #333;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-dark;
       word-break: break-all;
+      font-weight: $wh-font-weight-medium;
+      line-height: $wh-line-height-relaxed;
     }
   }
 }
 
 .action-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  @include bottom-bar;
   display: flex;
-  gap: 20rpx;
-  padding: 20rpx 32rpx;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background-color: #fff;
-  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
+  gap: $wh-spacing-md;
+  padding: $wh-spacing-lg $wh-spacing-xl;
+  padding-bottom: calc($wh-spacing-lg + env(safe-area-inset-bottom));
 
   button {
     flex: 1;
-    border-radius: 60rpx;
+    border-radius: $wh-border-radius-full;
+    font-weight: $wh-font-weight-semibold;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      transform: scale(0.98);
+    }
   }
 }
 </style>

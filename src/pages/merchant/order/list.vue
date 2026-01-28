@@ -1,11 +1,11 @@
 <template>
   <view class="order-list-container">
-    <u-sticky bg-color="#fff">
+    <u-sticky bg-color="#f7f8fa">
       <u-tabs
         :list="tabList"
         :current="currentTab"
-        active-color="#07c160"
-        line-color="#07c160"
+        active-color="#2d7ff9"
+        line-color="#2d7ff9"
         @change="handleTabChange"
       ></u-tabs>
     </u-sticky>
@@ -20,22 +20,34 @@
       </view>
 
       <view v-else class="order-items">
-        <view v-for="order in orders" :key="order._id" class="order-card">
+        <view
+          v-for="order in orders"
+          :key="order._id"
+          class="order-card"
+          :class="{ 'order-card-hover': isHovering }"
+          @touchstart="isHovering = true"
+          @touchend="isHovering = false"
+          @touchcancel="isHovering = false"
+        >
           <view class="card-header">
             <text class="order-no">单号: {{ order.order_no || order._id.slice(-8) }}</text>
-            <text :class="['status-txt', 'status-' + order.status]">{{
-              getStatusTxt(order.status)
-            }}</text>
+            <view :class="['status-badge', 'status-' + order.status]">
+              <text class="status-txt">{{ getStatusTxt(order.status) }}</text>
+            </view>
           </view>
 
           <view class="card-body">
             <view class="customer-info">
-              <u-icon name="account" size="16" color="#999"></u-icon>
+              <view class="icon-wrap">
+                <u-icon name="account" size="18" color="#2d7ff9"></u-icon>
+              </view>
               <text class="name">{{ order.address?.name || '未知客户' }}</text>
               <text class="mobile">{{ order.address?.mobile || '' }}</text>
             </view>
             <view v-if="order.address?.fullAddress" class="address-info">
-              <u-icon name="map" size="16" color="#999"></u-icon>
+              <view class="icon-wrap">
+                <u-icon name="map" size="18" color="#ff9500"></u-icon>
+              </view>
               <text class="addr">{{ order.address.fullAddress }}</text>
             </view>
 
@@ -54,7 +66,7 @@
             <view class="pay-info">
               <text class="method">{{ order.payment_method === 'credit' ? '赊账' : '现结' }}</text>
               <text class="amount"
-                >￥{{ priceHelper.format(order.total_amount || order.total_fee) }}</text
+                >¥{{ priceHelper.format(order.total_amount || order.total_fee) }}</text
               >
             </view>
 
@@ -85,7 +97,7 @@
       :fixed="true"
       :placeholder="true"
       :safe-area-inset-bottom="true"
-      active-color="#07c160"
+      active-color="#2d7ff9"
       @change="handleModuleChange"
     >
       <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
@@ -116,6 +128,7 @@ const tabList = [
 const currentTab = ref(0)
 const orders = ref<any[]>([])
 const loading = ref(false)
+const isHovering = ref(false)
 
 let lastLoadTime = 0
 onShow(() => {
@@ -206,48 +219,104 @@ const handleModuleChange = (index: number) => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .order-list-container {
   min-height: 100vh;
-  background-color: #f8f8f8;
+  background: $wh-bg-color-gradient;
 }
 
 .list-content {
-  padding: 20rpx;
+  padding: $wh-spacing-md;
 }
 
 .order-card {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
+  @include card-modern;
+  @include card-side-decoration(4rpx, $wh-gradient-blue-vertical);
+  margin-bottom: $wh-spacing-md;
+  padding: $wh-spacing-xl;
+  transition: all $wh-transition-normal cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.order-card-hover {
+    transform: scale(0.98);
+    box-shadow: $wh-shadow-md;
+    border-color: rgba(45, 127, 249, 0.3);
+  }
 
   .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1rpx solid #f5f5f5;
-    padding-bottom: 16rpx;
-    margin-bottom: 16rpx;
+    border-bottom: 1rpx solid $wh-border-color-light;
+    padding-bottom: $wh-spacing-md;
+    margin-bottom: $wh-spacing-md;
 
     .order-no {
-      font-size: 26rpx;
-      color: #999;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-light-gray;
+      font-weight: $wh-font-weight-medium;
+      letter-spacing: 0.3rpx;
     }
-    .status-txt {
-      font-size: 26rpx;
-      font-weight: bold;
+
+    .status-badge {
+      padding: 6rpx $wh-spacing-sm;
+      border-radius: $wh-border-radius-full;
+      transition: all $wh-transition-normal;
+
+      .status-txt {
+        font-size: $wh-font-size-sm;
+        font-weight: $wh-font-weight-semibold;
+        letter-spacing: 0.5rpx;
+      }
+
       &.status-0 {
-        color: #ff9900;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 149, 0, 0.12) 0%,
+          rgba(255, 149, 0, 0.08) 100%
+        );
+
+        .status-txt {
+          color: $wh-color-warning-modern;
+        }
       }
+
       &.status-1 {
-        color: #07c160;
+        background: linear-gradient(
+          135deg,
+          rgba(52, 199, 89, 0.12) 0%,
+          rgba(52, 199, 89, 0.08) 100%
+        );
+
+        .status-txt {
+          color: $wh-color-success-modern;
+        }
       }
+
       &.status-2 {
-        color: #999;
+        background: linear-gradient(
+          135deg,
+          rgba(110, 110, 115, 0.08) 0%,
+          rgba(110, 110, 115, 0.05) 100%
+        );
+
+        .status-txt {
+          color: $wh-text-color-gray;
+        }
       }
+
       &.status--1 {
-        color: #ff4d4f;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 59, 48, 0.12) 0%,
+          rgba(255, 59, 48, 0.08) 100%
+        );
+
+        .status-txt {
+          color: $wh-color-danger-modern;
+        }
       }
     }
   }
@@ -257,44 +326,67 @@ const handleModuleChange = (index: number) => {
     .address-info {
       display: flex;
       align-items: center;
-      gap: 12rpx;
-      margin-bottom: 12rpx;
+      gap: $wh-spacing-sm;
+      margin-bottom: $wh-spacing-sm;
+
+      .icon-wrap {
+        width: 36rpx;
+        height: 36rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $wh-color-blue-light-bg;
+        border-radius: $wh-border-radius-full;
+      }
+
       .name {
-        font-size: 30rpx;
-        font-weight: bold;
-        color: #333;
+        font-size: $wh-font-size-lg;
+        font-weight: $wh-font-weight-semibold;
+        color: $wh-text-color-dark;
+        letter-spacing: 0.3rpx;
       }
+
       .mobile {
-        font-size: 26rpx;
-        color: #666;
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-gray;
+        margin-left: $wh-spacing-xs;
       }
+
       .addr {
-        font-size: 26rpx;
-        color: #666;
-        line-height: 1.4;
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-gray;
+        line-height: $wh-line-height-relaxed;
+        flex: 1;
       }
     }
 
     .items-summary {
-      background-color: #f9f9f9;
-      padding: 16rpx;
-      border-radius: 8rpx;
-      margin-top: 16rpx;
+      background: linear-gradient(135deg, $wh-bg-color-secondary 0%, $wh-color-blue-light 100%);
+      padding: $wh-spacing-md;
+      border-radius: $wh-border-radius-md;
+      margin-top: $wh-spacing-md;
+      border: 1rpx solid rgba(45, 127, 249, 0.08);
+
       .item-row {
         display: flex;
         justify-content: space-between;
-        font-size: 26rpx;
-        color: #666;
-        margin-bottom: 8rpx;
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-secondary;
+        margin-bottom: $wh-spacing-xs;
+        font-weight: $wh-font-weight-medium;
+
         &:last-child {
           margin-bottom: 0;
         }
       }
+
       .more {
-        font-size: 24rpx;
-        color: #999;
+        font-size: $wh-font-size-xs;
+        color: $wh-text-color-light-gray;
         text-align: center;
-        margin-top: 8rpx;
+        margin-top: $wh-spacing-sm;
+        font-weight: $wh-font-weight-medium;
+        letter-spacing: 0.5rpx;
       }
     }
   }
@@ -303,29 +395,43 @@ const handleModuleChange = (index: number) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 24rpx;
-    padding-top: 24rpx;
-    border-top: 1rpx solid #f5f5f5;
+    margin-top: $wh-spacing-md;
+    padding-top: $wh-spacing-md;
+    border-top: 1rpx solid $wh-border-color-light;
 
     .pay-info {
+      display: flex;
+      align-items: baseline;
+      gap: $wh-spacing-sm;
+
       .method {
-        font-size: 24rpx;
-        color: #999;
-        background-color: #f0f0f0;
-        padding: 4rpx 12rpx;
-        border-radius: 4rpx;
-        margin-right: 12rpx;
+        font-size: $wh-font-size-xs;
+        color: $wh-text-color-gray;
+        background: $wh-bg-color-tertiary;
+        padding: 4rpx $wh-spacing-sm;
+        border-radius: $wh-border-radius-xs;
+        font-weight: $wh-font-weight-semibold;
+        letter-spacing: 0.5rpx;
       }
+
       .amount {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #ff4d4f;
+        @include price-text-small;
       }
     }
 
     .actions {
       display: flex;
-      gap: 16rpx;
+      gap: $wh-spacing-sm;
+
+      ::v-deep .u-button {
+        border-radius: $wh-border-radius-full !important;
+        font-weight: $wh-font-weight-semibold !important;
+        transition: all $wh-transition-normal !important;
+
+        &:active {
+          transform: scale(0.95) !important;
+        }
+      }
     }
   }
 }

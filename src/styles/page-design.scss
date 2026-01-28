@@ -1,0 +1,455 @@
+/**
+ * 页面级设计系统 - Page Design System
+ * 用于页面组件的高级样式混入和装饰效果
+ */
+
+@import '@/styles/design-tokens.scss';
+
+/* ==================== 页面容器混入 ==================== */
+
+// 现代页面容器
+@mixin page-container-modern {
+  min-height: 100vh;
+  @include gradient-bg;
+  padding: $wh-spacing-lg $wh-spacing-lg 180rpx;
+  @include safe-area-top;
+}
+
+// 页面容器（带顶部间距）
+@mixin page-container-with-top($top-padding: $wh-spacing-lg) {
+  min-height: 100vh;
+  @include gradient-bg;
+  padding: $top-padding $wh-spacing-lg 180rpx;
+  padding-top: calc($top-padding + env(safe-area-inset-top));
+}
+
+/* ==================== 区块装饰混入 ==================== */
+
+// 通用区块基础
+@mixin section-base {
+  background-color: $wh-bg-color-card;
+  border-radius: $wh-border-radius-lg;
+  padding: $wh-spacing-xl;
+  margin-bottom: $wh-spacing-md;
+  box-shadow: $wh-shadow-sm;
+  position: relative;
+  overflow: hidden;
+}
+
+// 顶部装饰条区块
+@mixin section-with-top-bar($gradient: $wh-gradient-primary, $height: 3rpx) {
+  @include section-base;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: $height;
+    background: $gradient;
+    opacity: 0.8;
+  }
+}
+
+// 带标签装饰的区块
+@mixin section-with-label($dot-color: $wh-color-blue) {
+  @include section-with-top-bar;
+
+  .section-label {
+    @include text-subheading;
+    margin-bottom: $wh-spacing-lg;
+    display: flex;
+    align-items: center;
+    @include label-dot($dot-color);
+  }
+}
+
+/* ==================== 卡片交互混入 ==================== */
+
+// 商品卡片基础
+@mixin goods-card-base {
+  display: flex;
+  align-items: stretch;
+  padding: $wh-spacing-xl;
+  margin-bottom: $wh-spacing-md;
+  background-color: $wh-bg-color-card;
+  border-radius: $wh-border-radius-lg;
+  box-shadow: $wh-shadow-sm;
+  border: 1rpx solid $wh-border-color-light;
+  transition: all $wh-transition-normal;
+  position: relative;
+  overflow: hidden;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+// 商品卡片悬停效果
+@mixin goods-card-hover {
+  @include goods-card-base;
+
+  &.goods-item-hover {
+    transform: scale(0.98);
+    box-shadow: $wh-shadow-md;
+    border-color: rgba(45, 127, 249, 0.3);
+  }
+}
+
+// 商品卡片带左侧装饰条
+@mixin goods-card-with-decoration {
+  @include goods-card-hover;
+  @include card-side-decoration(4rpx, $wh-gradient-blue-vertical);
+}
+
+/* ==================== 文字渐变效果 ==================== */
+
+// 价格渐变文字
+@mixin price-gradient-text {
+  background: $wh-gradient-price;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: $wh-font-weight-extrabold;
+  letter-spacing: -0.5rpx;
+}
+
+// 价格文字（小号）
+@mixin price-text-small {
+  font-size: $wh-font-size-xl;
+  @include price-gradient-text;
+  letter-spacing: -0.5rpx;
+}
+
+// 价格文字（中号）
+@mixin price-text-medium {
+  font-size: $wh-font-size-2xl;
+  @include price-gradient-text;
+  letter-spacing: -1rpx;
+}
+
+// 价格文字（大号）
+@mixin price-text-large {
+  font-size: $wh-font-size-3xl;
+  @include price-gradient-text;
+  letter-spacing: -1rpx;
+}
+
+/* ==================== 客户选择区块 ==================== */
+
+@mixin customer-selector {
+  display: flex;
+  align-items: center;
+  padding: $wh-spacing-xl;
+  background: $wh-gradient-customer;
+  border: 1rpx solid rgba(45, 127, 249, 0.1);
+  box-shadow: $wh-shadow-colored;
+  transition: all $wh-transition-normal;
+  @include card-top-decoration($wh-gradient-primary);
+  @include hover-scale(0.98);
+
+  &:active {
+    background: linear-gradient(135deg, #f0f5ff 0%, #d9e9ff 100%);
+  }
+
+  .customer-info {
+    flex: 1;
+
+    .customer-name {
+      font-size: $wh-font-size-xl;
+      font-weight: $wh-font-weight-semibold;
+      color: $wh-text-color-dark;
+      letter-spacing: 0.3rpx;
+      margin-bottom: 4rpx;
+    }
+
+    .customer-phone {
+      font-size: $wh-font-size-md;
+      color: $wh-text-color-gray;
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+
+      &::before {
+        content: '';
+        width: 2rpx;
+        height: 2rpx;
+        background: $wh-text-color-light-gray;
+        border-radius: 50%;
+      }
+    }
+  }
+
+  .no-selection {
+    flex: 1;
+    font-size: $wh-font-size-md;
+    color: $wh-text-color-light-gray;
+    font-weight: $wh-font-weight-medium;
+    letter-spacing: 0.5rpx;
+  }
+}
+
+/* ==================== 空状态区块 ==================== */
+
+@mixin empty-state-with-border($border-color: $wh-border-color-medium) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60rpx $wh-spacing-xl;
+  border: 2rpx dashed $border-color;
+  border-radius: $wh-border-radius-lg;
+  background: $wh-gradient-empty;
+  transition: all $wh-transition-normal;
+
+  @include hover-scale(0.97);
+
+  &:active {
+    border-color: $wh-color-blue;
+  }
+
+  .txt {
+    font-size: $wh-font-size-md;
+    color: $wh-color-blue;
+    margin-left: $wh-spacing-sm;
+    margin-top: $wh-spacing-sm;
+    font-weight: $wh-font-weight-semibold;
+    letter-spacing: 0.5rpx;
+  }
+}
+
+/* ==================== 规格标签 ==================== */
+
+@mixin spec-tag {
+  font-size: $wh-font-size-sm;
+  color: $wh-text-color-gray;
+  line-height: $wh-line-height-loose;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  @include spec-tag-bg($wh-color-blue-light-bg);
+  width: fit-content;
+  padding: 4rpx $wh-spacing-sm;
+}
+
+@mixin spec-item-content {
+  .spec-qty {
+    font-weight: $wh-font-weight-semibold;
+    color: $wh-text-color-dark;
+    margin-right: 4rpx;
+  }
+
+  .spec-unit {
+    color: $wh-text-color-gray;
+    margin-right: $wh-spacing-sm;
+    font-weight: $wh-font-weight-medium;
+  }
+
+  .spec-x {
+    color: $wh-text-color-light-gray;
+    margin: 0 4rpx;
+    font-weight: $wh-font-weight-normal;
+  }
+
+  .spec-price {
+    color: $wh-color-success-modern;
+    font-weight: $wh-font-weight-semibold;
+    font-size: $wh-font-size-md;
+  }
+}
+
+/* ==================== 小计显示 ==================== */
+
+@mixin subtotal-display {
+  display: flex;
+  align-items: baseline;
+  padding-top: $wh-spacing-sm;
+  border-top: 1rpx dashed rgba(0, 0, 0, 0.06);
+  gap: $wh-spacing-sm;
+
+  .subtotal-label {
+    font-size: $wh-font-size-sm;
+    color: $wh-text-color-light-gray;
+    font-weight: $wh-font-weight-medium;
+    text-transform: uppercase;
+    letter-spacing: 0.5rpx;
+  }
+
+  .subtotal-amount {
+    @include price-text-small;
+  }
+}
+
+/* ==================== 底部栏样式 ==================== */
+
+@mixin total-bar-section {
+  display: flex;
+  align-items: baseline;
+  gap: $wh-spacing-sm;
+
+  .label {
+    font-size: $wh-font-size-md;
+    color: $wh-text-color-gray;
+    font-weight: $wh-font-weight-medium;
+  }
+
+  .amount {
+    @include price-text-medium;
+  }
+}
+
+/* ==================== 弹窗样式 ==================== */
+
+@mixin popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $wh-spacing-xl;
+  padding-bottom: $wh-spacing-md;
+  border-bottom: 1rpx solid $wh-border-color-light;
+
+  .popup-title {
+    @include text-heading;
+    letter-spacing: 0.5rpx;
+  }
+}
+
+@mixin popup-content {
+  padding: $wh-spacing-xl;
+  padding-bottom: calc($wh-spacing-xl + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%);
+}
+
+@mixin goods-preview-card {
+  display: flex;
+  padding: $wh-spacing-lg;
+  background: linear-gradient(135deg, $wh-bg-color-secondary 0%, $wh-color-blue-light 100%);
+  border-radius: $wh-border-radius-lg;
+  margin-bottom: $wh-spacing-xl;
+  border: 1rpx solid rgba(45, 127, 249, 0.1);
+
+  .goods-img {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: $wh-border-radius-md;
+    margin-right: $wh-spacing-lg;
+    border: 1rpx solid $wh-border-color-light;
+  }
+
+  .goods-detail {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .name {
+      @include text-subheading;
+      margin-bottom: $wh-spacing-sm;
+      letter-spacing: 0.3rpx;
+    }
+
+    .price {
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-gray;
+      line-height: $wh-line-height-loose;
+      font-weight: $wh-font-weight-medium;
+    }
+  }
+}
+
+@mixin total-preview-section {
+  display: flex;
+  justify-content: flex-end;
+  align-items: baseline;
+  padding: $wh-spacing-xl 0;
+  border-top: 2rpx solid $wh-border-color-light;
+  margin-top: $wh-spacing-lg;
+  gap: $wh-spacing-sm;
+
+  .label {
+    font-size: $wh-font-size-md;
+    color: $wh-text-color-gray;
+    font-weight: $wh-font-weight-semibold;
+    letter-spacing: 0.5rpx;
+  }
+
+  .amount {
+    @include price-text-large;
+  }
+}
+
+/* ==================== 添加按钮样式 ==================== */
+
+@mixin add-more-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $wh-spacing-lg;
+  margin-top: $wh-spacing-lg;
+  border: 2rpx dashed $wh-color-blue;
+  border-radius: $wh-border-radius-lg;
+  background: $wh-gradient-empty;
+  transition: all $wh-transition-normal;
+
+  @include hover-scale(0.97);
+
+  .txt {
+    font-size: $wh-font-size-md;
+    color: $wh-color-blue;
+    margin-left: $wh-spacing-sm;
+    font-weight: $wh-font-weight-semibold;
+    letter-spacing: 0.5rpx;
+  }
+}
+
+/* ==================== 文本域样式 ==================== */
+
+@mixin modern-textarea {
+  background-color: $wh-bg-color-tertiary !important;
+  border-radius: $wh-border-radius-md !important;
+  border: 1rpx solid $wh-border-color-light !important;
+  padding: $wh-spacing-md !important;
+  font-size: $wh-font-size-md !important;
+  color: $wh-text-color-dark !important;
+  line-height: 1.6 !important;
+  transition: all $wh-transition-normal !important;
+
+  &:focus {
+    background-color: $wh-bg-color-card !important;
+    border-color: $wh-color-blue !important;
+    box-shadow: 0 0 0 3rpx rgba(45, 127, 249, 0.1) !important;
+  }
+
+  &::placeholder {
+    color: $wh-text-color-light-gray !important;
+  }
+}
+
+/* ==================== 图片占位符 ==================== */
+
+@mixin goods-image-style {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $wh-border-radius-md;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, $wh-bg-color-tertiary 0%, $wh-bg-color-secondary 100%);
+  border: 1rpx solid $wh-border-color-light;
+  overflow: hidden;
+
+  &.placeholder {
+    @include image-placeholder;
+  }
+}
+
+/* ==================== 删除按钮 ==================== */
+
+@mixin delete-button {
+  display: flex;
+  align-items: flex-start;
+  padding-top: $wh-spacing-xxs;
+  flex-shrink: 0;
+  margin-left: $wh-spacing-sm;
+
+  @include button-press(0.85);
+}

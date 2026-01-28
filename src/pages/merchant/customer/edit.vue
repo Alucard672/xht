@@ -125,19 +125,90 @@ const handleDelete = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .customer-edit-container {
-  padding: 30rpx;
-  background-color: #fff;
-  min-height: 100vh;
+  @include page-container-with-top($wh-spacing-xl);
+  background: $wh-bg-color-gradient;
+  padding-bottom: 180rpx;
+
+  ::v-deep .u-form {
+    .u-form-item {
+      background: $wh-bg-color-card;
+      padding: $wh-spacing-xl;
+      margin-bottom: $wh-spacing-md;
+      border-radius: $wh-border-radius-lg;
+      box-shadow: $wh-shadow-sm;
+      border: 1rpx solid $wh-border-color-light;
+
+      .u-form-item__body {
+        padding: 0;
+      }
+
+      .u-form-item__body__left {
+        @include text-subheading;
+        margin-bottom: $wh-spacing-sm;
+      }
+
+      .u-form-item__body__right {
+        .u-input,
+        .u-textarea {
+          background: $wh-bg-color-tertiary;
+          border-radius: $wh-border-radius-md;
+          padding: $wh-spacing-md;
+          font-size: $wh-font-size-md;
+          color: $wh-text-color-dark;
+          transition: all $wh-transition-normal;
+
+          &:focus {
+            background: $wh-bg-color-card;
+            border-color: $wh-color-blue;
+            box-shadow: 0 0 0 6rpx rgba(45, 127, 249, 0.1);
+          }
+
+          &::placeholder {
+            color: $wh-text-color-placeholder;
+          }
+        }
+      }
+    }
+  }
 }
 
 .footer-btn {
-  margin-top: 100rpx;
+  margin-top: $wh-spacing-3xl;
+  padding: 0 $wh-spacing-xl;
+
+  ::v-deep .u-button {
+    height: 100rpx;
+    border-radius: $wh-border-radius-full;
+    font-weight: $wh-font-weight-semibold;
+    font-size: $wh-font-size-xl;
+    box-shadow: $wh-shadow-colored;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      transform: scale(0.98);
+      box-shadow: $wh-shadow-md;
+    }
+  }
+
   .delete-link {
     text-align: center;
-    margin-top: 40rpx;
-    color: #ff4d4f;
-    font-size: 28rpx;
+    margin-top: $wh-spacing-xl;
+    color: $wh-color-danger-modern;
+    font-size: $wh-font-size-md;
+    font-weight: $wh-font-weight-semibold;
+    padding: $wh-spacing-sm;
+    border-radius: $wh-border-radius-full;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      opacity: 0.7;
+      transform: scale(0.95);
+    }
   }
 }
 </style>

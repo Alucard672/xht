@@ -348,33 +348,127 @@ const saveGoods = async () => {
 <style lang="scss" scoped>
 @import '@/styles/design-tokens.scss';
 @import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
 
 .goods-edit-container {
   padding: $wh-spacing-md;
   padding-bottom: 260rpx;
+
+  ::v-deep .wh-form-section {
+    @include section-base;
+    margin-bottom: $wh-spacing-md;
+
+    .section-title {
+      @include text-heading;
+      margin-bottom: $wh-spacing-lg;
+      letter-spacing: 0.5rpx;
+    }
+  }
+
+  ::v-deep .u-form-item {
+    background: transparent;
+    padding: $wh-spacing-md 0;
+    border-bottom: 1rpx solid $wh-border-color-light;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .u-form-item__body__left {
+      .u-form-item__body__left__content {
+        @include text-subheading;
+        color: $wh-text-color-dark;
+        font-weight: $wh-font-weight-semibold;
+      }
+
+      .u-form-item__body__left__content__required {
+        color: $wh-color-danger-modern;
+      }
+    }
+
+    .u-form-item__body__right {
+      .u-input {
+        background: $wh-bg-color-tertiary;
+        border-radius: $wh-border-radius-md;
+        padding: $wh-spacing-sm $wh-spacing-md;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-dark;
+        transition: all $wh-transition-normal;
+
+        &:focus {
+          background: $wh-bg-color-card;
+          border-color: $wh-color-blue;
+          box-shadow: 0 0 0 6rpx rgba(45, 127, 249, 0.1);
+        }
+
+        &::placeholder {
+          color: $wh-text-color-placeholder;
+        }
+      }
+    }
+  }
 }
 
 .form-tip-row {
   display: flex;
   justify-content: flex-end;
-  padding: $wh-spacing-xs 0 $wh-spacing-sm;
+  padding: $wh-spacing-xs 0 $wh-spacing-md;
 
   .link-text {
     @include text-secondary;
-    color: $wh-color-primary;
+    color: $wh-color-blue;
     font-size: $wh-font-size-sm;
-    text-decoration: underline;
+    text-decoration: none;
+    font-weight: $wh-font-weight-semibold;
+    padding: $wh-spacing-xs $wh-spacing-sm;
+    border-radius: $wh-border-radius-full;
+    background: $wh-color-blue-light-bg;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      opacity: 0.7;
+      transform: scale(0.95);
+    }
   }
 }
 
 .unit-section {
-  background-color: $wh-bg-color-hover;
-  padding: 0 $wh-spacing-md;
-  border-radius: $wh-border-radius-md;
+  background: linear-gradient(135deg, $wh-bg-color-secondary 0%, $wh-color-blue-light 100%);
+  padding: $wh-spacing-md;
+  border-radius: $wh-border-radius-lg;
   margin: $wh-spacing-md 0;
+  border: 1rpx solid rgba(45, 127, 249, 0.1);
+
+  ::v-deep .u-form-item {
+    background: transparent;
+
+    .u-form-item__body__right {
+      .u-input {
+        background: $wh-bg-color-card;
+      }
+    }
+  }
 }
 
 .unit-tip {
   @include text-tertiary;
+  font-weight: $wh-font-weight-medium;
+}
+
+// Upload component
+::v-deep .u-upload {
+  .u-upload__wrap {
+    .u-upload__button {
+      border-radius: $wh-border-radius-lg;
+      border: 2rpx dashed $wh-color-blue;
+      background: $wh-gradient-empty;
+    }
+
+    .u-upload__preview {
+      border-radius: $wh-border-radius-lg;
+      overflow: hidden;
+      box-shadow: $wh-shadow-sm;
+    }
+  }
 }
 </style>

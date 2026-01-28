@@ -1,7 +1,10 @@
 <template>
   <view class="login-container">
     <view class="header">
-      <text class="title">乡货通 - 商家登录</text>
+      <view class="logo-section">
+        <text class="logo-icon">🏪</text>
+      </view>
+      <text class="title">乡货通</text>
       <text class="subtitle">专注乡镇批发的 SaaS 平台</text>
     </view>
 
@@ -34,6 +37,10 @@
       <view class="actions">
         <text class="link" @click="goRegister">没有账号？去注册</text>
       </view>
+    </view>
+
+    <view class="footer">
+      <text class="footer-text">乡货通 · 让批发更简单</text>
     </view>
   </view>
 </template>
@@ -93,79 +100,150 @@ const goRegister = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .login-container {
-  padding: 60rpx;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #e8f4ff 0%, #f7f8fa 50%, #ffffff 100%);
+  padding: $wh-spacing-xxl $wh-spacing-xl;
+  @include safe-area-top;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
   .header {
-    margin-bottom: 80rpx;
+    margin-bottom: $wh-spacing-3xl;
     display: flex;
     flex-direction: column;
-    .title {
-      font-size: 48rpx;
-      font-weight: bold;
-      color: #333;
+    align-items: center;
+    text-align: center;
+
+    .logo-section {
+      margin-bottom: $wh-spacing-lg;
+
+      .logo-icon {
+        font-size: 120rpx;
+        display: block;
+        filter: drop-shadow(0 8rpx 16rpx rgba(45, 127, 249, 0.2));
+      }
     }
+
+    .title {
+      font-size: $wh-font-size-3xl;
+      font-weight: $wh-font-weight-extrabold;
+      background: $wh-gradient-blue;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2rpx;
+      margin-bottom: $wh-spacing-sm;
+    }
+
     .subtitle {
-      font-size: 28rpx;
-      color: #999;
-      margin-top: 10rpx;
+      font-size: $wh-font-size-md;
+      color: $wh-text-color-gray;
+      font-weight: $wh-font-weight-medium;
+      letter-spacing: 0.5rpx;
     }
   }
+
   .form {
-    margin-bottom: 40rpx;
+    margin-bottom: $wh-spacing-xl;
+
     .input-group {
-      background: #fff;
-      border-radius: 16rpx;
-      padding: 30rpx;
-      margin-bottom: 24rpx;
-      box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+      background: $wh-bg-color-card;
+      border-radius: $wh-border-radius-lg;
+      padding: $wh-spacing-xl;
+      margin-bottom: $wh-spacing-md;
+      box-shadow: $wh-shadow-sm;
+      border: 2rpx solid transparent;
+      transition: all $wh-transition-normal;
+
+      &:focus-within {
+        border-color: $wh-color-blue;
+        box-shadow: 0 0 0 6rpx rgba(45, 127, 249, 0.1);
+        transform: translateY(-2rpx);
+      }
+
       .label {
-        font-size: 28rpx;
-        color: #333;
-        font-weight: 500;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-dark;
+        font-weight: $wh-font-weight-semibold;
         display: block;
-        margin-bottom: 16rpx;
+        margin-bottom: $wh-spacing-sm;
+        letter-spacing: 0.5rpx;
       }
+
       .input {
-        font-size: 32rpx;
-        color: #333;
-        height: 80rpx;
-        line-height: 80rpx;
+        font-size: $wh-font-size-lg;
+        color: $wh-text-color-dark;
+        height: 88rpx;
+        line-height: 88rpx;
+        font-weight: $wh-font-weight-medium;
       }
+
       .placeholder {
-        color: #c0c4cc;
+        color: $wh-text-color-placeholder;
       }
     }
+
     .actions {
-      margin-top: 30rpx;
+      margin-top: $wh-spacing-lg;
       display: flex;
       justify-content: center;
+
       .link {
-        font-size: 28rpx;
-        color: #2979ff;
+        font-size: $wh-font-size-md;
+        color: $wh-color-blue;
+        font-weight: $wh-font-weight-semibold;
+        padding: $wh-spacing-sm;
+        border-radius: $wh-border-radius-full;
+        transition: all $wh-transition-normal;
+
+        &:active {
+          opacity: 0.7;
+          transform: scale(0.95);
+        }
       }
     }
+
     .submit-btn {
-      margin-top: 50rpx;
-      background: #07c160;
-      color: #fff;
-      border-radius: 12rpx;
-      font-size: 32rpx;
-      height: 96rpx;
-      line-height: 96rpx;
+      margin-top: $wh-spacing-xl;
+      background: $wh-color-blue;
+      color: $wh-text-color-inverse;
+      border-radius: $wh-border-radius-full;
+      font-size: $wh-font-size-xl;
+      font-weight: $wh-font-weight-semibold;
+      height: 100rpx;
+      line-height: 100rpx;
       border: none;
+      box-shadow: $wh-shadow-colored;
+      transition: all $wh-transition-normal;
+
       &:active {
-        opacity: 0.9;
+        transform: scale(0.95);
+        box-shadow: $wh-shadow-md;
       }
+
       &[disabled] {
-        opacity: 0.6;
+        opacity: 0.5;
+        transform: none;
       }
     }
   }
+
   .footer {
     text-align: center;
-    font-size: 24rpx;
-    color: #ccc;
-    margin-top: 60rpx;
+    padding-top: $wh-spacing-3xl;
+
+    .footer-text {
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-light-gray;
+      font-weight: $wh-font-weight-medium;
+      letter-spacing: 1rpx;
+    }
   }
 }
 </style>

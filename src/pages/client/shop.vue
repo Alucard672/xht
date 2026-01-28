@@ -639,12 +639,15 @@ const loadMore = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .shop-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   width: 100vw;
-  // 关键修改：背景改为白色，避免用户觉得有灰色蒙层
   background-color: #ffffff;
   overflow: hidden;
 
@@ -660,48 +663,50 @@ const loadMore = () => {
 
 .shop-header {
   flex-shrink: 0;
-  background-color: #07c160;
-  padding: calc(40rpx + env(safe-area-inset-top)) 32rpx 0;
+  background: $wh-gradient-blue;
+  padding: calc($wh-spacing-lg + env(safe-area-inset-top)) $wh-spacing-xl 0;
 
   .top-row {
     display: flex;
     align-items: center;
-    gap: 16rpx;
-    margin-bottom: 24rpx;
+    gap: $wh-spacing-sm;
+    margin-bottom: $wh-spacing-md;
 
     .shop-logo {
-      width: 80rpx;
-      height: 80rpx;
-      border-radius: 12rpx;
+      width: 88rpx;
+      height: 88rpx;
+      border-radius: $wh-border-radius-lg;
       border: 2rpx solid rgba(255, 255, 255, 0.4);
+      box-shadow: $wh-shadow-sm;
     }
 
     .shop-name {
-      color: #fff;
-      font-size: 34rpx;
-      font-weight: bold;
+      color: $wh-text-color-inverse;
+      font-size: $wh-font-size-xl;
+      font-weight: $wh-font-weight-extrabold;
+      letter-spacing: 0.5rpx;
     }
   }
 
   .search-box {
-    margin-bottom: 16rpx;
+    margin-bottom: $wh-spacing-sm;
   }
 
   .search-panel {
     position: absolute;
-    top: calc(100% + 16rpx);
-    left: 32rpx;
-    right: 32rpx;
-    background-color: #fff;
-    border-radius: 16rpx;
-    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+    top: calc(100% + $wh-spacing-sm);
+    left: $wh-spacing-xl;
+    right: $wh-spacing-xl;
+    background-color: $wh-bg-color-card;
+    border-radius: $wh-border-radius-lg;
+    box-shadow: $wh-shadow-lg;
     max-height: 60vh;
     overflow-y: auto;
-    z-index: 100;
+    z-index: $wh-z-index-overlay;
 
     .search-section {
-      padding: 20rpx 24rpx;
-      border-bottom: 1rpx solid #f5f5f5;
+      padding: $wh-spacing-md $wh-spacing-xl;
+      border-bottom: 1rpx solid $wh-border-color-light;
 
       &:last-child {
         border-bottom: none;
@@ -711,31 +716,46 @@ const loadMore = () => {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 16rpx;
+        margin-bottom: $wh-spacing-md;
 
         .section-title {
-          font-size: 26rpx;
-          color: #333;
-          font-weight: 500;
+          font-size: $wh-font-size-sm;
+          color: $wh-text-color-dark;
+          font-weight: $wh-font-weight-semibold;
+          letter-spacing: 0.3rpx;
         }
 
         .clear-btn {
-          font-size: 24rpx;
-          color: #999;
+          font-size: $wh-font-size-xs;
+          color: $wh-text-color-light-gray;
+          font-weight: $wh-font-weight-medium;
+          padding: $wh-spacing-xs;
+          transition: all $wh-transition-normal;
+
+          &:active {
+            opacity: 0.7;
+          }
         }
       }
 
       .tag-list {
         display: flex;
         flex-wrap: wrap;
-        gap: 16rpx;
+        gap: $wh-spacing-sm;
 
         .tag-item {
-          padding: 12rpx 24rpx;
-          background-color: #f5f5f5;
-          border-radius: 8rpx;
-          font-size: 26rpx;
-          color: #666;
+          padding: $wh-spacing-sm $wh-spacing-md;
+          background: $wh-bg-color-tertiary;
+          border-radius: $wh-border-radius-full;
+          font-size: $wh-font-size-sm;
+          color: $wh-text-color-secondary;
+          font-weight: $wh-font-weight-medium;
+          transition: all $wh-transition-normal;
+
+          &:active {
+            background: $wh-color-blue-light-bg;
+            color: $wh-color-blue;
+          }
         }
       }
 
@@ -743,12 +763,18 @@ const loadMore = () => {
         .history-item {
           display: flex;
           align-items: center;
-          gap: 12rpx;
-          padding: 16rpx 0;
+          gap: $wh-spacing-sm;
+          padding: $wh-spacing-md 0;
+          transition: all $wh-transition-normal;
+
+          &:active {
+            opacity: 0.7;
+          }
 
           .history-text {
-            font-size: 28rpx;
-            color: #333;
+            font-size: $wh-font-size-md;
+            color: $wh-text-color-dark;
+            font-weight: $wh-font-weight-medium;
           }
         }
       }
@@ -769,27 +795,31 @@ const loadMore = () => {
 
   .category-list {
     width: 160rpx;
-    background-color: #f8f8f8;
+    background: $wh-bg-color-secondary;
     height: 100%;
     .cat-item {
-      padding: 32rpx 20rpx;
-      font-size: 26rpx;
-      color: #666;
+      padding: $wh-spacing-lg $wh-spacing-md;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-secondary;
       text-align: center;
+      font-weight: $wh-font-weight-medium;
+      transition: all $wh-transition-normal;
+      position: relative;
+
       &.active {
-        background-color: #fff;
-        color: #07c160;
-        font-weight: bold;
+        background: $wh-bg-color-card;
+        color: $wh-color-blue;
+        font-weight: $wh-font-weight-semibold;
         position: relative;
         &::after {
           content: '';
           position: absolute;
           left: 0;
-          top: 30%;
-          bottom: 30%;
+          top: 25%;
+          bottom: 25%;
           width: 6rpx;
-          background-color: #07c160;
-          border-radius: 0 4rpx 4rpx 0;
+          background: $wh-gradient-blue-vertical;
+          border-radius: 0 $wh-border-radius-xs $wh-border-radius-xs 0;
         }
       }
     }
@@ -810,16 +840,17 @@ const loadMore = () => {
 
     .goods-card {
       display: flex;
-      gap: 20rpx;
+      gap: $wh-spacing-md;
       position: relative;
-      padding-bottom: 20rpx;
-      border-bottom: 1rpx solid #f0f0f0; // 增加分割线，视觉更清晰
+      padding-bottom: $wh-spacing-md;
+      border-bottom: 1rpx solid $wh-border-color-light;
 
       .goods-img {
         width: 160rpx;
         height: 160rpx;
-        border-radius: 12rpx;
-        background-color: #f9f9f9;
+        border-radius: $wh-border-radius-lg;
+        background: $wh-gradient-empty;
+        border: 1rpx solid $wh-border-color-light;
       }
 
       .goods-info {
@@ -827,138 +858,162 @@ const loadMore = () => {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 4rpx 0;
+        padding: $wh-spacing-xs 0;
 
         .name {
-          font-size: 30rpx;
-          font-weight: bold;
-          color: #333;
+          font-size: $wh-font-size-lg;
+          font-weight: $wh-font-weight-semibold;
+          color: $wh-text-color-dark;
+          letter-spacing: 0.3rpx;
         }
         .spec {
-          font-size: 24rpx;
-          color: #999;
-          margin-top: 4rpx;
+          font-size: $wh-font-size-xs;
+          color: $wh-text-color-light-gray;
+          margin-top: $wh-spacing-xs;
+          font-weight: $wh-font-weight-medium;
         }
 
         .price-row {
-          margin-top: 10rpx;
+          margin-top: $wh-spacing-xs;
           .price-main {
             display: flex;
             align-items: baseline;
-            color: #ff4d4f;
             .symbol {
-              font-size: 24rpx;
+              font-size: $wh-font-size-sm;
+              background: $wh-gradient-price;
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
             }
             .val {
-              font-size: 36rpx;
-              font-weight: bold;
+              @include price-text-small;
             }
             .unit {
-              font-size: 24rpx;
-              color: #999;
-              margin-left: 4rpx;
+              font-size: $wh-font-size-xs;
+              color: $wh-text-color-light-gray;
+              margin-left: $wh-spacing-xs;
+              font-weight: $wh-font-weight-medium;
             }
           }
           .price-sub {
-            font-size: 22rpx;
-            color: #999;
+            font-size: $wh-font-size-xs;
+            color: $wh-text-color-gray;
             margin-top: 2rpx;
+            font-weight: $wh-font-weight-medium;
           }
         }
 
         .add-btn {
           position: absolute;
           right: 0;
-          bottom: 20rpx;
-          width: 56rpx;
-          height: 56rpx;
-          background-color: #07c160;
-          border-radius: 50%;
+          bottom: $wh-spacing-md;
+          width: 64rpx;
+          height: 64rpx;
+          background: $wh-color-blue;
+          border-radius: $wh-border-radius-circle;
           display: flex;
           justify-content: center;
           align-items: center;
-          box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
+          box-shadow: $wh-shadow-colored;
+          transition: all $wh-transition-normal;
+
+          &:active {
+            transform: scale(0.9);
+            box-shadow: $wh-shadow-md;
+          }
         }
       }
     }
   }
 }
 
-// 关键 CSS 修改：处理底部固定栏位置
+// Cart bar with glass effect
 .cart-bar {
   position: fixed;
-  left: 32rpx;
-  right: 32rpx;
-  // 位于自定义底部导航上方
-  bottom: calc(110rpx + env(safe-area-inset-bottom) + 16rpx);
+  left: $wh-spacing-xl;
+  right: $wh-spacing-xl;
+  bottom: calc(110rpx + env(safe-area-inset-bottom) + $wh-spacing-md);
   height: 100rpx;
-  background-color: #333;
-  border-radius: 50rpx;
+  background: rgba(51, 51, 51, 0.95);
+  @include glass-effect(20rpx, 0.95);
+  border-radius: $wh-border-radius-full;
   display: flex;
   align-items: center;
-  padding: 0 10rpx 0 30rpx;
-  z-index: 99; // 高于底部导航
-  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.2);
+  padding: 0 $wh-spacing-sm 0 $wh-spacing-xl;
+  z-index: $wh-z-index-footer;
+  box-shadow: $wh-shadow-bottom-bar;
 
   .cart-icon {
     position: relative;
-    margin-top: 0; // 移除负边距，实现垂直居中
-    background-color: #07c160;
+    background: $wh-color-blue;
     width: 90rpx;
     height: 90rpx;
-    border-radius: 50%;
+    border-radius: $wh-border-radius-circle;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-    z-index: 101;
+    box-shadow: $wh-shadow-colored;
+    z-index: $wh-z-index-sticky;
     flex-shrink: 0;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      transform: scale(0.95);
+    }
 
     .badge {
       position: absolute;
-      right: -6rpx; // 稍微向右偏移
-      top: -6rpx; // 稍微向上偏移
-      background-color: #ff4d4f;
+      right: -6rpx;
+      top: -6rpx;
+      background-color: $wh-color-danger-modern;
       color: #fff;
-      font-size: 18rpx;
-      min-width: 30rpx;
-      height: 30rpx;
-      border-radius: 15rpx;
+      font-size: $wh-font-size-xs;
+      min-width: 32rpx;
+      height: 32rpx;
+      border-radius: $wh-border-radius-full;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 0 4rpx;
+      padding: 0 $wh-spacing-xs;
       border: 2rpx solid #fff;
+      font-weight: $wh-font-weight-semibold;
     }
   }
 
   .cart-info {
     flex: 1;
-    margin-left: 20rpx;
+    margin-left: $wh-spacing-md;
     display: flex;
     flex-direction: column;
     .total-price {
-      color: #fff;
-      font-size: 36rpx;
-      font-weight: bold;
+      color: $wh-text-color-inverse;
+      font-size: $wh-font-size-2xl;
+      font-weight: $wh-font-weight-extrabold;
+      letter-spacing: -0.5rpx;
     }
     .delivery-tip {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 22rpx;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: $wh-font-size-xs;
+      font-weight: $wh-font-weight-medium;
     }
   }
 
   .checkout-btn {
     width: 180rpx;
     height: 80rpx;
-    background-color: #07c160;
-    border-radius: 40rpx;
+    background: $wh-color-blue;
+    border-radius: $wh-border-radius-full;
     color: #fff;
-    font-size: 30rpx;
-    font-weight: bold;
+    font-size: $wh-font-size-lg;
+    font-weight: $wh-font-weight-semibold;
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      transform: scale(0.95);
+    }
   }
 }
 
