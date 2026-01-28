@@ -43,7 +43,11 @@ const getFriendlyMessage = (message: string, type: string): string => {
   return defaultMessages[type as string] || message
 }
 
-const handleError = (error: Error | string | unknown, type: string = 'system', options: any = {}) => {
+const handleError = (
+  error: Error | string | unknown,
+  type: string = 'system',
+  options: any = {}
+) => {
   const { showToast = true, duration = 2000 } = options
 
   // 获取错误消息

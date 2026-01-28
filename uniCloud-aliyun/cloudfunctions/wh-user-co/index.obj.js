@@ -82,22 +82,22 @@ module.exports = {
 
     let tenantInfo = null
     let expiredAt = null
-    
+
     if (user.tenant_id) {
       const tenantRes = await db.collection('wh_tenants').doc(user.tenant_id).get()
       if (tenantRes.data.length > 0) {
         tenantInfo = tenantRes.data[0]
         expiredAt = getEffectiveExpiredAt(tenantInfo)
-        
+
         // 检查商家状态
         if (tenantInfo.status === 0) {
           throw new Error('您的账号正在审核中，请耐心等待')
         }
-        
+
         if (tenantInfo.status === 2) {
           throw new Error('您的账号已被冻结，请联系管理员')
         }
-        
+
         // 检查有效期
         if (expiredAt && expiredAt < Date.now()) {
           // 同步更新状态为过期
@@ -106,7 +106,7 @@ module.exports = {
           })
           throw new Error('您的账号已过期，请联系管理员续期')
         }
-        
+
         // 如果设置了新的有效期且大于当前时间，确保状态为正常
         if (expiredAt && expiredAt > Date.now() && tenantInfo.status === 3) {
           await db.collection('wh_tenants').doc(user.tenant_id).update({
@@ -127,10 +127,12 @@ module.exports = {
         role: user.role || [],
         tenant_id: user.tenant_id
       },
-      tenantInfo: tenantInfo ? {
-        ...tenantInfo,
-        expired_at: expiredAt
-      } : null
+      tenantInfo: tenantInfo
+        ? {
+            ...tenantInfo,
+            expired_at: expiredAt
+          }
+        : null
     }
   },
 
@@ -150,7 +152,7 @@ module.exports = {
 
     const db = uniCloud.database()
     const now = Date.now()
-    const FREE_TRIAL_DAYS = 7  // 免费试用期（天）
+    const FREE_TRIAL_DAYS = 7 // 免费试用期（天）
     const expiredAt = now + FREE_TRIAL_DAYS * 24 * 60 * 60 * 1000
 
     const existUser = await db.collection('uni-id-users').where({ mobile: username }).get()
