@@ -525,7 +525,7 @@ onUnmounted(() => {
     .goods-card {
       background: $wh-bg-color-card;
       border-radius: $wh-border-radius-md;
-      padding: 16rpx 20rpx;
+      padding: 10rpx 20rpx;
       margin-bottom: 12rpx;
       display: flex;
       align-items: center;
@@ -540,8 +540,8 @@ onUnmounted(() => {
       }
 
       .goods-img {
-        width: 80rpx;
-        height: 80rpx;
+        width: 120rpx;
+        height: 120rpx;
         border-radius: $wh-border-radius-sm;
         flex-shrink: 0;
         background: $wh-bg-color-tertiary;
@@ -559,7 +559,7 @@ onUnmounted(() => {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        min-height: 80rpx;
+        min-height: 120rpx;
         overflow: hidden;
 
         .goods-name {
