@@ -149,12 +149,6 @@
       }
     },
     {
-      "path": "pages/client/credit/apply",
-      "style": {
-        "navigationBarTitleText": "申请赊账"
-      }
-    },
-    {
       "path": "pages/client/my-shops",
       "style": {
         "navigationBarTitleText": "我的商家"

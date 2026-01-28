@@ -66,7 +66,7 @@
       </view>
 
       <!-- 操作按钮 -->
-      <view class="action-bar" v-if="order.status === 2">
+      <view v-if="order.status === 2" class="action-bar">
         <u-button text="再次购买" @click="reorder"></u-button>
       </view>
     </template>
@@ -140,109 +140,141 @@ const reorder = () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .order-detail-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding-bottom: 40rpx;
+  @include page-container-with-top;
+  padding-bottom: 180rpx;
 }
 
 .loading-state,
 .empty-state {
-  display: flex;
-  justify-content: center;
-  padding-top: 200rpx;
+  @include flex-center;
+  padding-top: $wh-spacing-3xl;
 }
 
 .status-section {
-  background-color: #fff;
-  padding: 40rpx 32rpx;
+  @include card-modern;
+  padding: $wh-spacing-3xl $wh-spacing-xxl;
   text-align: center;
-  border-bottom: 1rpx solid #f5f5f5;
+  margin-bottom: $wh-spacing-lg;
+  position: relative;
+  overflow: hidden;
+
+  // 根据状态添加渐变背景
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.05;
+    background-image: radial-gradient(
+      circle at 30% 50%,
+      rgba(45, 127, 249, 0.3) 0%,
+      transparent 50%
+    );
+    pointer-events: none;
+  }
 
   .status-badge {
     display: inline-block;
-    padding: 12rpx 40rpx;
-    border-radius: 40rpx;
-    font-size: 30rpx;
-    font-weight: bold;
-    margin-bottom: 16rpx;
+    padding: $wh-spacing-sm $wh-spacing-2xl;
+    border-radius: $wh-border-radius-full;
+    @include text-subheading;
+    font-weight: $wh-font-weight-semibold;
+    margin-bottom: $wh-spacing-md;
+    position: relative;
+    z-index: 1;
 
     &.status-pending {
-      background-color: #fff7e6;
-      color: #d48806;
+      background: linear-gradient(135deg, rgba(255, 149, 0, 0.12) 0%, rgba(255, 149, 0, 0.08) 100%);
+      color: $wh-color-warning;
+      border: 2rpx solid rgba(255, 149, 0, 0.2);
     }
 
     &.status-processing {
-      background-color: #e6f7ff;
-      color: #1890ff;
+      background: linear-gradient(
+        135deg,
+        rgba(45, 127, 249, 0.12) 0%,
+        rgba(45, 127, 249, 0.08) 100%
+      );
+      color: $wh-color-blue;
+      border: 2rpx solid rgba(45, 127, 249, 0.2);
     }
 
     &.status-completed {
-      background-color: #f6ffed;
-      color: #52c41a;
+      background: linear-gradient(135deg, rgba(7, 193, 96, 0.12) 0%, rgba(7, 193, 96, 0.08) 100%);
+      color: $wh-color-success-modern;
+      border: 2rpx solid rgba(7, 193, 96, 0.2);
     }
 
     &.status-cancelled {
-      background-color: #f5f5f5;
-      color: #999;
+      background: $wh-bg-color-tertiary;
+      color: $wh-text-color-light-gray;
+      border: 2rpx solid $wh-border-color-light;
     }
   }
 
   .order-no {
-    font-size: 24rpx;
-    color: #999;
+    font-size: $wh-font-size-sm;
+    color: $wh-text-color-light-gray;
+    font-weight: $wh-font-weight-medium;
+    position: relative;
+    z-index: 1;
   }
 }
 
 .section-card {
-  background-color: #fff;
-  margin: 24rpx 32rpx 0;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+  @include card-modern;
+  margin: 0 $wh-spacing-lg $wh-spacing-lg;
+  padding: $wh-spacing-xl;
+  @include slide-in-up;
 
   .section-title {
-    font-size: 30rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 20rpx;
-    padding-bottom: 16rpx;
-    border-bottom: 1rpx solid #f5f5f5;
+    @include text-heading;
+    margin-bottom: $wh-spacing-lg;
+    padding-bottom: $wh-spacing-md;
+    border-bottom: 2rpx solid $wh-border-color-lighter;
+    letter-spacing: 0.3rpx;
   }
 
   .info-row {
-    display: flex;
-    justify-content: space-between;
+    @include flex-between;
     align-items: flex-start;
-    padding: 12rpx 0;
+    padding: $wh-spacing-sm 0;
 
     .label {
-      font-size: 26rpx;
-      color: #999;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-secondary;
       flex-shrink: 0;
+      font-weight: $wh-font-weight-medium;
     }
 
     .value {
-      font-size: 26rpx;
-      color: #333;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-dark;
       text-align: right;
-      margin-left: 20rpx;
+      margin-left: $wh-spacing-md;
+      font-weight: $wh-font-weight-medium;
     }
 
     &.total-row {
-      border-top: 1rpx solid #f5f5f5;
-      margin-top: 16rpx;
-      padding-top: 20rpx;
+      border-top: 2rpx solid $wh-border-color-lighter;
+      margin-top: $wh-spacing-md;
+      padding-top: $wh-spacing-lg;
 
       .label {
-        font-size: 28rpx;
-        color: #333;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-dark;
+        font-weight: $wh-font-weight-semibold;
       }
 
       .total-price {
-        font-size: 36rpx;
-        font-weight: bold;
-        color: #ff4d4f;
+        @include price-text-medium;
       }
     }
   }
@@ -253,8 +285,9 @@ const reorder = () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16rpx 0;
-    border-bottom: 1rpx solid #f5f5f5;
+    padding: $wh-spacing-md 0;
+    border-bottom: 2rpx solid $wh-border-color-lighter;
+    transition: all $wh-transition-normal;
 
     &:last-child {
       border-bottom: none;
@@ -264,39 +297,46 @@ const reorder = () => {
       flex: 1;
 
       .goods-name {
-        font-size: 28rpx;
-        color: #333;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-dark;
         display: block;
+        font-weight: $wh-font-weight-medium;
+        margin-bottom: $wh-spacing-xs;
       }
 
       .goods-spec {
-        font-size: 24rpx;
-        color: #999;
-        margin-top: 4rpx;
+        font-size: $wh-font-size-xs;
+        color: $wh-text-color-light-gray;
         display: block;
+        font-weight: $wh-font-weight-normal;
       }
     }
 
     .goods-price {
-      font-size: 28rpx;
-      color: #333;
-      font-weight: 500;
+      font-size: $wh-font-size-md;
+      color: $wh-text-color-dark;
+      font-weight: $wh-font-weight-semibold;
     }
   }
 }
 
 .action-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20rpx 32rpx;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background-color: #fff;
-  box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
+  @include bottom-bar;
+  padding: $wh-spacing-xl $wh-spacing-xl calc($wh-spacing-xl + env(safe-area-inset-bottom));
 
-  button {
-    border-radius: 60rpx;
+  ::v-deep .u-button {
+    width: 100%;
+    height: 100rpx;
+    border-radius: $wh-border-radius-full !important;
+    font-weight: $wh-font-weight-semibold !important;
+    font-size: $wh-font-size-xl !important;
+    box-shadow: $wh-shadow-colored !important;
+    transition: all $wh-transition-normal !important;
+
+    &:active {
+      transform: scale(0.98) !important;
+      box-shadow: $wh-shadow-md !important;
+    }
   }
 }
 </style>

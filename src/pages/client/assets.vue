@@ -16,16 +16,10 @@
 
     <view class="action-bar">
       <u-button
-        text="申请赊账"
-        icon="plus"
-        custom-style="flex: 1; margin-right: 20rpx;"
-        @click="requestCredit"
-      ></u-button>
-      <u-button
         text="立即还款"
-        type="warning"
+        type="primary"
         icon="rmb"
-        custom-style="flex: 1;"
+        custom-style="width: 100%;"
         @click="showRepayPopup = true"
       ></u-button>
     </view>
@@ -134,8 +128,8 @@ const fetchData = async () => {
 
 const requestCredit = () => {
   uni.showModal({
-    title: '申请赊账',
-    content: '请联系商家为您增加赊账额度',
+    title: '联系商家',
+    content: '如需增加赊账额度，请联系商家',
     showCancel: false
   })
 }
@@ -179,75 +173,116 @@ getSystemInfo()
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .assets-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 24rpx;
+  @include page-container-with-top($wh-spacing-lg);
 }
 
 .debt-card {
-  background: linear-gradient(135deg, #ff4d4f 0%, #ff7875 100%);
-  border-radius: 24rpx;
-  padding: 40rpx;
-  margin-bottom: 24rpx;
+  @include card-modern;
+  background: $wh-gradient-danger;
+  padding: $wh-spacing-3xl;
+  margin-bottom: $wh-spacing-xl;
+  position: relative;
+  overflow: hidden;
+
+  // 装饰性背景元素
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -10%;
+    width: 300rpx;
+    height: 300rpx;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
 
   .debt-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 20rpx;
+    @include flex-between;
+    margin-bottom: $wh-spacing-lg;
+    position: relative;
+    z-index: 1;
   }
 
   .label {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 28rpx;
+    font-size: $wh-font-size-md;
+    font-weight: $wh-font-weight-medium;
   }
 
   .tip {
     color: rgba(255, 255, 255, 0.7);
-    font-size: 24rpx;
+    font-size: $wh-font-size-sm;
+    font-weight: $wh-font-weight-normal;
   }
 
   .amount-row {
-    display: flex;
+    @include flex-start;
     align-items: baseline;
-    margin-bottom: 16rpx;
+    margin-bottom: $wh-spacing-md;
+    position: relative;
+    z-index: 1;
 
     .currency {
       color: #fff;
-      font-size: 36rpx;
-      margin-right: 8rpx;
+      font-size: $wh-font-size-2xl;
+      margin-right: $wh-spacing-xs;
+      font-weight: $wh-font-weight-semibold;
     }
 
     .amount {
       color: #fff;
-      font-size: 72rpx;
-      font-weight: bold;
+      @include price-text-large;
+      color: #fff !important;
     }
   }
 
   .info-row .info {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 26rpx;
+    font-size: $wh-font-size-sm;
+    font-weight: $wh-font-weight-medium;
+    position: relative;
+    z-index: 1;
   }
 }
 
 .action-bar {
-  display: flex;
-  margin-bottom: 24rpx;
+  margin-bottom: $wh-spacing-xl;
+
+  ::v-deep .u-button {
+    width: 100%;
+    height: 100rpx;
+    border-radius: $wh-border-radius-full !important;
+    font-weight: $wh-font-weight-semibold !important;
+    font-size: $wh-font-size-xl !important;
+    box-shadow: $wh-shadow-colored !important;
+    transition: all $wh-transition-normal !important;
+
+    &:active {
+      transform: scale(0.98) !important;
+      box-shadow: $wh-shadow-md !important;
+    }
+  }
 }
 
 .record-section {
-  background-color: #fff;
-  border-radius: 20rpx;
-  padding: 24rpx;
+  @include section-base;
+  padding: 0 $wh-spacing-xl;
+  @include slide-in-up;
 
   .section-header {
-    margin-bottom: 20rpx;
+    @include flex-between;
+    align-items: center;
+    margin-bottom: $wh-spacing-lg;
+    padding: $wh-spacing-md $wh-spacing-sm;
+    @include label-dot($wh-color-blue);
 
     .title {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #333;
+      @include text-heading;
     }
   }
 
@@ -256,79 +291,109 @@ getSystemInfo()
   }
 
   .record-item {
-    display: flex;
-    justify-content: space-between;
+    @include flex-between;
     align-items: center;
-    padding: 24rpx 0;
-    border-bottom: 1rpx solid #f5f5f5;
+    padding: $wh-spacing-lg 0;
+    border-bottom: 2rpx solid $wh-border-color-lighter;
+    transition: all $wh-transition-normal;
 
     &:last-child {
       border-bottom: none;
     }
+
+    &:active {
+      transform: scale(0.98);
+      opacity: 0.8;
+    }
   }
 
   .record-left {
-    display: flex;
-    flex-direction: column;
+    @include flex-column;
   }
 
   .type-tag {
-    font-size: 28rpx;
-    font-weight: 500;
-    margin-bottom: 8rpx;
+    font-size: $wh-font-size-md;
+    font-weight: $wh-font-weight-semibold;
+    margin-bottom: $wh-spacing-xs;
 
     &.borrow {
-      color: #ff9900;
+      color: $wh-color-warning;
     }
 
     &.repay {
-      color: #07c160;
+      color: $wh-color-success-modern;
     }
   }
 
   .date {
-    font-size: 24rpx;
-    color: #999;
+    font-size: $wh-font-size-xs;
+    color: $wh-text-color-light-gray;
+    font-weight: $wh-font-weight-normal;
   }
 
   .record-amount {
-    font-size: 32rpx;
-    font-weight: bold;
+    font-size: $wh-font-size-lg;
+    font-weight: $wh-font-weight-extrabold;
 
     &.borrow {
-      color: #ff4d4f;
+      color: $wh-color-danger-modern;
     }
 
     &.repay {
-      color: #07c160;
+      color: $wh-color-success-modern;
     }
   }
 }
 
 .repay-popup {
-  padding: 32rpx;
+  @include popup-content;
+  padding: $wh-spacing-xxl;
 
   .popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 32rpx;
-
-    .popup-title {
-      font-size: 34rpx;
-      font-weight: bold;
-    }
+    @include popup-header;
   }
 
   .popup-body {
     .input-group {
-      margin-bottom: 32rpx;
+      margin-bottom: $wh-spacing-2xl;
 
       .input-label {
-        font-size: 28rpx;
-        color: #666;
-        margin-bottom: 16rpx;
+        @include text-subheading;
+        font-size: $wh-font-size-md !important;
+        color: $wh-text-color-secondary;
+        margin-bottom: $wh-spacing-md;
         display: block;
+        font-weight: $wh-font-weight-medium;
+      }
+
+      ::v-deep .u-input {
+        background: $wh-bg-color-tertiary !important;
+        border-radius: $wh-border-radius-lg !important;
+        padding: $wh-spacing-sm $wh-spacing-md !important;
+        font-size: $wh-font-size-md !important;
+        color: $wh-text-color-dark !important;
+        transition: all $wh-transition-normal !important;
+
+        &:focus {
+          background: $wh-bg-color-card !important;
+          border-color: $wh-color-blue !important;
+          box-shadow: 0 0 0 6rpx rgba(45, 127, 249, 0.1) !important;
+        }
+      }
+    }
+
+    ::v-deep .u-button {
+      width: 100%;
+      height: 100rpx;
+      border-radius: $wh-border-radius-full !important;
+      font-weight: $wh-font-weight-semibold !important;
+      font-size: $wh-font-size-xl !important;
+      box-shadow: $wh-shadow-colored !important;
+      transition: all $wh-transition-normal !important;
+
+      &:active {
+        transform: scale(0.98) !important;
+        box-shadow: $wh-shadow-md !important;
       }
     }
   }

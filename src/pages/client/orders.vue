@@ -95,44 +95,89 @@ const getStatusTxt = (status: number) => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .order-list-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 20rpx;
+  @include page-container-with-top($wh-spacing-md);
 }
 
 .order-card {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 24rpx;
+  @include card-modern;
+  padding: $wh-spacing-xl;
+  margin-bottom: $wh-spacing-md;
+  position: relative;
+  overflow: hidden;
+  @include slide-in-up;
+  transition: all $wh-transition-normal;
+
+  // 左侧装饰条
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6rpx;
+    background: $wh-gradient-blue-vertical;
+    opacity: 0;
+    transition: opacity $wh-transition-normal;
+  }
+
+  &:active {
+    transform: scale(0.98);
+
+    &::before {
+      opacity: 1;
+    }
+  }
 
   .card-header {
-    display: flex;
-    justify-content: space-between;
+    @include flex-between;
     align-items: center;
-    border-bottom: 1rpx solid #f5f5f5;
-    padding-bottom: 16rpx;
-    margin-bottom: 16rpx;
+    border-bottom: 2rpx solid $wh-border-color-lighter;
+    padding-bottom: $wh-spacing-md;
+    margin-bottom: $wh-spacing-md;
 
     .order-no {
-      font-size: 24rpx;
-      color: #999;
+      font-size: $wh-font-size-xs;
+      color: $wh-text-color-light-gray;
+      font-weight: $wh-font-weight-medium;
     }
     .status-txt {
-      font-size: 26rpx;
-      font-weight: bold;
+      font-size: $wh-font-size-sm;
+      font-weight: $wh-font-weight-semibold;
+      padding: 6rpx $wh-spacing-md;
+      border-radius: $wh-border-radius-full;
+
       &.status-0 {
-        color: #ff9900;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 149, 0, 0.12) 0%,
+          rgba(255, 149, 0, 0.08) 100%
+        );
+        color: $wh-color-warning;
       }
       &.status-1 {
-        color: #07c160;
+        background: linear-gradient(
+          135deg,
+          rgba(45, 127, 249, 0.12) 0%,
+          rgba(45, 127, 249, 0.08) 100%
+        );
+        color: $wh-color-blue;
       }
       &.status-2 {
-        color: #999;
+        background: linear-gradient(135deg, rgba(7, 193, 96, 0.12) 0%, rgba(7, 193, 96, 0.08) 100%);
+        color: $wh-color-success-modern;
       }
       &.status--1 {
-        color: #ff4d4f;
+        background: linear-gradient(
+          135deg,
+          rgba(255, 77, 79, 0.12) 0%,
+          rgba(255, 77, 79, 0.08) 100%
+        );
+        color: $wh-color-danger-modern;
       }
     }
   }
@@ -140,51 +185,54 @@ const getStatusTxt = (status: number) => {
   .card-body {
     .items-list {
       .item-row {
-        display: flex;
-        justify-content: space-between;
+        @include flex-between;
         align-items: center;
-        margin-bottom: 12rpx;
-        font-size: 28rpx;
-        color: #333;
+        margin-bottom: $wh-spacing-sm;
+        font-size: $wh-font-size-md;
+        color: $wh-text-color-dark;
         .item-name {
           flex: 1;
-          margin-right: 20rpx;
+          margin-right: $wh-spacing-md;
+          font-weight: $wh-font-weight-medium;
         }
         .item-qty {
-          color: #999;
-          margin-right: 40rpx;
+          color: $wh-text-color-secondary;
+          margin-right: $wh-spacing-2xl;
+          font-weight: $wh-font-weight-normal;
         }
         .item-price {
-          font-weight: 500;
+          font-weight: $wh-font-weight-semibold;
         }
       }
     }
   }
 
   .card-footer {
-    border-top: 1rpx solid #f5f5f5;
-    margin-top: 20rpx;
-    padding-top: 16rpx;
+    border-top: 2rpx solid $wh-border-color-lighter;
+    margin-top: $wh-spacing-md;
+    padding-top: $wh-spacing-md;
     .pay-info {
-      display: flex;
-      justify-content: space-between;
+      @include flex-between;
       align-items: center;
       .method {
-        font-size: 24rpx;
-        color: #999;
+        font-size: $wh-font-size-xs;
+        color: $wh-text-color-secondary;
+        font-weight: $wh-font-weight-medium;
+        padding: 6rpx $wh-spacing-sm;
+        background: $wh-bg-color-tertiary;
+        border-radius: $wh-border-radius-md;
       }
       .total {
-        display: flex;
+        @include flex-end;
         align-items: baseline;
         .label {
-          font-size: 24rpx;
-          color: #666;
-          margin-right: 8rpx;
+          font-size: $wh-font-size-sm;
+          color: $wh-text-color-secondary;
+          margin-right: $wh-spacing-xs;
+          font-weight: $wh-font-weight-medium;
         }
         .amount {
-          font-size: 32rpx;
-          font-weight: bold;
-          color: #ff4d4f;
+          @include price-text-small;
         }
       }
     }
@@ -193,6 +241,7 @@ const getStatusTxt = (status: number) => {
 
 .loading-state,
 .empty-state {
-  padding-top: 200rpx;
+  @include flex-center;
+  padding-top: $wh-spacing-3xl;
 }
 </style>
