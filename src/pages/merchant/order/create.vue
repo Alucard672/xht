@@ -22,26 +22,62 @@
       </view>
 
       <view v-else class="goods-list">
-        <view v-for="(item, index) in selectedGoods" :key="index" class="goods-item">
-          <view class="goods-main">
+        <view
+          v-for="(item, index) in selectedGoods"
+          :key="index"
+          class="goods-item"
+          hover-class="goods-item-hover"
+          @click="editGoods(index)"
+        >
+          <!-- 左侧：图片 + 信息 -->
+          <view class="goods-left">
+            <!-- 商品图片 -->
+            <image v-if="item.img_url" :src="item.img_url" class="goods-img" mode="aspectFill" />
+            <view v-else class="goods-img placeholder">
+              <u-icon name="shopping-bag" size="48" color="#ccc"></u-icon>
+            </view>
+
+            <!-- 商品信息 -->
             <view class="goods-info">
-              <view class="goods-name">{{ item.name }}</view>
-              <view v-if="item.is_multi_unit" class="goods-spec">
-                <text v-if="item.countBig">{{ item.countBig }}{{ item.unitBigName }}</text>
-                <text v-if="item.countSmall">{{ item.countSmall }}{{ item.unitSmallName }}</text>
+              <view class="goods-name u-line-1">{{ item.name }}</view>
+
+              <!-- 多单位数量显示 -->
+              <view class="goods-specs">
+                <template v-if="item.is_multi_unit">
+                  <view v-if="item.countBig > 0" class="spec-item">
+                    <text class="spec-qty">{{ item.countBig }}</text>
+                    <text class="spec-unit">{{ item.unitBigName }}</text>
+                    <text class="spec-x">×</text>
+                    <text class="spec-price">¥{{ priceHelper.format(item.priceBig) }}</text>
+                  </view>
+                  <view v-if="item.countSmall > 0" class="spec-item">
+                    <text class="spec-qty">{{ item.countSmall }}</text>
+                    <text class="spec-unit">{{ item.unitSmallName }}</text>
+                    <text class="spec-x">×</text>
+                    <text class="spec-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
+                  </view>
+                </template>
+                <template v-else>
+                  <view class="spec-item">
+                    <text class="spec-qty">{{ item.countSmall }}</text>
+                    <text class="spec-unit">{{ item.unitSmallName }}</text>
+                    <text class="spec-x">×</text>
+                    <text class="spec-price">¥{{ priceHelper.format(item.priceSmall) }}</text>
+                  </view>
+                </template>
               </view>
-              <view v-else class="goods-spec">
-                <text>{{ item.countSmall }}{{ item.unitSmallName }}</text>
+
+              <!-- 小计 -->
+              <view class="goods-subtotal">
+                <text class="subtotal-label">小计:</text>
+                <text class="subtotal-amount">¥{{ priceHelper.format(getItemTotal(item)) }}</text>
               </view>
             </view>
-            <view class="goods-actions">
-              <view class="edit-btn" @click="editGoods(index)">
-                <u-icon name="edit-pen" size="18" color="#2979ff"></u-icon>
-                <text class="txt">修改</text>
-              </view>
-              <view class="goods-total"> ¥{{ priceHelper.format(getItemTotal(item)) }} </view>
-              <u-icon name="close" size="16" color="#999" @click="removeGoods(index)"></u-icon>
-            </view>
+          </view>
+
+          <!-- 右侧：删除按钮 -->
+          <view class="goods-right" @click.stop="removeGoods(index)">
+            <u-icon name="close-circle-fill" size="20" color="#ff4d4f"></u-icon>
           </view>
         </view>
 
@@ -405,227 +441,139 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
+// 导入设计系统
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
+// ========== 页面容器 ==========
 .create-order-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 20rpx 24rpx 140rpx;
+  @include page-container-with-top;
 }
 
+// ========== 通用区块 ==========
 .section {
-  background-color: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-
-  .section-label {
-    font-size: 28rpx;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 20rpx;
-  }
+  @include section-with-label($wh-color-blue);
 }
 
+// ========== 客户选择区块 ==========
 .customer-section {
-  display: flex;
-  align-items: center;
-
-  .customer-info {
-    flex: 1;
-    .customer-name {
-      font-size: 32rpx;
-      font-weight: 500;
-      color: #333;
-    }
-    .customer-phone {
-      font-size: 26rpx;
-      color: #666;
-      margin-top: 4rpx;
-    }
-  }
-
-  .no-selection {
-    flex: 1;
-    font-size: 28rpx;
-    color: #999;
-  }
+  @include customer-selector;
 }
 
+// ========== 商品区块 ==========
 .goods-section {
   .empty-goods {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40rpx;
-    border: 2rpx dashed #2979ff;
-    border-radius: 12rpx;
-    .txt {
-      font-size: 28rpx;
-      color: #2979ff;
-      margin-left: 12rpx;
-    }
+    @include empty-state-with-border;
   }
 
   .goods-list {
     .goods-item {
-      padding: 24rpx 0;
-      border-bottom: 1rpx solid #f5f5f5;
+      @include goods-card-with-decoration;
+      @include slide-in-up;
 
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .goods-main {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .goods-info {
+      // 左侧区域
+      .goods-left {
         flex: 1;
-        .goods-name {
-          font-size: 28rpx;
-          color: #333;
-          margin-bottom: 8rpx;
+        display: flex;
+        align-items: flex-start;
+        gap: $wh-spacing-lg;
+        overflow: hidden;
+        padding-right: $wh-spacing-sm;
+
+        .goods-img {
+          @include goods-image-style;
         }
-        .goods-spec {
-          font-size: 24rpx;
-          color: #999;
-          text {
-            margin-right: 12rpx;
+
+        .goods-info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          min-height: 120rpx;
+          overflow: hidden;
+
+          .goods-name {
+            font-size: $wh-font-size-lg;
+            font-weight: $wh-font-weight-semibold;
+            color: $wh-text-color-dark;
+            line-height: $wh-line-height-snug;
+            margin-bottom: $wh-spacing-sm;
+            letter-spacing: 0.3rpx;
+          }
+
+          .goods-specs {
+            display: flex;
+            flex-direction: column;
+            gap: 6rpx;
+            margin-bottom: $wh-spacing-sm;
+
+            .spec-item {
+              @include spec-tag;
+              @include spec-item-content;
+            }
+          }
+
+          .goods-subtotal {
+            @include subtotal-display;
           }
         }
       }
 
-      .goods-actions {
-        display: flex;
-        align-items: center;
-        gap: 20rpx;
-
-        .edit-btn {
-          display: flex;
-          align-items: center;
-          padding: 8rpx 16rpx;
-          background-color: #f0f9eb;
-          border-radius: 8rpx;
-          .txt {
-            font-size: 24rpx;
-            color: #2979ff;
-            margin-left: 4rpx;
-          }
-        }
-
-        .goods-total {
-          font-size: 28rpx;
-          color: #ff4d4f;
-          font-weight: 500;
-          min-width: 100rpx;
-          text-align: right;
-        }
+      // 右侧删除按钮
+      .goods-right {
+        @include delete-button;
       }
     }
 
     .add-more {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20rpx;
-      margin-top: 20rpx;
-      border: 2rpx dashed #2979ff;
-      border-radius: 12rpx;
-      .txt {
-        font-size: 26rpx;
-        color: #2979ff;
-        margin-left: 8rpx;
-      }
+      @include add-more-button;
     }
   }
 }
 
+// ========== 支付方式区块 ==========
 .payment-section {
   .radio-desc {
-    font-size: 24rpx;
-    color: #999;
-    margin: 8rpx 0 16rpx 60rpx;
+    font-size: $wh-font-size-sm;
+    color: $wh-text-color-light-gray;
+    margin: 6rpx 0 $wh-spacing-lg 60rpx;
+    line-height: 1.5;
   }
 }
 
+// ========== 备注区块 ==========
+.remark-section {
+  textarea {
+    @include modern-textarea;
+  }
+}
+
+// ========== 底部栏 ==========
 .footer-bar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: calc(120rpx + env(safe-area-inset-bottom));
-  background-color: #fff;
+  @include bottom-bar;
+  height: calc(140rpx + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40rpx env(safe-area-inset-bottom);
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  box-sizing: border-box;
+  padding: $wh-spacing-xl $wh-spacing-xl calc($wh-spacing-xl + env(safe-area-inset-bottom));
 
   .total-info {
-    display: flex;
-    align-items: baseline;
-    .label {
-      font-size: 28rpx;
-      color: #333;
-    }
-    .amount {
-      font-size: 44rpx;
-      color: #ff4d4f;
-      font-weight: bold;
-    }
+    @include total-bar-section;
   }
 }
 
-// 多单位选择弹窗
+// ========== 多单位选择弹窗 ==========
 .unit-popup {
-  padding: 30rpx;
-  padding-bottom: calc(30rpx + env(safe-area-inset-bottom));
+  @include popup-content;
 
   .popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30rpx;
-    .popup-title {
-      font-size: 32rpx;
-      font-weight: bold;
-      color: #333;
-    }
+    @include popup-header;
   }
 
   .popup-content {
     .goods-preview {
-      display: flex;
-      padding: 20rpx;
-      background-color: #f5f5f5;
-      border-radius: 12rpx;
-      margin-bottom: 30rpx;
-      .goods-img {
-        width: 120rpx;
-        height: 120rpx;
-        border-radius: 12rpx;
-        margin-right: 20rpx;
-      }
-      .goods-detail {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        .name {
-          font-size: 28rpx;
-          font-weight: 500;
-          color: #333;
-          margin-bottom: 8rpx;
-        }
-        .price {
-          font-size: 24rpx;
-          color: #999;
-          line-height: 1.5;
-        }
-      }
+      @include goods-preview-card;
     }
 
     .unit-selector {
@@ -633,37 +581,27 @@ onUnmounted(() => {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 24rpx 0;
-        border-bottom: 1rpx solid #f5f5f5;
+        padding: $wh-spacing-lg 0;
+        border-bottom: 1rpx solid $wh-border-color-light;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
         .unit-label {
-          font-size: 28rpx;
-          color: #333;
+          @include text-subheading;
+          letter-spacing: 0.3rpx;
         }
       }
     }
 
     .total-preview {
-      display: flex;
-      justify-content: flex-end;
-      align-items: baseline;
-      padding: 30rpx 0;
-      border-top: 1rpx solid #f5f5f5;
-      margin-top: 20rpx;
-      .label {
-        font-size: 26rpx;
-        color: #666;
-        margin-right: 12rpx;
-      }
-      .amount {
-        font-size: 40rpx;
-        color: #ff4d4f;
-        font-weight: bold;
-      }
+      @include total-preview-section;
     }
   }
 
   .popup-footer {
-    margin-top: 30rpx;
+    margin-top: $wh-spacing-xl;
   }
 }
 </style>
