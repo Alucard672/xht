@@ -118,7 +118,7 @@
             ></u-button>
           </view>
           <view v-else class="cart-items">
-            <view v-for="(item, id) in cart" :key="id" class="cart-item">
+            <view v-for="(item, id) in cart.value" :key="id" class="cart-item">
               <image :src="item.img_url || '/static/logo.png'" class="item-img"></image>
               <view class="item-info">
                 <view class="item-name">{{ item.name }}</view>
@@ -236,8 +236,8 @@
             <view class="p-info">
               <view class="p-name">{{ activeItem.name }}</view>
               <view class="p-price"
-                >已选：{{ tempCartItem.countBig || 0 }}{{ activeItem.unit_big?.name || '' }}
-                {{ tempCartItem.countSmall || 0 }}{{ activeItem.unit_small?.name }}</view
+                >已选：{{ tempCartItem.value.countBig || 0 }}{{ activeItem.unit_big?.name || '' }}
+                {{ tempCartItem.value.countSmall || 0 }}{{ activeItem.unit_small?.name }}</view
               >
             </view>
           </view>
@@ -251,7 +251,7 @@
                   {{ activeItem.unit_big.name }}</text
                 >
               </view>
-              <u-number-box v-model="tempCartItem.countBig" :min="0"></u-number-box>
+              <u-number-box v-model="tempCartItem.value.countBig" :min="0"></u-number-box>
             </view>
 
             <view class="unit-select-item">
@@ -262,7 +262,7 @@
                   {{ activeItem.unit_small.name }}</text
                 >
               </view>
-              <u-number-box v-model="tempCartItem.countSmall" :min="0"></u-number-box>
+              <u-number-box v-model="tempCartItem.value.countSmall" :min="0"></u-number-box>
             </view>
           </view>
 
@@ -326,12 +326,15 @@ const userInfo = ref({
 
 const categories = ref([{ _id: 'all', name: '全部商品' }])
 
-const cart = reactive<any>({})
+const cart = ref<Record<string, any>>({})
 const showCartPopup = ref(false)
 
 const showUnitPopup = ref(false)
-const activeItem = ref<any>(null)
-const tempCartItem = reactive<any>({
+const activeItem = ref<any>({
+  unit_big: { name: '', price: 0 },
+  unit_small: { name: '', price: 0 }
+})
+const tempCartItem = ref({
   countBig: 0,
   countSmall: 0
 })
@@ -370,9 +373,7 @@ const loadCartFromStorage = () => {
   if (saved) {
     try {
       const data = JSON.parse(saved)
-      // 清空当前内存购物车并恢复
-      Object.keys(cart).forEach(k => delete cart[k])
-      Object.assign(cart, data)
+      cart.value = data
     } catch (e) {
       console.error('Failed to parse saved cart:', e)
     }
@@ -381,7 +382,7 @@ const loadCartFromStorage = () => {
 
 const saveCartToStorage = () => {
   const key = getCartKey()
-  uni.setStorageSync(key, JSON.stringify(cart))
+  uni.setStorageSync(key, JSON.stringify(cart.value))
 }
 
 const fetchShopInfo = async () => {
@@ -425,32 +426,32 @@ const whereClause = computed(() => {
 
 const addToCart = (item: any) => {
   activeItem.value = item
-  const existing = cart[item._id]
+  const existing = cart.value[item._id]
   if (existing) {
-    tempCartItem.countBig = existing.countBig || 0
-    tempCartItem.countSmall = existing.countSmall || 0
+    tempCartItem.value.countBig = existing.countBig || 0
+    tempCartItem.value.countSmall = existing.countSmall || 0
   } else {
-    tempCartItem.countBig = 0
-    tempCartItem.countSmall = 0
+    tempCartItem.value.countBig = 0
+    tempCartItem.value.countSmall = 0
   }
   showUnitPopup.value = true
 }
 
 const confirmAddToCart = () => {
   const item = activeItem.value
-  if (tempCartItem.countBig === 0 && tempCartItem.countSmall === 0) {
-    delete cart[item._id]
+  if (tempCartItem.value.countBig === 0 && tempCartItem.value.countSmall === 0) {
+    delete cart.value[item._id]
   } else {
-    cart[item._id] = {
+    cart.value[item._id] = {
       _id: item._id,
       name: item.name,
       img_url: item.img_url,
       unitSmallName: item.unit_small.name,
       priceSmall: item.unit_small.price,
-      countSmall: tempCartItem.countSmall,
+      countSmall: tempCartItem.value.countSmall,
       unitBigName: item.unit_big?.name,
       priceBig: item.unit_big?.price,
-      countBig: tempCartItem.countBig
+      countBig: tempCartItem.value.countBig
     }
   }
   saveCartToStorage() // 持久化保存
@@ -459,19 +460,19 @@ const confirmAddToCart = () => {
 }
 
 const clearCart = () => {
-  Object.keys(cart).forEach(k => delete cart[k])
+  cart.value = {}
   saveCartToStorage()
 }
 
 const cartTotalCount = computed(() => {
-  return Object.values(cart).reduce(
+  return Object.values(cart.value).reduce(
     (total: number, item: any) => total + (item.countSmall || 0) + (item.countBig || 0),
     0
   )
 })
 
 const cartTotalAmount = computed(() => {
-  return Object.values(cart).reduce((total: number, item: any) => {
+  return Object.values(cart.value).reduce((total: number, item: any) => {
     let sum = total + item.priceSmall * (item.countSmall || 0)
     if (item.countBig && item.priceBig) {
       sum += item.priceBig * item.countBig
@@ -488,13 +489,13 @@ const bottomSpaceHeight = computed(() => {
 
 const goToCheckout = () => {
   if (cartTotalCount.value === 0) return
-  uni.setStorageSync('current_cart', JSON.stringify(Object.values(cart)))
+  uni.setStorageSync('current_cart', JSON.stringify(Object.values(cart.value)))
   uni.navigateTo({ url: `/pages/client/checkout?tenant_id=${tenant_id.value}&mode=${mode.value}` })
 }
 
 const onCartNumChange = (item: any) => {
   if (item.countSmall <= 0 && (item.countBig || 0) <= 0) {
-    delete cart[item._id]
+    delete cart.value[item._id]
   }
   saveCartToStorage()
 }
