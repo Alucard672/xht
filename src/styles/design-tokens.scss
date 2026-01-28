@@ -1,6 +1,6 @@
 /**
  * 设计系统 - Design Tokens
- * 类微信原生风格
+ * 类微信原生风格 + 现代增强
  */
 
 /* ==================== 颜色系统 ==================== */
@@ -10,12 +10,22 @@ $wh-color-primary: #07c160; // 微信绿，用于主要操作
 $wh-color-primary-light: rgba(7, 193, 96, 0.1);
 $wh-color-primary-dark: #06ad56;
 
+// 扩展主色（蓝色系）
+$wh-color-blue: #2d7ff9; // 专业蓝
+$wh-color-blue-light: #e8f4ff; // 浅蓝背景
+$wh-color-blue-dark: #1a6be0; // 深蓝
+
 /* 文字颜色 */
 $wh-text-color-primary: #333333; // 主文字
 $wh-text-color-secondary: #666666; // 次要文字
 $wh-text-color-tertiary: #999999; // 辅助文字
 $wh-text-color-placeholder: #cccccc; // 占位文字
 $wh-text-color-inverse: #ffffff; // 反色文字
+
+// 扩展文字颜色
+$wh-text-color-dark: #1a1a1a; // 深色主文字
+$wh-text-color-gray: #6e6e73; // iOS 灰
+$wh-text-color-light-gray: #aeaeb2; // 浅灰
 
 /* 背景颜色 */
 $wh-bg-color-page: #f7f7f7; // 页面背景
@@ -24,17 +34,36 @@ $wh-bg-color-hover: #f1f1f1; // 点击状态
 $wh-bg-color-mask: rgba(0, 0, 0, 0.4); // 遮罩
 $wh-bg-color-divider: #ededed; // 分割线
 
+// 扩展背景颜色
+$wh-bg-color-secondary: #f7f8fa; // 次要背景
+$wh-bg-color-tertiary: #f0f0f5; // 输入框背景
+$wh-bg-color-gradient: linear-gradient(180deg, #f7f8fa 0%, #ffffff 100%); // 渐变背景
+
 /* 状态颜色 */
 $wh-color-success: #07c160; // 成功
 $wh-color-warning: #ff9500; // 警告
 $wh-color-danger: #fa5151; // 危险
 $wh-color-info: #10aeff; // 信息
 
+// 扩展状态颜色
+$wh-color-danger-modern: #ff3b30; // iOS 警告红
+$wh-color-warning-modern: #ff9500; // iOS 提示橙
+$wh-color-success-modern: #34c759; // iOS 成功绿
+
 /* 状态颜色 - 浅色背景 */
 $wh-color-success-light: rgba(7, 193, 96, 0.1);
 $wh-color-warning-light: rgba(255, 149, 0, 0.1);
 $wh-color-danger-light: rgba(250, 81, 81, 0.1);
 $wh-color-info-light: rgba(16, 174, 255, 0.1);
+
+// 扩展浅色背景
+$wh-color-blue-light-bg: rgba(45, 127, 249, 0.04);
+$wh-color-green-light-bg: rgba(52, 199, 89, 0.04);
+$wh-color-red-light-bg: rgba(255, 59, 48, 0.06);
+
+/* 边框颜色 */
+$wh-border-color-light: #e5e5ea; // 浅色边框
+$wh-border-color-medium: #d1d1d6; // 中等边框
 
 /* ==================== 字体系统 ==================== */
 
@@ -46,15 +75,27 @@ $wh-font-size-md: 30rpx; // 中等
 $wh-font-size-lg: 32rpx; // 标题
 $wh-font-size-xl: 36rpx; // 大标题
 
+// 扩展字号
+$wh-font-size-2xl: 44rpx; // 超大标题
+$wh-font-size-3xl: 48rpx; // 特大标题
+
 /* 字重 */
 $wh-font-weight-normal: 400; // 常规
 $wh-font-weight-medium: 500; // 中等
 $wh-font-weight-bold: 600; // 加粗
 
+// 扩展字重
+$wh-font-weight-semibold: 700; // 半粗
+$wh-font-weight-extrabold: 800; // 特粗
+
 /* 行高 */
 $wh-line-height-tight: 1.2;
 $wh-line-height-normal: 1.5;
 $wh-line-height-relaxed: 1.8;
+
+// 扩展行高
+$wh-line-height-snug: 1.3;
+$wh-line-height-loose: 1.6;
 
 /* ==================== 间距系统 ==================== */
 
@@ -69,6 +110,10 @@ $wh-spacing-lg: $wh-spacing-unit * 4; // 32rpx
 $wh-spacing-xl: $wh-spacing-unit * 6; // 48rpx
 $wh-spacing-xxl: $wh-spacing-unit * 8; // 64rpx
 
+// 扩展间距
+$wh-spacing-xxs: 6rpx; // 超小间距
+$wh-spacing-3xl: 80rpx; // 超大间距
+
 /* ==================== 圆角系统 ==================== */
 
 $wh-border-radius-sm: 8rpx; // 标签、小按钮
@@ -77,11 +122,20 @@ $wh-border-radius-lg: 16rpx; // 大卡片
 $wh-border-radius-xl: 24rpx; // 超大卡片
 $wh-border-radius-circle: 50%; // 圆形
 
+// 扩展圆角
+$wh-border-radius-xs: 6rpx; // 极小圆角
+$wh-border-radius-full: 999rpx; // 全圆角
+
 /* ==================== 阴影系统 ==================== */
 
 $wh-shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.04); // 列表卡片
 $wh-shadow-md: 0 4rpx 12rpx rgba(0, 0, 0, 0.08); // 浮层
 $wh-shadow-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.12); // 弹窗
+
+// 扩展阴影
+$wh-shadow-xs: 0 1rpx 3rpx rgba(0, 0, 0, 0.04); // 极小阴影
+$wh-shadow-colored: 0 4rpx 16rpx rgba(45, 127, 249, 0.15); // 彩色阴影
+$wh-shadow-bottom-bar: 0 -4rpx 24rpx rgba(0, 0, 0, 0.06); // 底部栏阴影
 
 /* ==================== 层级系统 ==================== */
 
@@ -92,12 +146,39 @@ $wh-z-index-overlay: 200;
 $wh-z-index-modal: 300;
 $wh-z-index-toast: 400;
 
+// 扩展层级
+$wh-z-index-header: 50; // 头部导航
+$wh-z-index-footer: 90; // 底部栏
+
 /* ==================== 动画系统 ==================== */
 
 $wh-transition-fast: 0.15s;
 $wh-transition-base: 0.3s;
 $wh-transition-slow: 0.5s;
 
+// 扩展动画
+$wh-transition-faster: 150ms; // 快速（毫秒）
+$wh-transition-normal: 200ms; // 标准（毫秒）
+$wh-transition-slower: 300ms; // 慢速（毫秒）
+
 $wh-easing-base: cubic-bezier(0.4, 0, 0.2, 1);
 $wh-easing-in: cubic-bezier(0.4, 0, 1, 1);
 $wh-easing-out: cubic-bezier(0, 0, 0.2, 1);
+
+/* ==================== 渐变系统 ==================== */
+
+// 主色渐变
+$wh-gradient-primary: linear-gradient(90deg, $wh-color-primary 0%, #5ac8fa 100%);
+$wh-gradient-blue: linear-gradient(90deg, $wh-color-blue 0%, #5ac8fa 100%);
+$wh-gradient-blue-vertical: linear-gradient(180deg, $wh-color-blue 0%, #5ac8fa 100%);
+
+// 价格渐变
+$wh-gradient-price: linear-gradient(135deg, $wh-color-danger-modern 0%, #ff6b6b 100%);
+
+// 背景渐变
+$wh-gradient-customer: linear-gradient(135deg, $wh-bg-color-card 0%, $wh-color-blue-light 100%);
+$wh-gradient-empty: linear-gradient(
+  135deg,
+  rgba(45, 127, 249, 0.02) 0%,
+  rgba(52, 199, 89, 0.02) 100%
+);

@@ -20,6 +20,57 @@
   padding: $wh-spacing-lg;
 }
 
+// 现代卡片风格
+@mixin card-modern {
+  background-color: $wh-bg-color-card;
+  border-radius: $wh-border-radius-lg;
+  padding: $wh-spacing-xl;
+  box-shadow: $wh-shadow-sm;
+  border: 1rpx solid $wh-border-color-light;
+  transition: all $wh-transition-normal cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: $wh-shadow-md;
+  }
+}
+
+// 装饰性顶部线条
+@mixin card-top-decoration($gradient: $wh-gradient-primary) {
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3rpx;
+    background: $gradient;
+    opacity: 0.8;
+  }
+}
+
+// 左侧装饰条
+@mixin card-side-decoration($width: 4rpx, $gradient: $wh-gradient-blue) {
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: $width;
+    background: $gradient;
+    opacity: 0;
+    transition: opacity $wh-transition-normal;
+  }
+
+  &.active::after,
+  &:hover::after {
+    opacity: 1;
+  }
+}
+
 /* ==================== 文本混入 ==================== */
 
 @mixin text-primary {
@@ -57,6 +108,43 @@
   line-height: $wh-line-height-normal;
 }
 
+// 现代文本样式
+@mixin text-heading {
+  font-size: $wh-font-size-xl;
+  font-weight: $wh-font-weight-semibold;
+  color: $wh-text-color-dark;
+  line-height: $wh-line-height-snug;
+  letter-spacing: 0.3rpx;
+}
+
+@mixin text-subheading {
+  font-size: $wh-font-size-lg;
+  font-weight: $wh-font-weight-semibold;
+  color: $wh-text-color-dark;
+  letter-spacing: 0.3rpx;
+}
+
+@mixin text-gradient-price {
+  background: $wh-gradient-price;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: $wh-font-weight-extrabold;
+  letter-spacing: -0.5rpx;
+}
+
+// 标签装饰点
+@mixin label-dot($color: $wh-color-blue) {
+  &::before {
+    content: '';
+    width: 6rpx;
+    height: 24rpx;
+    background: $color;
+    border-radius: $wh-border-radius-full;
+    margin-right: $wh-spacing-xs;
+  }
+}
+
 /* ==================== 按钮混入 ==================== */
 
 @mixin button-primary {
@@ -79,6 +167,22 @@
   border-radius: $wh-border-radius-sm;
   font-size: $wh-font-size-base;
   font-weight: $wh-font-weight-medium;
+}
+
+// 现代按钮样式
+@mixin button-modern($bg-color: $wh-color-blue) {
+  background: $bg-color;
+  color: $wh-text-color-inverse;
+  border-radius: $wh-border-radius-full;
+  font-size: $wh-font-size-md;
+  font-weight: $wh-font-weight-semibold;
+  padding: $wh-spacing-sm $wh-spacing-lg;
+  transition: all $wh-transition-normal;
+
+  &:active {
+    transform: scale(0.95);
+    opacity: 0.9;
+  }
 }
 
 /* ==================== 布局混入 ==================== */
@@ -132,4 +236,87 @@
 @mixin safe-area-top {
   padding-top: constant(safe-area-inset-top);
   padding-top: env(safe-area-inset-top);
+}
+
+/* ==================== 交互动画混入 ==================== */
+
+// 悬停缩放效果
+@mixin hover-scale($scale: 0.98) {
+  transition: all $wh-transition-normal cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:active,
+  &.active {
+    transform: scale($scale);
+  }
+}
+
+// 按钮按下效果
+@mixin button-press($scale: 0.85) {
+  transition: transform $wh-transition-faster;
+
+  &:active {
+    transform: scale($scale);
+    opacity: 0.7;
+  }
+}
+
+// 入场动画
+@mixin slide-in-up {
+  animation: slideInUp $wh-transition-slower ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(20rpx);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ==================== 背景效果混入 ==================== */
+
+// 毛玻璃效果
+@mixin glass-effect($blur: 20rpx, $bg-opacity: 0.95) {
+  backdrop-filter: blur($blur);
+  -webkit-backdrop-filter: blur($blur);
+  background: rgba(255, 255, 255, $bg-opacity);
+}
+
+// 渐变背景
+@mixin gradient-bg($gradient: $wh-bg-color-gradient) {
+  background: $gradient;
+}
+
+// 规格标签背景
+@mixin spec-tag-bg($color: rgba(45, 127, 249, 0.04)) {
+  background: $color;
+  border-radius: $wh-border-radius-xs;
+  padding: 4rpx $wh-spacing-sm;
+}
+
+/* ==================== 图片占位混入 ==================== */
+
+@mixin image-placeholder {
+  background: linear-gradient(135deg, $wh-bg-color-tertiary 0%, $wh-bg-color-secondary 100%);
+  border: 1rpx solid $wh-border-color-light;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ==================== 底部栏混入 ==================== */
+
+@mixin bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  @include glass-effect;
+  box-shadow: $wh-shadow-bottom-bar;
+  z-index: $wh-z-index-footer;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.05);
 }
