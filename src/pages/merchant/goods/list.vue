@@ -203,6 +203,7 @@ onShow(() => {
 <style lang="scss" scoped>
 @import '@/styles/design-tokens.scss';
 @import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
 
 .list-container {
   padding: $wh-spacing-md;
@@ -217,52 +218,72 @@ onShow(() => {
 }
 
 .stock-warning-bar {
+  @include card-modern;
   display: flex;
   align-items: center;
-  padding: 24rpx 32rpx;
-  margin: 0 $wh-spacing-md;
-  margin-top: $wh-spacing-md;
-  background-color: #fff2f0;
-  border-radius: 16rpx;
-  border: 1rpx solid #ffccc7;
+  padding: $wh-spacing-lg $wh-spacing-xl;
+  margin: 0 $wh-spacing-md $wh-spacing-md;
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 149, 0, 0.05) 100%);
+  border: 2rpx solid rgba(255, 59, 48, 0.15);
+  transition: all $wh-transition-normal;
+
+  @include hover-scale(0.98);
+
+  &:active {
+    border-color: rgba(255, 59, 48, 0.3);
+    transform: scale(0.98);
+  }
 
   .warning-icon {
-    width: 64rpx;
-    height: 64rpx;
-    border-radius: 50%;
-    background-color: #fff;
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: $wh-border-radius-circle;
+    background: $wh-gradient-customer;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 20rpx;
+    margin-right: $wh-spacing-md;
+    box-shadow: $wh-shadow-xs;
+    border: 2rpx solid rgba(255, 59, 48, 0.2);
   }
 
   .warning-info {
     flex: 1;
 
     .warning-title {
-      font-size: 28rpx;
-      color: #333;
-      font-weight: 500;
+      font-size: $wh-font-size-lg;
+      font-weight: $wh-font-weight-semibold;
+      color: $wh-text-color-dark;
       display: block;
+      letter-spacing: 0.3rpx;
+      margin-bottom: $wh-spacing-xs;
     }
 
     .warning-desc {
-      font-size: 24rpx;
-      color: #ff4d4f;
-      margin-top: 4rpx;
+      font-size: $wh-font-size-sm;
+      color: $wh-color-danger-modern;
+      margin-top: $wh-spacing-xs;
       display: block;
+      font-weight: $wh-font-weight-medium;
     }
   }
 
   .warning-action {
     display: flex;
     align-items: center;
+    padding: $wh-spacing-sm;
+    border-radius: $wh-border-radius-full;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      background: $wh-bg-color-tertiary;
+    }
 
     .action-text {
-      font-size: 26rpx;
-      color: #999;
-      margin-right: 8rpx;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-gray;
+      margin-right: $wh-spacing-xs;
+      font-weight: $wh-font-weight-medium;
     }
   }
 }
