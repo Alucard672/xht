@@ -276,62 +276,79 @@ const handleRenewal = async () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .renewal-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 24rpx;
+  @include page-container-with-top($wh-spacing-xl);
   padding-bottom: 200rpx;
 }
 
 .expired-card {
-  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
-  border-radius: 20rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-  color: #fff;
+  @include card-modern;
+  background: $wh-gradient-blue-vertical;
+  padding: $wh-spacing-xxl;
+  margin-bottom: $wh-spacing-lg;
+  color: $wh-text-color-inverse;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300rpx;
+    height: 300rpx;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
 
   .card-header {
-    display: flex;
-    justify-content: space-between;
+    @include flex-between;
     align-items: center;
-    margin-bottom: 24rpx;
+    margin-bottom: $wh-spacing-lg;
+    position: relative;
+    z-index: 1;
 
     .title {
-      font-size: 28rpx;
-      opacity: 0.9;
+      @include text-subheading;
+      opacity: 0.95;
+      letter-spacing: 0.3rpx;
     }
   }
 
   .expired-date {
-    display: flex;
+    @include flex-start;
     align-items: baseline;
-    margin-bottom: 16rpx;
+    margin-bottom: $wh-spacing-md;
 
     .date {
-      font-size: 56rpx;
-      font-weight: bold;
-      margin-right: 12rpx;
+      @include price-text-large;
+      margin-right: $wh-spacing-sm;
     }
 
     .unit {
-      font-size: 28rpx;
+      font-size: $wh-font-size-md;
       opacity: 0.9;
+      font-weight: $wh-font-weight-medium;
     }
   }
 
   .days-info {
-    display: flex;
-    align-items: center;
+    @include flex-start;
 
     .days {
-      font-size: 36rpx;
-      font-weight: bold;
-      margin-right: 8rpx;
+      font-size: $wh-font-size-2xl;
+      font-weight: $wh-font-weight-extrabold;
+      margin-right: $wh-spacing-xs;
     }
 
     .text {
-      font-size: 26rpx;
+      font-size: $wh-font-size-sm;
       opacity: 0.9;
+      font-weight: $wh-font-weight-medium;
     }
 
     &.expired .text {
@@ -341,131 +358,164 @@ const handleRenewal = async () => {
 }
 
 .renewal-tip {
-  display: flex;
+  @include flex-start;
   align-items: center;
-  background-color: #fff2f0;
-  border: 1rpx solid #ffccc7;
-  border-radius: 12rpx;
-  padding: 20rpx;
-  margin-bottom: 32rpx;
+  background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 149, 0, 0.05) 100%);
+  border: 2rpx solid rgba(255, 59, 48, 0.15);
+  border-radius: $wh-border-radius-lg;
+  padding: $wh-spacing-lg $wh-spacing-xl;
+  margin-bottom: $wh-spacing-3xl;
+  transition: all $wh-transition-normal;
+
+  @include hover-scale(0.98);
 
   .tip-text {
-    margin-left: 16rpx;
-    font-size: 26rpx;
-    color: #ff4d4f;
+    margin-left: $wh-spacing-sm;
+    font-size: $wh-font-size-md;
+    color: $wh-color-danger-modern;
+    font-weight: $wh-font-weight-semibold;
     flex: 1;
+    line-height: $wh-line-height-relaxed;
   }
 }
 
 .section-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 24rpx;
-  padding-left: 8rpx;
+  @include text-heading;
+  margin-bottom: $wh-spacing-lg;
+  padding-left: $wh-spacing-sm;
+  @include label-dot($wh-color-blue);
 }
 
 .package-list {
   .package-item {
-    background-color: #fff;
-    border-radius: 16rpx;
-    padding: 24rpx;
-    margin-bottom: 20rpx;
+    @include card-modern;
+    margin-bottom: $wh-spacing-md;
+    padding: $wh-spacing-xl;
     border: 2rpx solid transparent;
-    box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
     position: relative;
+    overflow: hidden;
+    transition: all $wh-transition-normal;
 
     &.selected {
-      border-color: #07c160;
-      background-color: #f6ffed;
+      border-color: $wh-color-blue;
+      background: $wh-color-blue-light-bg;
+      box-shadow: $wh-shadow-colored;
     }
 
     &.disabled {
-      opacity: 0.7;
+      opacity: 0.6;
+    }
+
+    &:active {
+      transform: scale(0.98);
     }
 
     .package-header {
-      display: flex;
-      justify-content: space-between;
+      @include flex-between;
       align-items: center;
-      margin-bottom: 16rpx;
+      margin-bottom: $wh-spacing-md;
 
       .package-name {
-        font-size: 32rpx;
-        font-weight: bold;
-        color: #333;
+        @include text-heading;
+        letter-spacing: 0.3rpx;
       }
 
       .package-price {
-        font-size: 36rpx;
-        font-weight: bold;
-        color: #07c160;
+        @include price-text-medium;
 
         &.free {
-          color: #1890ff;
+          color: $wh-color-info;
+          background: linear-gradient(
+            135deg,
+            rgba(16, 174, 255, 0.1) 0%,
+            rgba(16, 174, 255, 0.05) 100%
+          );
+          padding: 4rpx $wh-spacing-sm;
+          border-radius: $wh-border-radius-full;
+          font-size: $wh-font-size-lg !important;
         }
       }
     }
 
     .package-body {
       .duration {
-        font-size: 26rpx;
-        color: #666;
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-secondary;
+        font-weight: $wh-font-weight-medium;
+        margin-bottom: $wh-spacing-xs;
       }
 
       .description {
-        display: block;
-        font-size: 24rpx;
-        color: #999;
-        margin-top: 8rpx;
+        font-size: $wh-font-size-xs;
+        color: $wh-text-color-light-gray;
+        margin-top: $wh-spacing-xs;
+        font-weight: $wh-font-weight-normal;
+        line-height: $wh-line-height-relaxed;
       }
     }
 
     .package-footer {
       position: absolute;
-      right: 24rpx;
-      bottom: 24rpx;
+      right: $wh-spacing-lg;
+      bottom: $wh-spacing-lg;
 
       .circle {
-        width: 40rpx;
-        height: 40rpx;
-        border-radius: 50%;
-        border: 2rpx solid #ddd;
+        width: 48rpx;
+        height: 48rpx;
+        border-radius: $wh-border-radius-circle;
+        border: 3rpx solid $wh-border-color-light;
+        transition: all $wh-transition-normal;
+      }
+
+      .u-icon {
+        position: absolute;
+        right: 0;
+        top: 0;
       }
     }
   }
 }
 
 .loading-packages {
-  display: flex;
-  justify-content: center;
-  padding: 100rpx 0;
+  @include flex-center;
+  padding: $wh-spacing-3xl;
 }
 
 .bottom-action {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #fff;
-  padding: 24rpx;
-  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  @include bottom-bar;
+  height: auto;
+  min-height: 160rpx;
+  padding: $wh-spacing-xl $wh-spacing-xl calc($wh-spacing-xl + env(safe-area-inset-bottom));
 
   .total-info {
-    display: flex;
-    justify-content: flex-end;
+    @include flex-end;
     align-items: center;
-    margin-bottom: 20rpx;
+    margin-bottom: $wh-spacing-lg;
+    gap: $wh-spacing-sm;
 
     .label {
-      font-size: 28rpx;
-      color: #666;
+      font-size: $wh-font-size-md;
+      color: $wh-text-color-gray;
+      font-weight: $wh-font-weight-medium;
     }
 
     .amount {
-      font-size: 40rpx;
-      font-weight: bold;
-      color: #07c160;
+      @include price-text-medium;
+    }
+  }
+
+  ::v-deep .u-button {
+    width: 100%;
+    height: 100rpx;
+    border-radius: $wh-border-radius-full !important;
+    font-weight: $wh-font-weight-semibold !important;
+    font-size: $wh-font-size-xl !important;
+    box-shadow: $wh-shadow-colored !important;
+    transition: all $wh-transition-normal !important;
+
+    &:active {
+      transform: scale(0.98) !important;
+      box-shadow: $wh-shadow-md !important;
     }
   }
 }

@@ -173,29 +173,92 @@ onMounted(() => {
 <style lang="scss" scoped>
 @import '@/styles/design-tokens.scss';
 @import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
 
 .category-container {
   padding: $wh-spacing-md;
 
   .header-action {
-    margin-bottom: $wh-spacing-md;
+    margin-bottom: $wh-spacing-lg;
+    padding: 0 $wh-spacing-sm;
+
+    ::v-deep .u-button {
+      border-radius: $wh-border-radius-full !important;
+      font-weight: $wh-font-weight-semibold !important;
+      box-shadow: $wh-shadow-colored !important;
+      transition: all $wh-transition-normal !important;
+
+      &:active {
+        transform: scale(0.98) !important;
+        box-shadow: $wh-shadow-md !important;
+      }
+    }
   }
 
   .category-list {
     display: flex;
     flex-direction: column;
-    gap: $wh-spacing-sm;
+    gap: $wh-spacing-md;
+
+    ::v-deep .wh-section-card {
+      @include slide-in-up;
+      transition: all $wh-transition-normal;
+
+      &:active {
+        transform: scale(0.98);
+      }
+    }
   }
 
   .cell-actions {
-    display: inline-flex;
-    align-items: center;
+    @include flex-start;
     gap: $wh-spacing-md;
+
+    .u-icon {
+      padding: $wh-spacing-sm;
+      border-radius: $wh-border-radius-full;
+      transition: all $wh-transition-normal;
+
+      &:active {
+        transform: scale(0.9);
+        opacity: 0.7;
+      }
+    }
   }
 
   .modal-content {
-    padding: $wh-spacing-md 0;
+    padding: $wh-spacing-lg 0;
     width: 100%;
+
+    ::v-deep .u-form {
+      .u-form-item {
+        margin-bottom: $wh-spacing-lg;
+
+        .u-form-item__body__left {
+          .u-form-item__body__left__content__label {
+            @include text-subheading;
+            font-size: $wh-font-size-md !important;
+          }
+        }
+
+        .u-form-item__body__right {
+          .u-input {
+            background: $wh-bg-color-tertiary !important;
+            border-radius: $wh-border-radius-md !important;
+            padding: $wh-spacing-sm $wh-spacing-md !important;
+            font-size: $wh-font-size-md !important;
+            color: $wh-text-color-dark !important;
+            transition: all $wh-transition-normal !important;
+
+            &:focus {
+              background: $wh-bg-color-card !important;
+              border-color: $wh-color-blue !important;
+              box-shadow: 0 0 0 6rpx rgba(45, 127, 249, 0.1) !important;
+            }
+          }
+        }
+      }
+    }
   }
 }
 

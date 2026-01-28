@@ -194,55 +194,76 @@ const saveSettings = async () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .setting-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 20rpx;
+  @include page-container-with-top;
+  padding-bottom: 180rpx;
 
   // 店铺信息卡片
   .info-card {
-    background: linear-gradient(135deg, #07c160 0%, #06ae56 100%);
-    border-radius: 20rpx;
-    padding: 32rpx;
-    margin-bottom: 30rpx;
-    color: #fff;
+    @include card-modern;
+    background: $wh-gradient-blue-vertical;
+    padding: $wh-spacing-xxl;
+    margin-bottom: $wh-spacing-xl;
+    color: $wh-text-color-inverse;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300rpx;
+      height: 300rpx;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
 
     &.is-expired {
-      background: linear-gradient(135deg, #ff4d4f 0%, #d9363e 100%);
+      background: linear-gradient(135deg, $wh-color-danger-modern 0%, #d9363e 100%);
     }
 
     .card-header {
-      display: flex;
-      justify-content: space-between;
+      @include flex-between;
       align-items: center;
-      margin-bottom: 24rpx;
+      margin-bottom: $wh-spacing-lg;
+      position: relative;
+      z-index: 1;
 
       .card-title {
-        font-size: 32rpx;
-        font-weight: bold;
+        @include text-heading;
+        letter-spacing: 0.5rpx;
       }
     }
 
     .card-body {
+      position: relative;
+      z-index: 1;
+
       .info-row {
-        display: flex;
-        justify-content: space-between;
+        @include flex-between;
         align-items: center;
-        padding: 16rpx 0;
-        border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+        padding: $wh-spacing-md 0;
+        border-bottom: 1rpx solid rgba(255, 255, 255, 0.15);
 
         &:last-child {
           border-bottom: none;
         }
 
         .label {
-          font-size: 28rpx;
-          opacity: 0.8;
+          font-size: $wh-font-size-md;
+          opacity: 0.9;
+          font-weight: $wh-font-weight-medium;
         }
 
         .value {
-          font-size: 30rpx;
-          font-weight: 500;
+          font-size: $wh-font-size-lg;
+          font-weight: $wh-font-weight-semibold;
+          letter-spacing: 0.3rpx;
 
           &.text-danger {
             color: #ffec3d;
@@ -252,33 +273,35 @@ const saveSettings = async () => {
     }
 
     .card-footer {
-      margin-top: 24rpx;
-      padding-top: 24rpx;
-      border-top: 1rpx solid rgba(255, 255, 255, 0.1);
+      margin-top: $wh-spacing-lg;
+      padding-top: $wh-spacing-lg;
+      border-top: 1rpx solid rgba(255, 255, 255, 0.15);
 
       .renew-hint {
-        display: flex;
-        align-items: center;
-        font-size: 26rpx;
-        margin-bottom: 20rpx;
-        opacity: 0.9;
+        @include flex-start;
+        font-size: $wh-font-size-sm;
+        margin-bottom: $wh-spacing-md;
+        opacity: 0.95;
+        font-weight: $wh-font-weight-medium;
 
         text {
-          margin-left: 8rpx;
+          margin-left: $wh-spacing-xs;
         }
       }
 
       .renew-btn {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 20rpx;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 12rpx;
-        font-size: 28rpx;
-        font-weight: 500;
+        @include flex-center;
+        padding: $wh-spacing-md $wh-spacing-xl;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10rpx);
+        border-radius: $wh-border-radius-full;
+        font-size: $wh-font-size-md;
+        font-weight: $wh-font-weight-semibold;
+        box-shadow: $wh-shadow-xs;
+        transition: all $wh-transition-normal;
 
         &:active {
+          transform: scale(0.98);
           opacity: 0.8;
         }
       }
@@ -287,86 +310,136 @@ const saveSettings = async () => {
 
   // 续费弹窗
   .renew-popup {
-    padding: 32rpx;
+    @include popup-content;
+    padding: $wh-spacing-xxl;
 
     .popup-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 32rpx;
-
-      .popup-title {
-        font-size: 34rpx;
-        font-weight: bold;
-        color: #333;
-      }
-
-      .popup-close {
-        padding: 10rpx;
-      }
+      @include popup-header;
     }
 
     .popup-body {
       .contact-item {
-        margin-bottom: 32rpx;
+        margin-bottom: $wh-spacing-xl;
 
         .contact-label {
-          font-size: 28rpx;
-          color: #999;
-          margin-bottom: 12rpx;
+          font-size: $wh-font-size-sm;
+          color: $wh-text-color-light-gray;
+          margin-bottom: $wh-spacing-sm;
           display: block;
+          font-weight: $wh-font-weight-medium;
         }
 
         .contact-value {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 36rpx;
-          font-weight: bold;
-          color: #333;
+          @include flex-between;
+          font-size: $wh-font-size-2xl;
+          font-weight: $wh-font-weight-extrabold;
+          color: $wh-text-color-dark;
 
           .copy-btn {
-            display: flex;
-            align-items: center;
-            gap: 8rpx;
-            padding: 12rpx 24rpx;
-            background: #f0f0f0;
-            border-radius: 8rpx;
-            font-size: 26rpx;
-            font-weight: normal;
-            color: #07c160;
+            @include flex-start;
+            gap: $wh-spacing-xs;
+            padding: $wh-spacing-sm $wh-spacing-md;
+            background: $wh-bg-color-tertiary;
+            border-radius: $wh-border-radius-full;
+            font-size: $wh-font-size-sm;
+            font-weight: $wh-font-weight-semibold;
+            color: $wh-color-blue;
+            transition: all $wh-transition-normal;
 
             &:active {
-              opacity: 0.7;
+              background: rgba(45, 127, 249, 0.1);
+              transform: scale(0.98);
             }
           }
         }
 
         .contact-desc {
-          display: flex;
-          flex-direction: column;
-          gap: 12rpx;
-          font-size: 28rpx;
-          color: #666;
-          line-height: 1.6;
+          @include flex-column;
+          gap: $wh-spacing-sm;
+          font-size: $wh-font-size-sm;
+          color: $wh-text-color-secondary;
+          line-height: $wh-line-height-relaxed;
+
+          text {
+            position: relative;
+            padding-left: $wh-spacing-md;
+
+            &::before {
+              content: '•';
+              position: absolute;
+              left: 0;
+              color: $wh-color-blue;
+            }
+          }
         }
       }
     }
 
     .popup-footer {
-      margin-top: 40rpx;
+      margin-top: $wh-spacing-xxl;
+
+      ::v-deep .u-button {
+        border-radius: $wh-border-radius-full !important;
+        font-weight: $wh-font-weight-semibold !important;
+      }
     }
   }
 
   .form-box {
-    background-color: #fff;
-    border-radius: 16rpx;
-    padding: 0 30rpx;
+    @include section-base;
+    padding: 0 $wh-spacing-xl;
+    margin-bottom: $wh-spacing-xl;
+
+    ::v-deep .u-form {
+      .u-form-item {
+        margin-bottom: $wh-spacing-xl;
+        padding: $wh-spacing-lg 0;
+
+        .u-form-item__body__left {
+          .u-form-item__body__left__content__label {
+            @include text-subheading;
+            font-size: $wh-font-size-md !important;
+          }
+        }
+
+        .u-form-item__body__right {
+          .u-input {
+            background: $wh-bg-color-tertiary !important;
+            border-radius: $wh-border-radius-md !important;
+            padding: $wh-spacing-sm $wh-spacing-md !important;
+            font-size: $wh-font-size-md !important;
+            color: $wh-text-color-dark !important;
+            transition: all $wh-transition-normal !important;
+
+            &:focus {
+              background: $wh-bg-color-card !important;
+              border-color: $wh-color-blue !important;
+              box-shadow: 0 0 0 6rpx rgba(45, 127, 249, 0.1) !important;
+            }
+          }
+        }
+      }
+    }
   }
 
   .footer-btn {
-    margin-top: 60rpx;
-    padding: 0 40rpx;
+    margin-top: $wh-spacing-3xl;
+    padding: 0 $wh-spacing-xl;
+
+    ::v-deep .u-button {
+      width: 100%;
+      height: 100rpx;
+      border-radius: $wh-border-radius-full !important;
+      font-weight: $wh-font-weight-semibold !important;
+      font-size: $wh-font-size-xl !important;
+      box-shadow: $wh-shadow-colored !important;
+      transition: all $wh-transition-normal !important;
+
+      &:active {
+        transform: scale(0.98) !important;
+        box-shadow: $wh-shadow-md !important;
+      }
+    }
   }
 }
 </style>

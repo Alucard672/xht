@@ -162,122 +162,190 @@ const handleRepay = async () => {
 </script>
 
 <style lang="scss" scoped>
+@import '@/styles/design-tokens.scss';
+@import '@/styles/mixins.scss';
+@import '@/styles/page-design.scss';
+
 .customer-detail-container {
-  background-color: #f5f5f5;
+  background: $wh-bg-color-gradient;
   min-height: 100vh;
-  padding: 20rpx;
+  padding: $wh-spacing-lg $wh-spacing-lg 180rpx;
 }
 
 .header-card {
-  background-color: #fff;
-  padding: 40rpx;
-  border-radius: 20rpx;
-  margin-bottom: 30rpx;
+  @include card-modern;
+  padding: $wh-spacing-xxl;
+  margin-bottom: $wh-spacing-lg;
+  background: linear-gradient(135deg, $wh-bg-color-card 0%, $wh-color-blue-light 100%);
+  border: 2rpx solid rgba(45, 127, 249, 0.15);
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300rpx;
+    height: 300rpx;
+    background: radial-gradient(circle, rgba(45, 127, 249, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
 
   .info-row {
-    display: flex;
-    justify-content: space-between;
+    @include flex-between;
     align-items: center;
-    margin-bottom: 40rpx;
+    margin-bottom: $wh-spacing-3xl;
+    position: relative;
+    z-index: 1;
 
     .alias {
-      font-size: 40rpx;
-      font-weight: bold;
-      color: #333;
+      font-size: $wh-font-size-3xl;
+      font-weight: $wh-font-weight-extrabold;
+      color: $wh-text-color-dark;
+      letter-spacing: 0.5rpx;
     }
     .phone-link {
-      display: flex;
-      align-items: center;
-      gap: 10rpx;
-      color: #2979ff;
-      font-size: 30rpx;
+      @include flex-start;
+      gap: $wh-spacing-sm;
+      color: $wh-color-blue;
+      font-size: $wh-font-size-lg;
+      font-weight: $wh-font-weight-semibold;
+      padding: $wh-spacing-sm $wh-spacing-md;
+      border-radius: $wh-border-radius-full;
+      background: $wh-color-blue-light-bg;
+      transition: all $wh-transition-normal;
+
+      &:active {
+        background: rgba(45, 127, 249, 0.15);
+        transform: scale(0.98);
+      }
     }
   }
 
   .stats-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    @include flex-between;
+    align-items: flex-end;
 
     .stats-item {
-      display: flex;
-      flex-direction: column;
+      @include flex-column;
       .label {
-        font-size: 24rpx;
-        color: #999;
-        margin-bottom: 10rpx;
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-gray;
+        margin-bottom: $wh-spacing-sm;
+        font-weight: $wh-font-weight-medium;
+        letter-spacing: 0.5rpx;
       }
       .amount {
-        font-size: 48rpx;
-        font-weight: bold;
-        color: #333;
+        @include price-text-large;
+        color: $wh-text-color-dark;
         &.danger {
-          color: #ff4d4f;
+          background: $wh-gradient-price;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
         }
       }
     }
 
     .stats-action {
-      display: flex;
+      @include flex-start;
+      gap: $wh-spacing-sm;
+
+      ::v-deep .u-button {
+        border-radius: $wh-border-radius-full !important;
+        font-weight: $wh-font-weight-semibold !important;
+        transition: all $wh-transition-normal !important;
+
+        &:active {
+          transform: scale(0.95) !important;
+        }
+      }
     }
   }
 }
 
 .detail-section {
   .section-title {
-    font-size: 30rpx;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 20rpx;
-    padding-left: 10rpx;
+    @include text-heading;
+    margin-bottom: $wh-spacing-lg;
+    padding-left: $wh-spacing-sm;
+    letter-spacing: 0.3rpx;
+    @include label-dot($wh-color-blue);
   }
 }
 
 .log-item {
-  background-color: #fff;
-  padding: 30rpx;
-  border-radius: 16rpx;
-  margin-bottom: 20rpx;
+  @include card-modern;
+  margin-bottom: $wh-spacing-md;
+  padding: $wh-spacing-xl;
+  @include slide-in-up;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-left: 4rpx solid transparent;
+
+  &.plus {
+    border-left-color: $wh-color-danger-modern;
+  }
+
+  &.minus {
+    border-left-color: $wh-color-success-modern;
+  }
 
   .log-left {
+    flex: 1;
+    margin-right: $wh-spacing-md;
+
     .type-name {
-      font-size: 28rpx;
-      color: #333;
-      margin-bottom: 8rpx;
+      font-size: $wh-font-size-lg;
+      font-weight: $wh-font-weight-semibold;
+      color: $wh-text-color-dark;
+      margin-bottom: $wh-spacing-xs;
+      letter-spacing: 0.3rpx;
     }
     .log-time {
-      font-size: 22rpx;
-      color: #999;
-      margin-bottom: 4rpx;
+      font-size: $wh-font-size-xs;
+      color: $wh-text-color-light-gray;
+      margin-bottom: $wh-spacing-xs;
+      font-weight: $wh-font-weight-medium;
     }
     .log-remark {
-      font-size: 24rpx;
-      color: #666;
+      font-size: $wh-font-size-sm;
+      color: $wh-text-color-secondary;
       font-style: italic;
+      font-weight: $wh-font-weight-normal;
     }
   }
 
   .log-right {
-    font-size: 36rpx;
-    font-weight: bold;
+    @include price-text-medium;
+    flex-shrink: 0;
     &.plus {
-      color: #ff4d4f;
+      background: $wh-gradient-price;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     &.minus {
-      color: #52c41a;
+      color: $wh-color-success-modern;
     }
   }
 }
 
 .card-box {
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  box-shadow: $wh-shadow-sm;
 }
 
 .repay-form {
-  padding: 20rpx 0;
+  padding: $wh-spacing-lg 0;
   width: 100%;
+
+  ::v-deep .u-input {
+    .u-input__content {
+      font-size: $wh-font-size-md !important;
+      color: $wh-text-color-dark !important;
+    }
+  }
 }
 </style>
