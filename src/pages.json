@@ -167,6 +167,38 @@
     "navigationBarBackgroundColor": "#F8F8F8",
     "backgroundColor": "#F8F8F8"
   },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#2d7ff9",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/merchant/dashboard",
+        "text": "工作台",
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home_active.png"
+      },
+      {
+        "pagePath": "pages/merchant/order/list",
+        "text": "订单",
+        "iconPath": "static/tabbar/order.png",
+        "selectedIconPath": "static/tabbar/order_active.png"
+      },
+      {
+        "pagePath": "pages/merchant/goods/list",
+        "text": "商品",
+        "iconPath": "static/tabbar/goods.png",
+        "selectedIconPath": "static/tabbar/goods_active.png"
+      },
+      {
+        "pagePath": "pages/merchant/customer/list",
+        "text": "客户",
+        "iconPath": "static/tabbar/user.png",
+        "selectedIconPath": "static/tabbar/user_active.png"
+      }
+    ]
+  },
   "easycom": {
     "autoscan": true,
     "custom": {

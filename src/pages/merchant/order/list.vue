@@ -93,21 +93,6 @@
         </view>
       </view>
     </view>
-
-    <!-- 底部导航 -->
-    <u-tabbar
-      :value="1"
-      :fixed="true"
-      :placeholder="true"
-      :safe-area-inset-bottom="true"
-      active-color="#2d7ff9"
-      @change="handleModuleChange"
-    >
-      <u-tabbar-item text="工作台" icon="home"></u-tabbar-item>
-      <u-tabbar-item text="订单" icon="order"></u-tabbar-item>
-      <u-tabbar-item text="商品" icon="bag"></u-tabbar-item>
-      <u-tabbar-item text="客户" icon="account"></u-tabbar-item>
-    </u-tabbar>
   </view>
 </template>
 
@@ -230,16 +215,6 @@ const formatOrderTime = (timestamp: number) => {
 
   // 更早
   return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-}
-
-const handleModuleChange = (index: number) => {
-  const paths = [
-    '/pages/merchant/dashboard',
-    '/pages/merchant/order/list',
-    '/pages/merchant/goods/list',
-    '/pages/merchant/customer/list'
-  ]
-  uni.switchTab({ url: paths[index] })
 }
 </script>
 
