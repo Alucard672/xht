@@ -30,7 +30,10 @@
           @touchcancel="isHovering = false"
         >
           <view class="card-header">
-            <text class="order-no">单号: {{ order.order_no || order._id.slice(-8) }}</text>
+            <view class="header-left">
+              <text class="order-no">单号: {{ order.order_no || order._id.slice(-8) }}</text>
+              <text class="order-time">{{ formatOrderTime(order.create_time) }}</text>
+            </view>
             <view :class="['status-badge', 'status-' + order.status]">
               <text class="status-txt">{{ getStatusTxt(order.status) }}</text>
             </view>
@@ -207,6 +210,28 @@ const getStatusTxt = (status: number) => {
   }
 }
 
+const formatOrderTime = (timestamp: number) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+
+  // 今天
+  if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
+    return `今天 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  }
+
+  // 昨天
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (date.getDate() === yesterday.getDate() && date.getMonth() === yesterday.getMonth()) {
+    return `昨天 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  }
+
+  // 更早
+  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
 const handleModuleChange = (index: number) => {
   const paths = [
     '/pages/merchant/dashboard',
@@ -229,14 +254,14 @@ const handleModuleChange = (index: number) => {
 }
 
 .list-content {
-  padding: $wh-spacing-md;
+  padding: $wh-spacing-sm;
 }
 
 .order-card {
   @include card-modern;
   @include card-side-decoration(4rpx, $wh-gradient-blue-vertical);
-  margin-bottom: $wh-spacing-md;
-  padding: $wh-spacing-xl;
+  margin-bottom: $wh-spacing-sm;
+  padding: $wh-spacing-md;
   transition: all $wh-transition-normal cubic-bezier(0.4, 0, 0.2, 1);
 
   &.order-card-hover {
@@ -248,16 +273,29 @@ const handleModuleChange = (index: number) => {
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     border-bottom: 1rpx solid $wh-border-color-light;
-    padding-bottom: $wh-spacing-md;
-    margin-bottom: $wh-spacing-md;
+    padding-bottom: $wh-spacing-sm;
+    margin-bottom: $wh-spacing-sm;
+
+    .header-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4rpx;
+    }
 
     .order-no {
       font-size: $wh-font-size-sm;
-      color: $wh-text-color-light-gray;
-      font-weight: $wh-font-weight-medium;
+      color: $wh-text-color-dark;
+      font-weight: $wh-font-weight-semibold;
       letter-spacing: 0.3rpx;
+    }
+
+    .order-time {
+      font-size: $wh-font-size-xs;
+      color: $wh-text-color-gray;
+      font-weight: $wh-font-weight-normal;
     }
 
     .status-badge {
@@ -327,11 +365,11 @@ const handleModuleChange = (index: number) => {
       display: flex;
       align-items: center;
       gap: $wh-spacing-sm;
-      margin-bottom: $wh-spacing-sm;
+      margin-bottom: $wh-spacing-xs;
 
       .icon-wrap {
-        width: 36rpx;
-        height: 36rpx;
+        width: 32rpx;
+        height: 32rpx;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -340,20 +378,20 @@ const handleModuleChange = (index: number) => {
       }
 
       .name {
-        font-size: $wh-font-size-lg;
+        font-size: $wh-font-size-base;
         font-weight: $wh-font-weight-semibold;
         color: $wh-text-color-dark;
         letter-spacing: 0.3rpx;
       }
 
       .mobile {
-        font-size: $wh-font-size-sm;
+        font-size: $wh-font-size-xs;
         color: $wh-text-color-gray;
         margin-left: $wh-spacing-xs;
       }
 
       .addr {
-        font-size: $wh-font-size-sm;
+        font-size: $wh-font-size-xs;
         color: $wh-text-color-gray;
         line-height: $wh-line-height-relaxed;
         flex: 1;
@@ -362,17 +400,17 @@ const handleModuleChange = (index: number) => {
 
     .items-summary {
       background: linear-gradient(135deg, $wh-bg-color-secondary 0%, $wh-color-blue-light 100%);
-      padding: $wh-spacing-md;
+      padding: $wh-spacing-sm;
       border-radius: $wh-border-radius-md;
-      margin-top: $wh-spacing-md;
+      margin-top: $wh-spacing-sm;
       border: 1rpx solid rgba(45, 127, 249, 0.08);
 
       .item-row {
         display: flex;
         justify-content: space-between;
-        font-size: $wh-font-size-sm;
+        font-size: $wh-font-size-xs;
         color: $wh-text-color-secondary;
-        margin-bottom: $wh-spacing-xs;
+        margin-bottom: 4rpx;
         font-weight: $wh-font-weight-medium;
 
         &:last-child {
@@ -384,7 +422,7 @@ const handleModuleChange = (index: number) => {
         font-size: $wh-font-size-xs;
         color: $wh-text-color-light-gray;
         text-align: center;
-        margin-top: $wh-spacing-sm;
+        margin-top: $wh-spacing-xs;
         font-weight: $wh-font-weight-medium;
         letter-spacing: 0.5rpx;
       }
@@ -395,8 +433,8 @@ const handleModuleChange = (index: number) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: $wh-spacing-md;
-    padding-top: $wh-spacing-md;
+    margin-top: $wh-spacing-sm;
+    padding-top: $wh-spacing-sm;
     border-top: 1rpx solid $wh-border-color-light;
 
     .pay-info {
