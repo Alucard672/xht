@@ -448,12 +448,25 @@ onUnmounted(() => {
 
 // ========== 页面容器 ==========
 .create-order-container {
-  @include page-container-with-top;
+  min-height: 100vh;
+  background: $wh-bg-color-gradient;
+  padding: $wh-spacing-md $wh-spacing-md 180rpx;
 }
 
 // ========== 通用区块 ==========
 .section {
-  @include section-with-label($wh-color-blue);
+  background: $wh-bg-color-card;
+  border-radius: $wh-border-radius-lg;
+  padding: $wh-spacing-lg $wh-spacing-xl;
+  margin-bottom: $wh-spacing-md;
+  box-shadow: $wh-shadow-sm;
+
+  .section-label {
+    @include text-subheading;
+    margin-bottom: $wh-spacing-md;
+    padding-left: $wh-spacing-sm;
+    @include label-dot($wh-color-blue);
+  }
 }
 
 // ========== 客户选择区块 ==========
@@ -469,20 +482,51 @@ onUnmounted(() => {
 
   .goods-list {
     .goods-item {
-      @include goods-card-with-decoration;
+      background: $wh-bg-color-card;
+      border-radius: $wh-border-radius-md;
+      padding: $wh-spacing-md $wh-spacing-lg;
+      margin-bottom: $wh-spacing-sm;
+      box-shadow: $wh-shadow-xs;
+      position: relative;
+      overflow: hidden;
+      transition: all $wh-transition-normal;
       @include slide-in-up;
+
+      // 左侧装饰条（悬停显示）
+      &::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4rpx;
+        background: $wh-gradient-blue-vertical;
+        opacity: 0;
+        transition: opacity $wh-transition-normal;
+      }
+
+      &:active::after {
+        opacity: 1;
+      }
+
+      &:active {
+        transform: scale(0.98);
+      }
 
       // 左侧区域
       .goods-left {
         flex: 1;
         display: flex;
         align-items: flex-start;
-        gap: $wh-spacing-lg;
+        gap: $wh-spacing-md;
         overflow: hidden;
         padding-right: $wh-spacing-sm;
 
         .goods-img {
           @include goods-image-style;
+          width: 100rpx;
+          height: 100rpx;
+          flex-shrink: 0;
         }
 
         .goods-info {
@@ -490,11 +534,11 @@ onUnmounted(() => {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          min-height: 120rpx;
+          min-height: 100rpx;
           overflow: hidden;
 
           .goods-name {
-            font-size: $wh-font-size-lg;
+            font-size: $wh-font-size-md;
             font-weight: $wh-font-weight-semibold;
             color: $wh-text-color-dark;
             line-height: $wh-line-height-snug;
@@ -505,8 +549,8 @@ onUnmounted(() => {
           .goods-specs {
             display: flex;
             flex-direction: column;
-            gap: 6rpx;
-            margin-bottom: $wh-spacing-sm;
+            gap: 4rpx;
+            margin-bottom: 4rpx;
 
             .spec-item {
               @include spec-tag;
@@ -552,11 +596,11 @@ onUnmounted(() => {
 // ========== 底部栏 ==========
 .footer-bar {
   @include bottom-bar;
-  height: calc(140rpx + env(safe-area-inset-bottom));
+  height: calc(120rpx + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $wh-spacing-xl $wh-spacing-xl calc($wh-spacing-xl + env(safe-area-inset-bottom));
+  padding: $wh-spacing-md $wh-spacing-lg calc($wh-spacing-md + env(safe-area-inset-bottom));
 
   .total-info {
     @include total-bar-section;

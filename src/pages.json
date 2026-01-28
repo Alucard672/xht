@@ -4,7 +4,7 @@
       "path": "pages/merchant/dashboard",
       "style": {
         "navigationBarTitleText": "工作台",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -12,7 +12,7 @@
       "path": "pages/merchant/login",
       "style": {
         "navigationBarTitleText": "商家登录",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -20,7 +20,7 @@
       "path": "pages/merchant/register",
       "style": {
         "navigationBarTitleText": "商家入驻",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -28,7 +28,7 @@
       "path": "pages/merchant/order/list",
       "style": {
         "navigationBarTitleText": "订单管理",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -36,7 +36,7 @@
       "path": "pages/merchant/order/create",
       "style": {
         "navigationBarTitleText": "开单",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -44,7 +44,7 @@
       "path": "pages/merchant/order/detail",
       "style": {
         "navigationBarTitleText": "订单详情",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -52,7 +52,7 @@
       "path": "pages/merchant/customer/list",
       "style": {
         "navigationBarTitleText": "客户账本",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -60,7 +60,7 @@
       "path": "pages/merchant/customer/edit",
       "style": {
         "navigationBarTitleText": "编辑客户",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -68,7 +68,7 @@
       "path": "pages/merchant/customer/detail",
       "style": {
         "navigationBarTitleText": "客户详情",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -76,7 +76,7 @@
       "path": "pages/merchant/customer/picker",
       "style": {
         "navigationBarTitleText": "选择客户",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -84,7 +84,7 @@
       "path": "pages/merchant/setting/index",
       "style": {
         "navigationBarTitleText": "店铺设置",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -92,7 +92,7 @@
       "path": "pages/merchant/setting/qrcode",
       "style": {
         "navigationBarTitleText": "店铺二维码",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -108,7 +108,7 @@
       "path": "pages/merchant/notification/list",
       "style": {
         "navigationBarTitleText": "消息通知",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -158,7 +158,7 @@
       "path": "pages/merchant/renewal/index",
       "style": {
         "navigationBarTitleText": "续费",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -166,7 +166,7 @@
       "path": "pages/merchant/renewal/result",
       "style": {
         "navigationBarTitleText": "支付结果",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -174,7 +174,7 @@
       "path": "pages/merchant/goods/list",
       "style": {
         "navigationBarTitleText": "商品管理",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -182,7 +182,7 @@
       "path": "pages/merchant/goods/edit",
       "style": {
         "navigationBarTitleText": "商品编辑",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -190,7 +190,7 @@
       "path": "pages/merchant/goods/category",
       "style": {
         "navigationBarTitleText": "分类管理",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -198,7 +198,7 @@
       "path": "pages/merchant/goods/picker",
       "style": {
         "navigationBarTitleText": "选择商品",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     },
@@ -206,7 +206,7 @@
       "path": "pages/index/index",
       "style": {
         "navigationBarTitleText": "乡货通",
-        "navigationBarBackgroundColor": "#07c160",
+        "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
     }
