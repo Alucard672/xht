@@ -30,59 +30,11 @@
             :show-action="false"
             shape="round"
             bg-color="#ffffff"
-            @focus="showSearchPanel = true"
+            @focus="handleSearchFocus"
             @blur="handleSearchBlur"
             @search="handleSearch"
           ></u-search>
         </view>
-
-        <!-- 搜索面板 -->
-        <view v-if="showSearchPanel && !keyword" class="search-panel">
-          <!-- 热门搜索 -->
-          <view v-if="hotSearch.length > 0" class="search-section">
-            <view class="section-header">
-              <text class="section-title">热门搜索</text>
-            </view>
-            <view class="tag-list">
-              <view
-                v-for="(item, index) in hotSearch"
-                :key="index"
-                class="tag-item"
-                @click="handleHotSearch(item)"
-              >
-                {{ item }}
-              </view>
-            </view>
-          </view>
-
-          <!-- 搜索历史 -->
-          <view v-if="searchHistory.length > 0" class="search-section">
-            <view class="section-header">
-              <text class="section-title">搜索历史</text>
-              <text class="clear-btn" @click="clearSearchHistory">清空</text>
-            </view>
-            <view class="history-list">
-              <view
-                v-for="(item, index) in searchHistory"
-                :key="index"
-                class="history-item"
-                @click="handleHistorySearch(item)"
-              >
-                <u-icon name="clock" size="16" color="#999"></u-icon>
-                <text class="history-text">{{ item }}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <view v-if="mode !== 'agent'" class="notice-bar">
-        <u-notice-bar
-          text="通知：本周新品上架，茅台酒特价优惠中！欢迎选购！"
-          color="#d48806"
-          bg-color="#fff7e6"
-          mode="horizontal"
-        ></u-notice-bar>
       </view>
 
       <view v-if="currentTab === 0" class="content">
@@ -384,76 +336,16 @@ const tempCartItem = reactive<any>({
   countSmall: 0
 })
 
-// 搜索相关
-const showSearchPanel = ref(false)
-const searchHistory = ref<string[]>([])
-const hotSearch = ref<string[]>(['茅台', '五粮液', '食用油', '方便面', '矿泉水'])
-
-const getSearchHistoryKey = () => `search_history_${tenant_id.value}`
-
-const loadSearchHistory = () => {
-  const key = getSearchHistoryKey()
-  const saved = uni.getStorageSync(key)
-  if (saved) {
-    try {
-      searchHistory.value = JSON.parse(saved)
-    } catch (e) {
-      searchHistory.value = []
-    }
-  }
-}
-
-const saveSearchHistory = (keyword: string) => {
-  if (!keyword.trim()) return
-  const key = getSearchHistoryKey()
-  const list = [...searchHistory.value]
-  const index = list.indexOf(keyword)
-  if (index > -1) {
-    list.splice(index, 1)
-  }
-  list.unshift(keyword)
-  if (list.length > 20) {
-    list.pop()
-  }
-  searchHistory.value = list
-  uni.setStorageSync(key, JSON.stringify(list))
-}
-
-const clearSearchHistory = () => {
-  uni.showModal({
-    title: '提示',
-    content: '确定要清空搜索历史吗？',
-    success: res => {
-      if (res.confirm) {
-        searchHistory.value = []
-        uni.removeStorageSync(getSearchHistoryKey())
-      }
-    }
-  })
-}
-
 const handleSearch = () => {
-  if (keyword.value.trim()) {
-    saveSearchHistory(keyword.value)
-    showSearchPanel.value = false
-  }
+  // Simplified search - just trigger filtering
+}
+
+const handleSearchFocus = () => {
+  // Search focus handler - can be expanded later
 }
 
 const handleSearchBlur = () => {
-  setTimeout(() => {
-    showSearchPanel.value = false
-  }, 200)
-}
-
-const handleHotSearch = (item: string) => {
-  keyword.value = item
-  saveSearchHistory(item)
-  showSearchPanel.value = false
-}
-
-const handleHistorySearch = (item: string) => {
-  keyword.value = item
-  showSearchPanel.value = false
+  // Search blur handler
 }
 
 onLoad(async options => {
@@ -468,7 +360,6 @@ onLoad(async options => {
   fetchShopInfo()
   fetchCategories()
   loadCartFromStorage()
-  loadSearchHistory()
 })
 
 const getCartKey = () => `cart_${tenant_id.value}`
@@ -691,100 +582,6 @@ const loadMore = () => {
   .search-box {
     margin-bottom: $wh-spacing-sm;
   }
-
-  .search-panel {
-    position: absolute;
-    top: calc(100% + $wh-spacing-sm);
-    left: $wh-spacing-xl;
-    right: $wh-spacing-xl;
-    background-color: $wh-bg-color-card;
-    border-radius: $wh-border-radius-lg;
-    box-shadow: $wh-shadow-lg;
-    max-height: 60vh;
-    overflow-y: auto;
-    z-index: $wh-z-index-overlay;
-
-    .search-section {
-      padding: $wh-spacing-md $wh-spacing-xl;
-      border-bottom: 1rpx solid $wh-border-color-light;
-
-      &:last-child {
-        border-bottom: none;
-      }
-
-      .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: $wh-spacing-md;
-
-        .section-title {
-          font-size: $wh-font-size-sm;
-          color: $wh-text-color-dark;
-          font-weight: $wh-font-weight-semibold;
-          letter-spacing: 0.3rpx;
-        }
-
-        .clear-btn {
-          font-size: $wh-font-size-xs;
-          color: $wh-text-color-light-gray;
-          font-weight: $wh-font-weight-medium;
-          padding: $wh-spacing-xs;
-          transition: all $wh-transition-normal;
-
-          &:active {
-            opacity: 0.7;
-          }
-        }
-      }
-
-      .tag-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: $wh-spacing-sm;
-
-        .tag-item {
-          padding: $wh-spacing-sm $wh-spacing-md;
-          background: $wh-bg-color-tertiary;
-          border-radius: $wh-border-radius-full;
-          font-size: $wh-font-size-sm;
-          color: $wh-text-color-secondary;
-          font-weight: $wh-font-weight-medium;
-          transition: all $wh-transition-normal;
-
-          &:active {
-            background: $wh-color-blue-light-bg;
-            color: $wh-color-blue;
-          }
-        }
-      }
-
-      .history-list {
-        .history-item {
-          display: flex;
-          align-items: center;
-          gap: $wh-spacing-sm;
-          padding: $wh-spacing-md 0;
-          transition: all $wh-transition-normal;
-
-          &:active {
-            opacity: 0.7;
-          }
-
-          .history-text {
-            font-size: $wh-font-size-md;
-            color: $wh-text-color-dark;
-            font-weight: $wh-font-weight-medium;
-          }
-        }
-      }
-    }
-  }
-}
-
-.notice-bar {
-  flex-shrink: 0;
-  margin-bottom: 2rpx;
 }
 
 .content {

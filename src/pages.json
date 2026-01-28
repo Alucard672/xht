@@ -41,14 +41,6 @@
       }
     },
     {
-      "path": "pages/merchant/order/detail",
-      "style": {
-        "navigationBarTitleText": "订单详情",
-        "navigationBarBackgroundColor": "#2d7ff9",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
       "path": "pages/merchant/customer/list",
       "style": {
         "navigationBarTitleText": "客户账本",
@@ -81,33 +73,9 @@
       }
     },
     {
-      "path": "pages/merchant/setting/index",
+      "path": "pages/merchant/store",
       "style": {
         "navigationBarTitleText": "店铺设置",
-        "navigationBarBackgroundColor": "#2d7ff9",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/merchant/setting/qrcode",
-      "style": {
-        "navigationBarTitleText": "店铺二维码",
-        "navigationBarBackgroundColor": "#2d7ff9",
-        "navigationBarTextStyle": "white"
-      }
-    },
-    {
-      "path": "pages/merchant/setting/qrcode-image",
-      "style": {
-        "navigationBarTitleText": "二维码图片",
-        "navigationBarBackgroundColor": "#ffffff",
-        "navigationBarTextStyle": "black"
-      }
-    },
-    {
-      "path": "pages/merchant/notification/list",
-      "style": {
-        "navigationBarTitleText": "消息通知",
         "navigationBarBackgroundColor": "#2d7ff9",
         "navigationBarTextStyle": "white"
       }
@@ -131,27 +99,9 @@
       }
     },
     {
-      "path": "pages/client/assets",
-      "style": {
-        "navigationBarTitleText": "我的资产"
-      }
-    },
-    {
-      "path": "pages/client/order/detail",
-      "style": {
-        "navigationBarTitleText": "订单详情"
-      }
-    },
-    {
       "path": "pages/client/scan",
       "style": {
         "navigationBarTitleText": "扫码进店"
-      }
-    },
-    {
-      "path": "pages/client/my-shops",
-      "style": {
-        "navigationBarTitleText": "我的商家"
       }
     },
     {

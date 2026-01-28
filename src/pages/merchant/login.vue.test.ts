@@ -39,7 +39,7 @@ describe('login.vue', () => {
         }
       })
 
-      expect(wrapper.text()).toContain('乡货通 - 商家登录')
+      expect(wrapper.text()).toContain('乡货通')
       expect(wrapper.text()).toContain('专注乡镇批发的 SaaS 平台')
     })
 

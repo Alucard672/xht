@@ -40,7 +40,7 @@
     <view class="header-stats" :class="{ 'header-expanded': isExpired || willExpireSoon }">
       <view class="header-top">
         <view class="shop-name">{{ shopName }} - 工作台</view>
-        <view class="setting-btn" @click="navTo('/pages/merchant/setting/index')">
+        <view class="setting-btn" @click="navTo('/pages/merchant/store')">
           <u-icon name="setting" color="#fff" size="24"></u-icon>
         </view>
       </view>
@@ -128,54 +128,6 @@
       ></u-empty>
     </view>
 
-    <!-- 库存预警 -->
-    <view class="section-header">
-      <view class="left">
-        <text class="title">库存预警</text>
-        <u-badge
-          :value="stockAlerts.length"
-          type="error"
-          :inverted="false"
-          custom-style="margin-left: 10rpx"
-        ></u-badge>
-      </view>
-      <text class="more" @click="navTo('/pages/merchant/goods/list')">管理</text>
-    </view>
-    <view class="stock-alerts card-box">
-      <view v-for="item in stockAlerts" :key="item._id" class="alert-item">
-        <view class="item-left">
-          <image
-            :src="item.image || '/static/empty/list.png'"
-            class="goods-img"
-            mode="aspectFill"
-          ></image>
-          <view class="goods-info">
-            <view class="name u-line-1">{{ item.name }}</view>
-            <view class="stock-num"
-              >库存：<text class="warn">{{ item.stock }}</text
-              >{{ item.unit_small }}</view
-            >
-          </view>
-        </view>
-        <view class="item-right">
-          <u-button
-            type="primary"
-            size="mini"
-            plain
-            text="去补货"
-            :custom-style="{ width: '140rpx', height: '52rpx', fontSize: '24rpx' }"
-            @click="navTo('/pages/merchant/goods/edit?id=' + item._id)"
-          ></u-button>
-        </view>
-      </view>
-      <u-empty
-        v-if="stockAlerts.length === 0"
-        mode="list"
-        text="库存充足"
-        icon="/static/empty/list.png"
-      ></u-empty>
-    </view>
-
     <!-- 底部导航 -->
     <u-tabbar
       :value="0"
@@ -215,7 +167,6 @@ const stats = ref({
   unsettledOrderCount: 0
 })
 const pendingOrders = ref<any[]>([])
-const stockAlerts = ref<any[]>([])
 let lastLoadTime = 0
 
 const loadData = async (force = false) => {
@@ -231,7 +182,6 @@ const loadData = async (force = false) => {
       lastLoadTime = now
       stats.value = res.data.stats
       pendingOrders.value = res.data.pendingOrders
-      stockAlerts.value = res.data.stockAlerts
       shopName.value = res.data.tenantName || '我的店铺'
 
       // 检查过期状态
@@ -293,7 +243,7 @@ const navTo = (url: string) => {
 }
 
 const showShopCode = () => {
-  uni.navigateTo({ url: '/pages/merchant/setting/qrcode' })
+  uni.navigateTo({ url: '/pages/merchant/store?tab=1' })
 }
 
 const handleModuleChange = (index: number) => {
@@ -720,74 +670,6 @@ onShow(() => {
       }
       .amount {
         @include price-text-small;
-      }
-    }
-  }
-}
-
-.stock-alerts {
-  padding: 0 $wh-spacing-md;
-
-  .alert-item {
-    @include card-modern;
-    margin: 0 $wh-spacing-sm $wh-spacing-md;
-    padding: $wh-spacing-lg;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-left: 4rpx solid $wh-color-warning-modern;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .item-left {
-      display: flex;
-      align-items: center;
-      flex: 1;
-      overflow: hidden;
-      margin-right: $wh-spacing-md;
-    }
-
-    .goods-img {
-      @include goods-image-style;
-      margin-right: $wh-spacing-md;
-    }
-
-    .goods-info {
-      flex: 1;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-
-      .name {
-        font-size: $wh-font-size-lg;
-        font-weight: $wh-font-weight-semibold;
-        color: $wh-text-color-dark;
-        margin-bottom: $wh-spacing-xs;
-        width: 100%;
-        letter-spacing: 0.3rpx;
-      }
-      .stock-num {
-        font-size: $wh-font-size-sm;
-        color: $wh-text-color-gray;
-        white-space: nowrap;
-        font-weight: $wh-font-weight-medium;
-        .warn {
-          color: $wh-color-warning-modern;
-          font-weight: $wh-font-weight-extrabold;
-          margin: 0 $wh-spacing-xs;
-        }
-      }
-    }
-
-    .item-right {
-      flex-shrink: 0;
-
-      ::v-deep .u-button {
-        border-radius: $wh-border-radius-full !important;
-        font-weight: $wh-font-weight-semibold !important;
       }
     }
   }

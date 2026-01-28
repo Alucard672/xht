@@ -10,20 +10,36 @@
       </view>
 
       <view v-else class="order-items">
-        <view v-for="order in orders" :key="order._id" class="order-card">
+        <view
+          v-for="order in orders"
+          :key="order._id"
+          class="order-card"
+          @click="toggleOrderExpand(order._id)"
+        >
           <view class="card-header">
-            <text class="order-no">单号: {{ order.order_no || order._id.slice(-8) }}</text>
-            <text :class="['status-txt', 'status-' + order.status]">{{
-              getStatusTxt(order.status)
-            }}</text>
+            <view class="header-left">
+              <text class="order-no">单号: {{ order.order_no || order._id.slice(-8) }}</text>
+              <text class="order-date">{{ formatDate(order.create_time) }}</text>
+            </view>
+            <view class="header-right">
+              <text :class="['status-txt', 'status-' + order.status]">{{
+                getStatusTxt(order.status)
+              }}</text>
+              <u-icon
+                :name="expandedOrders.includes(order._id) ? 'arrow-up' : 'arrow-down'"
+                size="16"
+                color="#999"
+              ></u-icon>
+            </view>
           </view>
 
-          <view class="card-body">
+          <!-- Expanded content -->
+          <view v-if="expandedOrders.includes(order._id)" class="card-body">
             <view class="items-list">
               <view v-for="(item, idx) in order.items" :key="idx" class="item-row">
                 <text class="item-name">{{ item.name }}</text>
                 <text class="item-qty">x{{ item.count }}{{ item.unit_name }}</text>
-                <text class="item-price">￥{{ priceHelper.format(item.price * item.count) }}</text>
+                <text class="item-price">¥{{ priceHelper.format(item.price * item.count) }}</text>
               </view>
             </view>
           </view>
@@ -36,9 +52,17 @@
               <view class="total">
                 <text class="label">合计:</text>
                 <text class="amount"
-                  >￥{{ priceHelper.format(order.total_amount || order.total_fee) }}</text
+                  >¥{{ priceHelper.format(order.total_amount || order.total_fee) }}</text
                 >
               </view>
+            </view>
+            <view
+              v-if="expandedOrders.includes(order._id)"
+              class="reorder-btn"
+              @click.stop="reorder(order)"
+            >
+              <u-icon name="reload" size="14" color="#2d7ff9"></u-icon>
+              <text>再次下单</text>
             </view>
           </view>
         </view>
@@ -57,6 +81,7 @@ const orderCo = importObject('wh-order-co')
 
 const orders = ref<any[]>([])
 const loading = ref(false)
+const expandedOrders = ref<string[]>([])
 
 onShow(() => {
   fetchOrders()
@@ -91,6 +116,29 @@ const getStatusTxt = (status: number) => {
     default:
       return '未知'
   }
+}
+
+const toggleOrderExpand = (orderId: string) => {
+  const index = expandedOrders.value.indexOf(orderId)
+  if (index > -1) {
+    expandedOrders.value.splice(index, 1)
+  } else {
+    expandedOrders.value.push(orderId)
+  }
+}
+
+const formatDate = (timestamp: number) => {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  return `${date.getMonth() + 1}/${date.getDate()} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+}
+
+const reorder = (order: any) => {
+  // For MVP, just show a toast
+  uni.showToast({
+    title: '功能开发中',
+    icon: 'none'
+  })
 }
 </script>
 
@@ -136,15 +184,35 @@ const getStatusTxt = (status: number) => {
   .card-header {
     @include flex-between;
     align-items: center;
-    border-bottom: 2rpx solid $wh-border-color-lighter;
+    border-bottom: 2rpx solid $wh-border-color-light;
     padding-bottom: $wh-spacing-md;
     margin-bottom: $wh-spacing-md;
 
-    .order-no {
-      font-size: $wh-font-size-xs;
-      color: $wh-text-color-light-gray;
-      font-weight: $wh-font-weight-medium;
+    .header-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: $wh-spacing-xs;
+
+      .order-no {
+        font-size: $wh-font-size-sm;
+        color: $wh-text-color-dark;
+        font-weight: $wh-font-weight-semibold;
+      }
+
+      .order-date {
+        font-size: $wh-font-size-xs;
+        color: $wh-text-color-light-gray;
+        font-weight: $wh-font-weight-medium;
+      }
     }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: $wh-spacing-sm;
+    }
+
     .status-txt {
       font-size: $wh-font-size-sm;
       font-weight: $wh-font-weight-semibold;
@@ -197,7 +265,7 @@ const getStatusTxt = (status: number) => {
         }
         .item-qty {
           color: $wh-text-color-secondary;
-          margin-right: $wh-spacing-2xl;
+          margin-right: $wh-spacing-xxl;
           font-weight: $wh-font-weight-normal;
         }
         .item-price {
@@ -208,9 +276,10 @@ const getStatusTxt = (status: number) => {
   }
 
   .card-footer {
-    border-top: 2rpx solid $wh-border-color-lighter;
+    border-top: 2rpx solid $wh-border-color-light;
     margin-top: $wh-spacing-md;
     padding-top: $wh-spacing-md;
+
     .pay-info {
       @include flex-between;
       align-items: center;
@@ -223,7 +292,8 @@ const getStatusTxt = (status: number) => {
         border-radius: $wh-border-radius-md;
       }
       .total {
-        @include flex-end;
+        display: flex;
+        justify-content: flex-end;
         align-items: baseline;
         .label {
           font-size: $wh-font-size-sm;
@@ -234,6 +304,29 @@ const getStatusTxt = (status: number) => {
         .amount {
           @include price-text-small;
         }
+      }
+    }
+
+    .reorder-btn {
+      display: flex;
+      align-items: center;
+      gap: $wh-spacing-xs;
+      margin-top: $wh-spacing-md;
+      padding: $wh-spacing-sm $wh-spacing-lg;
+      background: $wh-color-blue-light-bg;
+      border-radius: $wh-border-radius-full;
+      color: $wh-color-blue;
+      font-size: $wh-font-size-sm;
+      font-weight: $wh-font-weight-semibold;
+      transition: all $wh-transition-normal;
+
+      &:active {
+        transform: scale(0.95);
+        background: rgba(45, 127, 249, 0.15);
+      }
+
+      text {
+        font-weight: $wh-font-weight-semibold;
       }
     }
   }

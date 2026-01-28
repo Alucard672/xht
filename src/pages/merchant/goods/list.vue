@@ -17,21 +17,6 @@
       </template>
     </wh-filter-bar>
 
-    <!-- 库存预警入口 -->
-    <view class="stock-warning-bar" @click="showLowStockList">
-      <view class="warning-icon">
-        <u-icon name="warning" size="24" color="#ff4d4f"></u-icon>
-      </view>
-      <view class="warning-info">
-        <text class="warning-title">库存预警</text>
-        <text class="warning-desc">当前有 {{ lowStockCount }} 个商品库存不足</text>
-      </view>
-      <view class="warning-action">
-        <text class="action-text">去处理</text>
-        <u-icon name="arrow-right" size="16" color="#999"></u-icon>
-      </view>
-    </view>
-
     <view class="list-container">
       <view v-if="loading" class="loading-box">
         <u-loading-icon></u-loading-icon>
@@ -89,8 +74,6 @@ const { goodsList, loading, total, fetchGoodsList, toggleOnSale, deleteGoods } =
 const keyword = ref('')
 const currentPage = ref(1)
 const pageSize = ref(20)
-const lowStockCount = ref(0)
-const LOW_STOCK_THRESHOLD = 10 // 库存预警阈值
 
 let lastLoadTime = 0
 
@@ -112,13 +95,11 @@ const loadGoodsList = async (force = false) => {
     return
   }
   await fetchGoodsList({
-    keyword: keyword.value === 'low_stock' ? '' : keyword.value,
+    keyword: keyword.value,
     page: currentPage.value,
-    limit: pageSize.value,
-    showLowStock: keyword.value === 'low_stock'
+    limit: pageSize.value
   })
   lastLoadTime = now
-  countLowStock()
 }
 
 const handleGoodsClick = (goods: Goods) => {
@@ -166,34 +147,6 @@ onMounted(() => {
   loadGoodsList()
 })
 
-const countLowStock = () => {
-  lowStockCount.value = goodsList.value.filter((item: any) => {
-    const stock = item.stock || 0
-    return stock > 0 && stock <= LOW_STOCK_THRESHOLD
-  }).length
-}
-
-const showLowStockList = () => {
-  if (lowStockCount.value === 0) {
-    uni.showToast({ title: '暂无库存预警', icon: 'none' })
-    return
-  }
-  uni.showModal({
-    title: '库存预警',
-    content: `当前有 ${lowStockCount.value} 个商品库存不足（≤${LOW_STOCK_THRESHOLD}件），建议及时补货。`,
-    showCancel: true,
-    confirmText: '去补货',
-    cancelText: '知道了',
-    success: res => {
-      if (res.confirm) {
-        keyword.value = 'low_stock'
-        currentPage.value = 1
-        loadGoodsList(true)
-      }
-    }
-  })
-}
-
 onShow(() => {
   if (!merchantRouteGuard('/pages/merchant/goods/list')) return
   loadGoodsList()
@@ -215,76 +168,5 @@ onShow(() => {
 }
 
 .card-list {
-}
-
-.stock-warning-bar {
-  @include card-modern;
-  display: flex;
-  align-items: center;
-  padding: $wh-spacing-lg $wh-spacing-xl;
-  margin: 0 $wh-spacing-md $wh-spacing-md;
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 149, 0, 0.05) 100%);
-  border: 2rpx solid rgba(255, 59, 48, 0.15);
-  transition: all $wh-transition-normal;
-
-  @include hover-scale(0.98);
-
-  &:active {
-    border-color: rgba(255, 59, 48, 0.3);
-    transform: scale(0.98);
-  }
-
-  .warning-icon {
-    width: 72rpx;
-    height: 72rpx;
-    border-radius: $wh-border-radius-circle;
-    background: $wh-gradient-customer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: $wh-spacing-md;
-    box-shadow: $wh-shadow-xs;
-    border: 2rpx solid rgba(255, 59, 48, 0.2);
-  }
-
-  .warning-info {
-    flex: 1;
-
-    .warning-title {
-      font-size: $wh-font-size-lg;
-      font-weight: $wh-font-weight-semibold;
-      color: $wh-text-color-dark;
-      display: block;
-      letter-spacing: 0.3rpx;
-      margin-bottom: $wh-spacing-xs;
-    }
-
-    .warning-desc {
-      font-size: $wh-font-size-sm;
-      color: $wh-color-danger-modern;
-      margin-top: $wh-spacing-xs;
-      display: block;
-      font-weight: $wh-font-weight-medium;
-    }
-  }
-
-  .warning-action {
-    display: flex;
-    align-items: center;
-    padding: $wh-spacing-sm;
-    border-radius: $wh-border-radius-full;
-    transition: all $wh-transition-normal;
-
-    &:active {
-      background: $wh-bg-color-tertiary;
-    }
-
-    .action-text {
-      font-size: $wh-font-size-sm;
-      color: $wh-text-color-gray;
-      margin-right: $wh-spacing-xs;
-      font-weight: $wh-font-weight-medium;
-    }
-  }
 }
 </style>

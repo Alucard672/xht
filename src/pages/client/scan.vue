@@ -16,25 +16,6 @@
       </view>
     </view>
 
-    <view class="manual-input">
-      <text class="section-title">或者手动输入</text>
-      <u-input
-        v-model="manualTenantId"
-        placeholder="请输入店铺码"
-        border="surround"
-        shape="circle"
-        @confirm="handleManualInput"
-      />
-      <u-button
-        type="primary"
-        text="进入店铺"
-        :loading="loading"
-        :disabled="!manualTenantId"
-        custom-style="margin-top: 20rpx;"
-        @click="handleManualInput"
-      ></u-button>
-    </view>
-
     <view class="help-section">
       <u-icon name="question-circle" size="18" color="#999"></u-icon>
       <text class="help-text">没有店铺码？</text>
@@ -47,12 +28,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { importObject } from '@/utils/cloud'
 
-const manualTenantId = ref('')
 const loading = ref(false)
 const toastRef = ref<any>(null)
 const userCo = importObject('wh-user-co')
+
+onShow(() => {
+  checkLoginStatus()
+})
+
+const checkLoginStatus = () => {
+  const token = uni.getStorageSync('uni_id_token')
+  if (!token) {
+    uni.showModal({
+      title: '提示',
+      content: '请先登录后再扫码进店',
+      showCancel: false,
+      success: () => {
+        uni.redirectTo({
+          url: '/pages/client/scan' // Stay on scan page after auth
+        })
+      }
+    })
+  }
+}
 
 const handleScan = () => {
   uni.scanCode({
@@ -106,24 +107,11 @@ const processScanResult = (res: any) => {
   if (!tenantId) {
     toastRef.value?.show({
       type: 'error',
-      message: '无效的店铺码'
+      message: '无效的店铺码，请联系商家'
     })
     return
   }
 
-  navigateToShop(tenantId)
-}
-
-const handleManualInput = () => {
-  if (!manualTenantId.value) {
-    toastRef.value?.show({
-      type: 'error',
-      message: '请输入店铺码'
-    })
-    return
-  }
-
-  const tenantId = manualTenantId.value.trim()
   navigateToShop(tenantId)
 }
 
@@ -138,19 +126,38 @@ const navigateToShop = (tenantId: string) => {
     .then(async (res: any) => {
       if (res.result.data && res.result.data.length > 0) {
         const tenant = res.result.data[0]
+
+        // Check tenant status
         if (tenant.status === 0) {
           toastRef.value?.show({
             type: 'error',
-            message: '店铺已暂停营业'
+            message: '店铺审核中，暂未开业'
           })
+          loading.value = false
+          return
+        }
+        if (tenant.status === 2) {
+          toastRef.value?.show({
+            type: 'error',
+            message: '店铺已冻结，请联系商家'
+          })
+          loading.value = false
+          return
+        }
+        if (tenant.status === 3) {
+          toastRef.value?.show({
+            type: 'error',
+            message: '店铺已过期，请联系商家续费'
+          })
+          loading.value = false
           return
         }
 
-        // 保存店铺信息
+        // Save tenant info
         uni.setStorageSync('tenant_id', tenantId)
         uni.setStorageSync('tenant_info', tenant)
 
-        // 调用客户关联接口
+        // Bind tenant
         try {
           const bindRes: any = await userCo.bindTenant({ tenant_id: tenantId })
           if (bindRes.code === 0) {
@@ -160,11 +167,10 @@ const navigateToShop = (tenantId: string) => {
             })
           }
         } catch (e) {
-          // 关联失败不阻断流程
           console.error('Bind tenant failed:', e)
         }
 
-        // 延迟跳转，让用户看到成功提示
+        // Navigate with delay
         setTimeout(() => {
           uni.redirectTo({
             url: `/pages/client/shop?tenant_id=${tenantId}`,
@@ -172,7 +178,7 @@ const navigateToShop = (tenantId: string) => {
               console.error('Navigate failed:', err)
               toastRef.value?.show({
                 type: 'error',
-                message: '跳转失败'
+                message: '页面跳转失败'
               })
             }
           })
@@ -180,7 +186,7 @@ const navigateToShop = (tenantId: string) => {
       } else {
         toastRef.value?.show({
           type: 'error',
-          message: '店铺不存在'
+          message: '无效的店铺码，请联系商家'
         })
       }
     })
@@ -287,19 +293,6 @@ const showHelp = () => {
       font-size: 26rpx;
       color: #999;
     }
-  }
-}
-
-.manual-input {
-  width: 100%;
-  max-width: 600rpx;
-
-  .section-title {
-    display: block;
-    font-size: 28rpx;
-    color: #666;
-    text-align: center;
-    margin-bottom: 24rpx;
   }
 }
 

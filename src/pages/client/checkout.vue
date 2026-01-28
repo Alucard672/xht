@@ -1,20 +1,5 @@
 <template>
   <view class="checkout-container">
-    <view v-if="mode !== 'agent'" class="section address-section" @click="selectAddress">
-      <view v-if="address" class="address-info">
-        <view class="top">
-          <text class="name">{{ address.name }}</text>
-          <text class="mobile">{{ address.mobile }}</text>
-        </view>
-        <view class="detail">{{ address.fullAddress }}</view>
-      </view>
-      <view v-else class="no-address">
-        <u-icon name="map" size="24" color="#999"></u-icon>
-        <text class="txt">选择收货地址</text>
-      </view>
-      <u-icon name="arrow-right" size="18" color="#ccc"></u-icon>
-    </view>
-
     <!-- 商家代客下单：选择客户 -->
     <view v-if="mode === 'agent'" class="section customer-section" @click="selectCustomer">
       <view v-if="selectedCustomer" class="customer-info">
@@ -48,13 +33,10 @@
     </view>
 
     <view class="section payment-section">
-      <view class="section-title">支付方式</view>
-      <u-radio-group v-model="paymentMethod" placement="column">
-        <u-radio label="微信支付" name="wechat" active-color="#07c160"></u-radio>
-        <view class="radio-desc">在线支付</view>
-        <u-radio label="赊账结算" name="credit" active-color="#07c160"></u-radio>
-        <view class="radio-desc">稍后通过账本结算 (适合老客户)</view>
-      </u-radio-group>
+      <view class="payment-info">
+        <text class="payment-label">支付方式</text>
+        <text class="payment-value">货到付款（商家联系您）</text>
+      </view>
     </view>
 
     <view class="section remark-section">
@@ -94,12 +76,7 @@ const selectedCustomer = ref<any>(null)
 
 const tenant_id = ref('')
 const cartItems = ref<any[]>([])
-const address = ref<any>({
-  name: '',
-  mobile: '',
-  fullAddress: ''
-})
-const paymentMethod = ref('wechat')
+const paymentMethod = ref('credit') // Hardcoded to credit for MVP
 const remark = ref('')
 const submitting = ref(false)
 
@@ -125,10 +102,6 @@ const getItemTotal = (item: any) => {
     sum += item.priceBig * item.countBig
   }
   return sum
-}
-
-const selectAddress = () => {
-  uni.showToast({ title: '演示环境，暂不支持修改地址', icon: 'none' })
 }
 
 const selectCustomer = () => {
@@ -173,22 +146,12 @@ const submitOrder = async () => {
       })
       .flat()
 
-    let finalAddress = address.value
-    if (mode.value === 'agent' && selectedCustomer.value) {
-      finalAddress = {
-        name: selectedCustomer.value.alias,
-        mobile: selectedCustomer.value.phone || '',
-        fullAddress: selectedCustomer.value.address || selectedCustomer.value.remark || ''
-      }
-    }
-
     const res: any = await orderCo.createOrder({
       tenant_id: tenant_id.value,
       items,
       total_amount: totalAmount.value,
-      payment_method: paymentMethod.value,
+      payment_method: 'credit', // Hardcoded to credit for MVP
       remark: remark.value,
-      address: finalAddress,
       customer_id: selectedCustomer.value?._id // 如果是代客下单，传入选中的客户ID
     })
 
@@ -234,52 +197,6 @@ const submitOrder = async () => {
     @include text-subheading;
     margin-bottom: $wh-spacing-lg;
     letter-spacing: 0.3rpx;
-  }
-}
-
-.address-section {
-  @include customer-selector;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  .address-info {
-    flex: 1;
-    margin-right: $wh-spacing-md;
-    .top {
-      display: flex;
-      align-items: center;
-      gap: $wh-spacing-sm;
-      margin-bottom: $wh-spacing-xs;
-      .name {
-        font-size: $wh-font-size-xl;
-        font-weight: $wh-font-weight-semibold;
-        color: $wh-text-color-dark;
-      }
-      .mobile {
-        font-size: $wh-font-size-md;
-        color: $wh-text-color-gray;
-        font-weight: $wh-font-weight-medium;
-      }
-    }
-    .detail {
-      font-size: $wh-font-size-sm;
-      color: $wh-text-color-gray;
-      line-height: $wh-line-height-relaxed;
-      font-weight: $wh-font-weight-medium;
-    }
-  }
-
-  .no-address {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    gap: $wh-spacing-sm;
-    .txt {
-      font-size: $wh-font-size-lg;
-      color: $wh-text-color-light-gray;
-      font-weight: $wh-font-weight-semibold;
-    }
   }
 }
 
@@ -359,11 +276,23 @@ const submitOrder = async () => {
 }
 
 .payment-section {
-  .radio-desc {
-    font-size: $wh-font-size-xs;
-    color: $wh-text-color-light-gray;
-    margin: $wh-spacing-xs 0 $wh-spacing-lg 60rpx;
-    font-weight: $wh-font-weight-medium;
+  .payment-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $wh-spacing-md 0;
+
+    .payment-label {
+      font-size: $wh-font-size-base;
+      color: $wh-text-color-dark;
+      font-weight: $wh-font-weight-semibold;
+    }
+
+    .payment-value {
+      font-size: $wh-font-size-base;
+      color: $wh-color-blue;
+      font-weight: $wh-font-weight-semibold;
+    }
   }
 }
 

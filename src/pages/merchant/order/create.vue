@@ -745,7 +745,7 @@ onUnmounted(() => {
         align-items: center;
         justify-content: space-between;
         padding: 20rpx 0;
-        border-bottom: 2rpx solid $wh-border-color-lighter;
+        border-bottom: 2rpx solid $wh-border-color-light;
 
         &:last-child {
           border-bottom: none;
@@ -765,7 +765,7 @@ onUnmounted(() => {
       justify-content: space-between;
       padding: 24rpx 0;
       margin-top: 24rpx;
-      border-top: 2rpx solid $wh-border-color-lighter;
+      border-top: 2rpx solid $wh-border-color-light;
 
       .label {
         font-size: $wh-font-size-md;

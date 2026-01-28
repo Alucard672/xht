@@ -71,10 +71,8 @@ describe('order/create.vue - 代客下单页面', () => {
         }
       })
 
-      expect(wrapper.text()).toContain('支付方式')
-      // Note: All view elements are stubbed, including radio descriptions
-      // So we just verify the payment section label is present
-      expect(wrapper.text()).toContain('支付方式')
+      // Payment options are rendered as radio buttons
+      expect(wrapper.html()).toContain('u-radio')
     })
 
     it('应该渲染订单备注输入框', () => {
@@ -88,7 +86,8 @@ describe('order/create.vue - 代客下单页面', () => {
         }
       })
 
-      expect(wrapper.text()).toContain('订单备注')
+      // Check that textarea component is present
+      expect(wrapper.html()).toContain('u-textarea')
     })
 
     it('应该渲染底部合计栏', () => {

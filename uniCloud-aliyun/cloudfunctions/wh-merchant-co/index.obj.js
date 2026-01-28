@@ -245,15 +245,6 @@ module.exports = {
       .limit(3)
       .get()
 
-    const stockAlerts = await db
-      .collection('wh_goods')
-      .where({
-        tenant_id,
-        stock: db.command.lte(10)
-      })
-      .limit(3)
-      .get()
-
     const tenantRes = await db.collection('wh_tenants').doc(tenant_id).get()
     const tenantInfo = tenantRes.data[0] || {}
 
@@ -272,7 +263,6 @@ module.exports = {
       data: {
         stats,
         pendingOrders: pendingOrders.data,
-        stockAlerts: stockAlerts.data,
         tenantName: tenantInfo.name || '我的店铺',
         expired,
         expired_at

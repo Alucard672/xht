@@ -85,19 +85,7 @@
           </u-form-item>
         </wh-form-section>
 
-        <wh-form-section title="库存与上架">
-          <u-form-item label="当前总库存" border-bottom required>
-            <u-input
-              v-model="form.stock"
-              type="number"
-              :placeholder="'以' + (form.unit_small.name || '最小单位') + '计'"
-              border="none"
-            />
-            <template #right>
-              <text class="unit-tip">{{ form.unit_small.name }}</text>
-            </template>
-          </u-form-item>
-
+        <wh-form-section title="上架设置">
           <u-form-item label="是否上架销售" border-bottom>
             <u-switch v-model="form.is_on_sale" active-color="#07c160"></u-switch>
           </u-form-item>

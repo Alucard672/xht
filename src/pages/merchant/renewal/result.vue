@@ -112,7 +112,7 @@ const retryPayment = () => {
 
 .result-container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #e8f4ff 0%, #f7f8fa 50%, $wh-bg-color-base 100%);
+  background: linear-gradient(180deg, #e8f4ff 0%, #f7f8fa 50%, #f7f7f7 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,7 +156,7 @@ const retryPayment = () => {
   @include slide-in-up;
 
   .icon-area {
-    margin-bottom: $wh-spacing-2xl;
+    margin-bottom: $wh-spacing-xxl;
     animation: icon-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     @keyframes icon-pop {

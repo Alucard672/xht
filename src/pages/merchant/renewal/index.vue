@@ -71,7 +71,7 @@
       <u-empty v-if="packageList.length === 0" mode="data" text="暂无可用套餐"></u-empty>
     </view>
 
-    <u-loading v-else mode="circle" class="loading-packages"></u-loading>
+    <u-loading-icon v-else class="loading-packages"></u-loading-icon>
 
     <!-- 续费按钮 -->
     <view class="bottom-action">
@@ -488,7 +488,8 @@ const handleRenewal = async () => {
   padding: $wh-spacing-xl $wh-spacing-xl calc($wh-spacing-xl + env(safe-area-inset-bottom));
 
   .total-info {
-    @include flex-end;
+    display: flex;
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: $wh-spacing-lg;
     gap: $wh-spacing-sm;

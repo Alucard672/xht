@@ -6,11 +6,6 @@
         <view class="name-row">
           <text class="name u-line-1">{{ goods.name }}</text>
         </view>
-        <view class="stock-row">
-          <text>库存: </text>
-          <text :class="{ warn: goods.stock < 10 }">{{ goods.stock }}</text>
-          <text> {{ goods.unit_small.name }}</text>
-        </view>
         <view class="price-row">
           <text class="price"
             >¥{{ priceHelper.format(goods.unit_small.price) }}/{{ goods.unit_small.name }}</text
@@ -87,16 +82,6 @@ const handleClick = () => {
         .name {
           @include text-title;
           font-size: $wh-font-size-md;
-        }
-      }
-
-      .stock-row {
-        @include text-secondary;
-        font-size: $wh-font-size-sm;
-
-        .warn {
-          color: $wh-color-danger;
-          font-weight: $wh-font-weight-bold;
         }
       }
 
