@@ -43,3 +43,8 @@ vitest-report/
 .unpackage/
 tmp/
 temp/
+
+# Backup files
+*_backup*
+*.bak
+backup/
