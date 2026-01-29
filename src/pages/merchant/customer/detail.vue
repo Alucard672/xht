@@ -10,8 +10,14 @@
       </view>
       <view class="stats-row">
         <view class="stats-item">
-          <text class="label">当前欠款</text>
-          <text class="amount" :class="{ danger: customer.total_debt > 0 }">
+          <text class="label">账户余额</text>
+          <text
+            class="amount"
+            :class="{
+              danger: customer.total_debt > 0,
+              success: customer.total_debt < 0
+            }"
+          >
             ¥{{ (customer.total_debt / 100).toFixed(2) }}
           </text>
         </view>
@@ -34,7 +40,7 @@
     </view>
 
     <view class="detail-section">
-      <view class="section-title">欠款明细</view>
+      <view class="section-title">账户明细</view>
       <view class="log-list">
         <view v-for="log in logs" :key="log._id" class="log-item card-box">
           <view class="log-left">
@@ -42,8 +48,8 @@
             <view class="log-time">{{ formatDate(log.create_time) }}</view>
             <view v-if="log.remark" class="log-remark">{{ log.remark }}</view>
           </view>
-          <view class="log-right" :class="log.amount > 0 ? 'plus' : 'minus'">
-            {{ log.amount > 0 ? '+' : '' }}{{ (log.amount / 100).toFixed(2) }}
+          <view class="log-right" :class="getAmountClass(log)">
+            {{ formatAmount(log) }}
           </view>
         </view>
         <u-empty v-if="logs.length === 0" mode="data" text="暂无记录" />
@@ -120,6 +126,17 @@ const getTypeText = (log: any) => {
     adjust: '手动调整'
   }
   return map[log.type] || '变动记录'
+}
+
+const formatAmount = (log: any) => {
+  const amount = -(log.amount / 100) // 取反：存储逻辑 → 显示逻辑
+  const prefix = amount > 0 ? '+' : ''
+  return `${prefix}${amount.toFixed(2)}`
+}
+
+const getAmountClass = (log: any) => {
+  const displayAmount = -log.amount // 取反后判断
+  return displayAmount > 0 ? 'plus' : 'minus'
 }
 
 const formatDate = (ts: any) => {
@@ -245,6 +262,9 @@ const handleRepay = async () => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
+        &.success {
+          color: $wh-color-success-modern;
+        }
       }
     }
 
@@ -286,11 +306,11 @@ const handleRepay = async () => {
   border-left: 4rpx solid transparent;
 
   &.plus {
-    border-left-color: $wh-color-danger-modern;
+    border-left-color: $wh-color-success-modern;
   }
 
   &.minus {
-    border-left-color: $wh-color-success-modern;
+    border-left-color: $wh-color-danger-modern;
   }
 
   .log-left {
@@ -322,13 +342,13 @@ const handleRepay = async () => {
     @include price-text-medium;
     flex-shrink: 0;
     &.plus {
+      color: $wh-color-success-modern;
+    }
+    &.minus {
       background: $wh-gradient-price;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-    }
-    &.minus {
-      color: $wh-color-success-modern;
     }
   }
 }

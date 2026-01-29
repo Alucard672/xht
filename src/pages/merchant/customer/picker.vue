@@ -29,7 +29,7 @@
             </view>
             <view class="right">
               <view class="debt-box" :class="{ 'has-debt': item.total_debt > 0 }">
-                <text class="label">欠款</text>
+                <text class="label">余额</text>
                 <text class="amount">¥{{ (item.total_debt / 100).toFixed(2) }}</text>
               </view>
               <u-icon name="arrow-right" color="#ccc" size="16"></u-icon>
