@@ -13,9 +13,17 @@
         </view>
         <view class="customer-info">
           <text class="customer-name">{{ selectedCustomer.alias || selectedCustomer.phone }}</text>
-          <text class="customer-debt"
-            >账户余额: ¥{{ priceHelper.format(selectedCustomer.total_debt) }}</text
-          >
+          <text class="customer-debt">
+            账户余额:
+            <text
+              :class="{
+                'debt-amount': selectedCustomer.total_debt > 0,
+                'credit-amount': selectedCustomer.total_debt < 0
+              }"
+            >
+              ¥{{ priceHelper.format(Math.abs(selectedCustomer.total_debt)) }}
+            </text>
+          </text>
         </view>
         <u-icon name="arrow-right" size="16" color="#999"></u-icon>
       </view>
@@ -133,7 +141,9 @@
             </view>
             <view class="customer-debt">
               <text class="debt-label">余额</text>
-              <text class="debt-value">¥{{ priceHelper.format(customer.total_debt) }}</text>
+              <text class="debt-value"
+                >¥{{ priceHelper.format(Math.abs(customer.total_debt)) }}</text
+              >
             </view>
           </view>
         </scroll-view>

@@ -18,7 +18,14 @@
               success: customer.total_debt < 0
             }"
           >
-            ¥{{ (customer.total_debt / 100).toFixed(2) }}
+            ¥{{ Math.abs(customer.total_debt / 100).toFixed(2) }}
+          </text>
+          <text
+            v-if="customer.total_debt !== 0"
+            class="balance-tag"
+            :class="{ debt: customer.total_debt > 0, credit: customer.total_debt < 0 }"
+          >
+            {{ customer.total_debt > 0 ? '欠款' : '有余额' }}
           </text>
         </view>
         <view class="stats-action">
@@ -264,6 +271,23 @@ const handleRepay = async () => {
         }
         &.success {
           color: $wh-color-success-modern;
+        }
+      }
+      .balance-tag {
+        font-size: $wh-font-size-xs;
+        padding: 4rpx $wh-spacing-sm;
+        border-radius: $wh-border-radius-full;
+        margin-left: $wh-spacing-xs;
+        font-weight: $wh-font-weight-semibold;
+        &.debt {
+          color: $wh-color-danger-modern;
+          background: rgba(255, 77, 79, 0.1);
+          border: 1rpx solid rgba(255, 77, 79, 0.3);
+        }
+        &.credit {
+          color: $wh-color-success-modern;
+          background: rgba(52, 199, 89, 0.1);
+          border: 1rpx solid rgba(52, 199, 89, 0.3);
         }
       }
     }
