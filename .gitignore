@@ -12,6 +12,9 @@ node_modules
 dist
 *.local
 
+# Lock files (project uses yarn)
+package-lock.json
+
 # Environment files
 .env
 .env.[a-z]*
