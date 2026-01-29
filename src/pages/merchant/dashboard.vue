@@ -229,6 +229,7 @@ onShow(() => {
 </script>
 
 <style lang="scss" scoped>
+@use 'sass:color';
 @import '@/styles/design-tokens.scss';
 @import '@/styles/mixins.scss';
 @import '@/styles/page-design.scss';
@@ -595,7 +596,7 @@ onShow(() => {
 
     &:active {
       transform: scale(0.98);
-      background: darken($wh-bg-color-secondary, 5%);
+      background: color.adjust($wh-bg-color-secondary, $lightness: -5%);
     }
 
     &.danger {
