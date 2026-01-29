@@ -49,24 +49,24 @@
         <view class="stats-item">
           <view class="label">今日订单</view>
           <view class="value-row">
-            <text class="value">{{ stats.todayOrderCount }}</text>
+            <text class="value">{{ stats.todayOrderCount || 0 }}</text>
             <text class="unit">笔</text>
           </view>
         </view>
         <view class="stats-item">
           <view class="label">今日销售额</view>
           <view class="value-row">
-            <text class="value">{{ (stats.todayRevenue / 100).toFixed(0) }}</text>
+            <text class="value">{{ ((stats.todayRevenue || 0) / 100).toFixed(0) }}</text>
             <text class="unit">元</text>
           </view>
         </view>
         <view class="stats-item">
-          <view class="label">待处理订单</view>
+          <view class="label">今日新增欠款</view>
           <view class="value-row">
-            <text class="value">{{ stats.pendingOrderCount }}</text>
-            <text class="unit">笔</text>
-            <view v-if="stats.pendingOrderCount > 0" class="badge">{{
-              stats.pendingOrderCount
+            <text class="value">{{ ((stats.todayNewDebt || 0) / 100).toFixed(0) }}</text>
+            <text class="unit">元</text>
+            <view v-if="stats.todayNewDebt > 0" class="badge">{{
+              ((stats.todayNewDebt || 0) / 100).toFixed(0)
             }}</view>
           </view>
         </view>
@@ -76,55 +76,63 @@
     <!-- 快速操作 -->
     <view class="quick-actions card-box">
       <view class="action-item" @click="navTo('/pages/merchant/order/create')">
-        <view class="icon-box blue"><u-icon name="plus" color="#07c160" size="24"></u-icon></view>
+        <view class="icon-box blue"><u-icon name="plus" color="#07c160" size="32"></u-icon></view>
         <text>快速开单</text>
       </view>
-      <view class="action-item" @click="navTo('/pages/merchant/goods/list')">
-        <view class="icon-box orange"><u-icon name="bag" color="#fa8c16" size="24"></u-icon></view>
-        <text>商品管理</text>
-      </view>
-      <view class="action-item" @click="navTo('/pages/merchant/customer/list')">
-        <view class="icon-box green"><u-icon name="order" color="#52c41a" size="24"></u-icon></view>
-        <text>客户账本</text>
-      </view>
       <view class="action-item" @click="showShopCode">
-        <view class="icon-box purple"><u-icon name="grid" color="#722ed1" size="24"></u-icon></view>
+        <view class="icon-box purple"><u-icon name="grid" color="#722ed1" size="32"></u-icon></view>
         <text>店铺码</text>
       </view>
     </view>
 
-    <!-- 待处理订单 -->
+    <!-- 本月财务概览 -->
     <view class="section-header">
-      <text class="title">待处理订单</text>
-      <text class="more" @click="navTo('/pages/merchant/order/list')">查看全部 ></text>
+      <text class="title">本月财务概览</text>
     </view>
-    <view class="order-list">
-      <view v-for="order in pendingOrders" :key="order._id" class="order-card card-box">
-        <view class="order-header">
-          <u-tag
-            :text="getStatusText(order.status)"
-            :type="getStatusType(order.status)"
-            size="mini"
-          ></u-tag>
-          <text class="order-no">#{{ order.order_no.slice(-8) }}</text>
-          <text class="customer-name">{{ order.customer_name }}</text>
+    <view class="month-stats card-box">
+      <view class="month-stat-item">
+        <view class="label">本月销售额</view>
+        <view class="value">¥{{ ((stats.monthRevenue || 0) / 100).toFixed(0) }}</view>
+      </view>
+      <view class="month-stat-item">
+        <view class="label">本月订单数</view>
+        <view class="value">{{ stats.monthOrderCount || 0 }} 笔</view>
+      </view>
+      <view class="month-stat-item danger">
+        <view class="label">欠款总额</view>
+        <view class="value danger-text">¥{{ ((stats.totalDebt || 0) / 100).toFixed(0) }}</view>
+      </view>
+      <view class="month-stat-item">
+        <view class="label">本月回款</view>
+        <view class="value">¥{{ ((stats.monthRepayment || 0) / 100).toFixed(0) }}</view>
+      </view>
+    </view>
+
+    <!-- 欠款提醒 TOP 5 -->
+    <view class="section-header">
+      <text class="title">欠款提醒 TOP 5</text>
+      <text class="more" @click="navTo('/pages/merchant/customer/list')">查看全部 ></text>
+    </view>
+    <view class="debtors-list">
+      <view
+        v-for="(debtor, index) in stats.topDebtors || []"
+        :key="debtor.customer_id"
+        class="debtor-card card-box"
+        @click="navToCustomer(debtor.customer_id)"
+      >
+        <view class="debtor-rank" :class="'rank-' + (index + 1)">{{ index + 1 }}</view>
+        <view class="debtor-info">
+          <view class="debtor-name">{{ debtor.name || '未知客户' }}</view>
+          <view class="debtor-time">最后赊账: {{ formatTime(debtor.last_debt_time) }}</view>
         </view>
-        <view class="order-goods u-line-1">
-          <text v-for="(g, i) in order.items" :key="i"
-            >{{ g.name }} x{{ g.countSmall }}{{ g.unitSmallName
-            }}{{ i !== order.items.length - 1 ? '，' : '' }}</text
-          >
-        </view>
-        <view class="order-footer">
-          <text class="time">{{ formatTime(order.create_time) }}</text>
-          <text class="amount">¥{{ (order.total_amount / 100).toFixed(2) }}</text>
-        </view>
+        <view class="debtor-amount danger-text"
+          >¥{{ ((debtor.debt_amount || 0) / 100).toFixed(0) }}</view
+        >
       </view>
       <u-empty
-        v-if="pendingOrders.length === 0"
-        mode="order"
-        icon="/static/empty/order.png"
-        text="暂无待处理订单"
+        v-if="!stats.topDebtors || stats.topDebtors.length === 0"
+        mode="list"
+        text="暂无欠款客户"
       ></u-empty>
     </view>
   </view>
@@ -146,12 +154,18 @@ const willExpireSoon = ref(false)
 const expireDays = ref(0)
 const expiredAt = ref<number | null>(null)
 const stats = ref({
+  // 今日数据
   todayOrderCount: 0,
   todayRevenue: 0,
-  pendingOrderCount: 0,
-  unsettledOrderCount: 0
+  todayNewDebt: 0,
+  // 本月数据
+  monthOrderCount: 0,
+  monthRevenue: 0,
+  totalDebt: 0,
+  monthRepayment: 0,
+  // 欠款TOP 5
+  topDebtors: [] as any[]
 })
-const pendingOrders = ref<any[]>([])
 let lastLoadTime = 0
 
 const loadData = async (force = false) => {
@@ -166,7 +180,6 @@ const loadData = async (force = false) => {
     if (res.code === 0) {
       lastLoadTime = now
       stats.value = res.data.stats
-      pendingOrders.value = res.data.pendingOrders
       shopName.value = res.data.tenantName || '我的店铺'
 
       // 检查过期状态
@@ -203,16 +216,6 @@ onUnmounted(() => {
   uni.$off('refresh-dashboard')
 })
 
-const getStatusText = (status: string) => {
-  const map: any = { pending: '待确认', confirmed: '待发货', completed: '已完成' }
-  return map[status] || status
-}
-
-const getStatusType = (status: string) => {
-  const map: any = { pending: 'error', confirmed: 'primary', completed: 'success' }
-  return map[status] || 'info'
-}
-
 const formatTime = (ts: number) => {
   if (!ts) return ''
   const now = Date.now()
@@ -229,6 +232,12 @@ const navTo = (url: string) => {
 
 const showShopCode = () => {
   uni.navigateTo({ url: '/pages/merchant/store?tab=1' })
+}
+
+const navToCustomer = (customerId: string) => {
+  uni.navigateTo({
+    url: `/pages/merchant/customer/detail?id=${customerId}`
+  })
 }
 
 onShow(() => {
@@ -506,21 +515,22 @@ onShow(() => {
     align-items: center;
     gap: $wh-spacing-sm;
     transition: all $wh-transition-normal;
+    flex: 1;
 
     &:active {
       transform: scale(0.95);
     }
 
     text {
-      font-size: $wh-font-size-sm;
+      font-size: $wh-font-size-base;
       color: $wh-text-color-dark;
       font-weight: $wh-font-weight-semibold;
       letter-spacing: 0.3rpx;
     }
 
     .icon-box {
-      width: 104rpx;
-      height: 104rpx;
+      width: 128rpx;
+      height: 128rpx;
       border-radius: $wh-border-radius-lg;
       display: flex;
       justify-content: center;
@@ -540,22 +550,6 @@ onShow(() => {
         );
         border: 1rpx solid rgba(45, 127, 249, 0.2);
       }
-      &.orange {
-        background: linear-gradient(
-          135deg,
-          rgba(255, 149, 0, 0.1) 0%,
-          rgba(255, 149, 0, 0.05) 100%
-        );
-        border: 1rpx solid rgba(255, 149, 0, 0.2);
-      }
-      &.green {
-        background: linear-gradient(
-          135deg,
-          rgba(52, 199, 89, 0.1) 0%,
-          rgba(52, 199, 89, 0.05) 100%
-        );
-        border: 1rpx solid rgba(52, 199, 89, 0.2);
-      }
       &.purple {
         background: linear-gradient(
           135deg,
@@ -570,7 +564,7 @@ onShow(() => {
 
 .section-header {
   @include flex-between;
-  padding: $wh-spacing-3xl $wh-spacing-lg $wh-spacing-lg;
+  padding: $wh-spacing-xl $wh-spacing-lg $wh-spacing-md;
 
   .left {
     @include flex-start;
@@ -595,56 +589,125 @@ onShow(() => {
   }
 }
 
-.order-list {
-  .order-card {
+.month-stats {
+  @include card-modern;
+  padding: $wh-spacing-lg;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $wh-spacing-md;
+
+  .month-stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: $wh-spacing-md;
+    background: $wh-bg-color-secondary;
+    border-radius: $wh-border-radius-md;
+    transition: all $wh-transition-normal;
+
+    &:active {
+      transform: scale(0.98);
+      background: darken($wh-bg-color-secondary, 5%);
+    }
+
+    &.danger {
+      background: rgba(255, 77, 79, 0.05);
+      border: 1rpx solid rgba(255, 77, 79, 0.2);
+    }
+
+    .label {
+      font-size: $wh-font-size-xs;
+      color: $wh-text-color-secondary;
+      margin-bottom: $wh-spacing-xs;
+      font-weight: $wh-font-weight-medium;
+    }
+
+    .value {
+      font-size: $wh-font-size-lg;
+      font-weight: $wh-font-weight-extrabold;
+      color: $wh-text-color-dark;
+      letter-spacing: -0.5rpx;
+
+      &.danger-text {
+        color: $wh-color-danger-modern;
+      }
+    }
+  }
+}
+
+.debtors-list {
+  padding: 0 $wh-spacing-lg $wh-spacing-lg;
+
+  .debtor-card {
     @include card-modern;
-    margin: 0 $wh-spacing-lg $wh-spacing-md;
-    padding: $wh-spacing-xl;
-    @include card-side-decoration(4rpx, $wh-gradient-blue-vertical);
+    padding: $wh-spacing-lg;
+    margin-bottom: $wh-spacing-sm;
+    display: flex;
+    align-items: center;
+    gap: $wh-spacing-md;
+    transition: all $wh-transition-normal;
 
     &:active {
       transform: scale(0.98);
       box-shadow: $wh-shadow-md;
     }
 
-    .order-header {
+    .debtor-rank {
+      width: 48rpx;
+      height: 48rpx;
+      border-radius: $wh-border-radius-md;
       display: flex;
+      justify-content: center;
       align-items: center;
-      gap: $wh-spacing-sm;
-      margin-bottom: $wh-spacing-md;
+      font-size: $wh-font-size-base;
+      font-weight: $wh-font-weight-extrabold;
+      background: $wh-bg-color-secondary;
+      color: $wh-text-color-secondary;
+      flex-shrink: 0;
 
-      .order-no {
-        font-size: $wh-font-size-xs;
-        color: $wh-text-color-light-gray;
-        font-weight: $wh-font-weight-medium;
+      &.rank-1 {
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        color: #8b5a00;
       }
-      .customer-name {
+
+      &.rank-2 {
+        background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+        color: #5a5a5a;
+      }
+
+      &.rank-3 {
+        background: linear-gradient(135deg, #cd7f32 0%, #e6a85c 100%);
+        color: #5a3a00;
+      }
+    }
+
+    .debtor-info {
+      flex: 1;
+      min-width: 0;
+
+      .debtor-name {
         font-size: $wh-font-size-lg;
         font-weight: $wh-font-weight-semibold;
         color: $wh-text-color-dark;
-        flex: 1;
-        text-align: right;
+        margin-bottom: $wh-spacing-xs;
         letter-spacing: 0.3rpx;
       }
-    }
 
-    .order-goods {
-      font-size: $wh-font-size-sm;
-      color: $wh-text-color-secondary;
-      margin-bottom: $wh-spacing-md;
-      line-height: $wh-line-height-relaxed;
-      font-weight: $wh-font-weight-medium;
-    }
-
-    .order-footer {
-      @include flex-between;
-      .time {
+      .debtor-time {
         font-size: $wh-font-size-xs;
         color: $wh-text-color-light-gray;
         font-weight: $wh-font-weight-medium;
       }
-      .amount {
-        @include price-text-small;
+    }
+
+    .debtor-amount {
+      font-size: $wh-font-size-xl;
+      font-weight: $wh-font-weight-extrabold;
+      flex-shrink: 0;
+      letter-spacing: -0.5rpx;
+
+      &.danger-text {
+        color: $wh-color-danger-modern;
       }
     }
   }
