@@ -256,12 +256,12 @@ module.exports = {
     const monthOrderCount = monthOrders.data.length
     const monthRevenue = monthOrders.data.reduce((sum, o) => sum + (o.total_amount || 0), 0)
 
-    // 本月回款（查询本月所有repay类型的debt_log）
+    // 本月回款（查询本月所有repayment类型的debt_log）
     const monthRepaymentLogs = await db
       .collection('wh_debt_logs')
       .where({
         tenant_id,
-        type: 'repay',
+        type: 'repayment',
         create_time: db.command.gte(monthStart)
       })
       .get()
@@ -275,40 +275,6 @@ module.exports = {
 
     const totalDebt = customersRes.data.reduce((sum, c) => sum + (c.total_debt || 0), 0)
 
-    // ========== 欠款TOP 5 ==========
-    const topDebtors = await db
-      .collection('wh_customers')
-      .where({
-        tenant_id,
-        total_debt: db.command.gt(0)
-      })
-      .orderBy('total_debt', 'desc')
-      .limit(5)
-      .get()
-
-    // 为每个TOP客户查询最后赊账时间
-    const topDebtorsWithTime = await Promise.all(
-      topDebtors.data.map(async customer => {
-        const lastDebt = await db
-          .collection('wh_debt_logs')
-          .where({
-            tenant_id,
-            customer_id: customer._id,
-            type: 'order'
-          })
-          .orderBy('create_time', 'desc')
-          .limit(1)
-          .get()
-
-        return {
-          customer_id: customer._id,
-          name: customer.name,
-          debt_amount: customer.total_debt,
-          last_debt_time: lastDebt.data[0]?.create_time || null
-        }
-      })
-    )
-
     // ========== 组装统计数据 ==========
     const stats = {
       // 今日数据
@@ -319,9 +285,7 @@ module.exports = {
       monthOrderCount,
       monthRevenue,
       totalDebt,
-      monthRepayment,
-      // 欠款TOP 5
-      topDebtors: topDebtorsWithTime
+      monthRepayment
     }
 
     // ========== 店铺信息 ==========

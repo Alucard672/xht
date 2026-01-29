@@ -107,34 +107,6 @@
         <view class="value">¥{{ ((stats.monthRepayment || 0) / 100).toFixed(0) }}</view>
       </view>
     </view>
-
-    <!-- 欠款提醒 TOP 5 -->
-    <view class="section-header">
-      <text class="title">欠款提醒 TOP 5</text>
-      <text class="more" @click="navTo('/pages/merchant/customer/list')">查看全部 ></text>
-    </view>
-    <view class="debtors-list">
-      <view
-        v-for="(debtor, index) in stats.topDebtors || []"
-        :key="debtor.customer_id"
-        class="debtor-card card-box"
-        @click="navToCustomer(debtor.customer_id)"
-      >
-        <view class="debtor-rank" :class="'rank-' + (index + 1)">{{ index + 1 }}</view>
-        <view class="debtor-info">
-          <view class="debtor-name">{{ debtor.name || '未知客户' }}</view>
-          <view class="debtor-time">最后赊账: {{ formatTime(debtor.last_debt_time) }}</view>
-        </view>
-        <view class="debtor-amount danger-text"
-          >¥{{ ((debtor.debt_amount || 0) / 100).toFixed(0) }}</view
-        >
-      </view>
-      <u-empty
-        v-if="!stats.topDebtors || stats.topDebtors.length === 0"
-        mode="list"
-        text="暂无欠款客户"
-      ></u-empty>
-    </view>
   </view>
 </template>
 
@@ -162,9 +134,7 @@ const stats = ref({
   monthOrderCount: 0,
   monthRevenue: 0,
   totalDebt: 0,
-  monthRepayment: 0,
-  // 欠款TOP 5
-  topDebtors: [] as any[]
+  monthRepayment: 0
 })
 let lastLoadTime = 0
 
@@ -227,17 +197,23 @@ const formatTime = (ts: number) => {
 }
 
 const navTo = (url: string) => {
-  uni.navigateTo({ url })
+  // 判断是否是tabbar页面，如果是则使用switchTab
+  const tabBarPages = [
+    '/pages/merchant/dashboard',
+    '/pages/merchant/order/list',
+    '/pages/merchant/goods/list',
+    '/pages/merchant/customer/list'
+  ]
+
+  if (tabBarPages.includes(url)) {
+    uni.switchTab({ url })
+  } else {
+    uni.navigateTo({ url })
+  }
 }
 
 const showShopCode = () => {
   uni.navigateTo({ url: '/pages/merchant/store?tab=1' })
-}
-
-const navToCustomer = (customerId: string) => {
-  uni.navigateTo({
-    url: `/pages/merchant/customer/detail?id=${customerId}`
-  })
 }
 
 onShow(() => {
@@ -626,84 +602,6 @@ onShow(() => {
       font-size: $wh-font-size-lg;
       font-weight: $wh-font-weight-extrabold;
       color: $wh-text-color-dark;
-      letter-spacing: -0.5rpx;
-
-      &.danger-text {
-        color: $wh-color-danger-modern;
-      }
-    }
-  }
-}
-
-.debtors-list {
-  padding: 0 $wh-spacing-lg $wh-spacing-lg;
-
-  .debtor-card {
-    @include card-modern;
-    padding: $wh-spacing-lg;
-    margin-bottom: $wh-spacing-sm;
-    display: flex;
-    align-items: center;
-    gap: $wh-spacing-md;
-    transition: all $wh-transition-normal;
-
-    &:active {
-      transform: scale(0.98);
-      box-shadow: $wh-shadow-md;
-    }
-
-    .debtor-rank {
-      width: 48rpx;
-      height: 48rpx;
-      border-radius: $wh-border-radius-md;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: $wh-font-size-base;
-      font-weight: $wh-font-weight-extrabold;
-      background: $wh-bg-color-secondary;
-      color: $wh-text-color-secondary;
-      flex-shrink: 0;
-
-      &.rank-1 {
-        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-        color: #8b5a00;
-      }
-
-      &.rank-2 {
-        background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
-        color: #5a5a5a;
-      }
-
-      &.rank-3 {
-        background: linear-gradient(135deg, #cd7f32 0%, #e6a85c 100%);
-        color: #5a3a00;
-      }
-    }
-
-    .debtor-info {
-      flex: 1;
-      min-width: 0;
-
-      .debtor-name {
-        font-size: $wh-font-size-lg;
-        font-weight: $wh-font-weight-semibold;
-        color: $wh-text-color-dark;
-        margin-bottom: $wh-spacing-xs;
-        letter-spacing: 0.3rpx;
-      }
-
-      .debtor-time {
-        font-size: $wh-font-size-xs;
-        color: $wh-text-color-light-gray;
-        font-weight: $wh-font-weight-medium;
-      }
-    }
-
-    .debtor-amount {
-      font-size: $wh-font-size-xl;
-      font-weight: $wh-font-weight-extrabold;
-      flex-shrink: 0;
       letter-spacing: -0.5rpx;
 
       &.danger-text {
