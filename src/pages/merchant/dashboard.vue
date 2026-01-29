@@ -79,6 +79,10 @@
         <view class="icon-box blue"><u-icon name="plus" color="#07c160" size="32"></u-icon></view>
         <text>快速开单</text>
       </view>
+      <view class="action-item" @click="navTo('/pages/merchant/customer/debt-add?type=repay')">
+        <view class="icon-box green"><u-icon name="rmb" color="#52c41a" size="32"></u-icon></view>
+        <text>快速收款</text>
+      </view>
       <view class="action-item" @click="showShopCode">
         <view class="icon-box purple"><u-icon name="grid" color="#722ed1" size="32"></u-icon></view>
         <text>店铺码</text>
@@ -525,6 +529,14 @@ onShow(() => {
           rgba(45, 127, 249, 0.05) 100%
         );
         border: 1rpx solid rgba(45, 127, 249, 0.2);
+      }
+      &.green {
+        background: linear-gradient(
+          135deg,
+          rgba(82, 196, 26, 0.1) 0%,
+          rgba(82, 196, 26, 0.05) 100%
+        );
+        border: 1rpx solid rgba(82, 196, 26, 0.2);
       }
       &.purple {
         background: linear-gradient(

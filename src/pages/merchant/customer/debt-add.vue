@@ -145,8 +145,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { onShow } from '@dcloudio/uni-app'
+import { ref, computed, watch } from 'vue'
+import { onShow, onLoad } from '@dcloudio/uni-app'
 import { priceHelper } from '@/common/price-helper'
 import { importObject } from '@/utils/cloud'
 
@@ -162,6 +162,24 @@ const showCustomerPicker = ref(false)
 const searchKeyword = ref('')
 const customerList = ref<any[]>([])
 const loadingCustomers = ref(false)
+
+// 读取URL参数，设置默认类型
+onLoad(options => {
+  if (options?.type === 'repay' || options?.type === 'borrow') {
+    debtType.value = options.type
+  }
+})
+
+// 监听debtType变化，动态更新导航栏标题
+watch(
+  debtType,
+  newType => {
+    uni.setNavigationBarTitle({
+      title: newType === 'repay' ? '快速收款' : '记账'
+    })
+  },
+  { immediate: true }
+)
 
 const presetAmounts = [100, 200, 500, 1000, 2000, 5000]
 

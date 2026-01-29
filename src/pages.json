@@ -73,6 +73,14 @@
       }
     },
     {
+      "path": "pages/merchant/customer/debt-add",
+      "style": {
+        "navigationBarTitleText": "快速收款",
+        "navigationBarBackgroundColor": "#2d7ff9",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/merchant/store",
       "style": {
         "navigationBarTitleText": "店铺设置",
