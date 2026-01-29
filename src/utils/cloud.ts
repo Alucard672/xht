@@ -39,12 +39,33 @@ export function importObject<T = any>(name: string): T {
               result
             )
             return result
-          } catch (error) {
+          } catch (error: any) {
             const duration = Date.now() - startTime
             console.error(
               `[CloudErr][${requestId}] ❌ 失败 ${name}.${String(prop)} (${duration}ms)`,
               error
             )
+
+            // 处理403登录失效错误
+            if (error?.code === 403 || error?.errMsg?.includes('登录失效')) {
+              // 清除登录状态
+              uni.removeStorageSync('uni_id_token')
+              uni.removeStorageSync('uni_id_token_expired')
+              uni.removeStorageSync('uni-id-pages-userInfo')
+              uni.removeStorageSync('tenant_id')
+
+              // 显示提示并跳转到登录页
+              uni.showModal({
+                title: '提示',
+                content: error?.msg || '登录已失效，请重新登录',
+                showCancel: false,
+                success: () => {
+                  uni.reLaunch({ url: '/pages/merchant/login' })
+                }
+              })
+              return
+            }
+
             throw error
           }
         }
